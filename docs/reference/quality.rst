@@ -1,34 +1,30 @@
 .. _testing:
 
-********************************************
-Testing and Ensuring Type Annotation Quality
-********************************************
+******************************************************************************************
+型注釈の品質のテストと保証
+******************************************************************************************
 
-Testing Annotation Accuracy
-===========================
+注釈の精度のテスト
+==========================================================================================
 
-When creating a package with type annotations, authors may want to validate
-that the annotations they publish meet their expectations.
-This is especially important for library authors, for whom the published
-annotations are part of the public interface to their package.
+型注釈を含むパッケージを作成する場合、著者は公開する注釈が期待に沿っていることを検証したいと考えるかもしれません。
+これは、公開された注釈がパッケージのパブリック インターフェイスの一部であるライブラリの作成者にとって特に重要です。
 
-There are several approaches to this problem, and this document will show
-a few of them.
+この問題にはいくつかのアプローチがあり、このドキュメントではそのいくつかを紹介します。
 
 .. note::
 
-    For simplicity, we will assume that type-checking is done with ``mypy``.
-    Many of these strategies can be applied to other type-checkers as well.
+    簡単のために、型チェックは ``mypy`` で行われると仮定します。
+    これらの戦略の多くは、他の型チェッカーにも適用できます。
 
-Testing Using ``assert_type`` and ``--warn-unused-ignores``
------------------------------------------------------------
+``assert_type`` と ``--warn-unused-ignores`` を使用したテスト
+------------------------------------------------------------------------------------------
 
-The idea is to write normal Python files, set aside in a dedicated directory like ``typing_tests/``, which assert certain properties
-of the type annotations.
+通常の Python ファイルを作成し、``typing_tests/`` などの専用ディレクトリに配置して、型注釈の特定のプロパティをアサートするというアイデアです。
 
-``assert_type`` (``mypy`` 0.950 and above) can ensure that the type annotation produces the expected type.
+``assert_type`` (``mypy`` 0.950 以上) を使用すると、型注釈が予期される型を生成することを確認できます。
 
-If the following file is under test:
+次のファイルがテスト対象である場合:
 
 .. code-block:: python
 
@@ -36,7 +32,7 @@ If the following file is under test:
     def bar(x: int) -> str:
         return str(x)
 
-then the following file tests ``foo.py``:
+次のファイルは ``foo.py`` をテストします:
 
 .. code-block:: python
 
@@ -44,15 +40,13 @@ then the following file tests ``foo.py``:
 
     assert_type(bar(42), str)
 
-Clever use of ``mypy --warn-unused-ignores`` can be used to check that certain
-expressions are or are not well-typed. The idea is to have valid expressions along
-with invalid expressions annotated with ``type: ignore`` comments. When
-``mypy --warn-unused-ignores`` is run on these files, it should pass.
+``mypy --warn-unused-ignores`` を巧妙に使用すると、特定の式が型指定されているかどうかを確認できます。
+有効な式と ``type: ignore`` コメントで注釈された無効な式を一緒に配置するというアイデアです。
+これらのファイルで ``mypy --warn-unused-ignores`` を実行すると、パスするはずです。
 
-This strategy does not offer strong guarantees about the types under test, but
-it requires no additional tooling.
+この戦略は、テスト対象の型に関する強力な保証を提供しませんが、追加のツールは必要ありません。
 
-If the following file is under test:
+次のファイルがテスト対象である場合:
 
 .. code-block:: python
 
@@ -60,7 +54,7 @@ If the following file is under test:
     def bar(x: int) -> str:
         return str(x)
 
-then the following file tests ``foo.py``:
+次のファイルは ``foo.py`` をテストします:
 
 .. code-block:: python
 
@@ -70,21 +64,17 @@ then the following file tests ``foo.py``:
     r1: str = bar(42)
     r2: int = bar(42)  # type: ignore [assignment]
 
-Checking ``reveal_type`` output from ``mypy.api.run``
------------------------------------------------------
+``mypy.api.run`` からの ``reveal_type`` 出力のチェック
+------------------------------------------------------------------------------------------
 
-``mypy`` provides a subpackage named ``api`` for invoking ``mypy`` from a
-python process. In combination with ``reveal_type``, this can be used to write
-a function which gets the ``reveal_type`` output from an expression. Once
-that's obtained, tests can assert strings and regular expression matches
-against it.
+``mypy`` は、Python プロセスから ``mypy`` を呼び出すための ``api`` というサブパッケージを提供します。
+``reveal_type`` と組み合わせて、式から ``reveal_type`` 出力を取得する関数を記述するために使用できます。
+それが得られたら、テストはそれに対して文字列と正規表現の一致をアサートできます。
 
-This approach requires writing a set of helpers to provide a good testing
-experience, and it runs mypy once per test case (which can be slow).
-However, it builds only on ``mypy`` and the test framework of your choice.
+このアプローチでは、優れたテスト エクスペリエンスを提供するためのヘルパー セットを記述する必要があり、テスト ケースごとに mypy を 1 回実行します (これには時間がかかる場合があります)。
+ただし、``mypy`` と選択したテスト フレームワークのみに基づいて構築されます。
 
-The following example could be integrated into a testsuite written in
-any framework:
+次の例は、任意のフレームワークで記述されたテスト スイートに統合できます:
 
 .. code-block:: python
 
@@ -99,9 +89,7 @@ any framework:
         return match.group(1)
 
 
-For example, we can use the above to provide a ``run_reveal_type`` pytest
-fixture which generates a temporary file and uses it as the input to
-``get_reveal_type_output``:
+たとえば、上記を使用して一時ファイルを生成し、それを ``get_reveal_type_output`` への入力として使用する ``run_reveal_type`` pytest フィクスチャを提供できます:
 
 .. code-block:: python
 
@@ -128,22 +116,18 @@ fixture which generates a temporary file and uses it as the input to
         return func
 
 
-For more details, see `the documentation on mypy.api
-<https://mypy.readthedocs.io/en/stable/extending_mypy.html#integrating-mypy-into-another-python-application>`_.
+詳細については、`mypy.api に関するドキュメント <https://mypy.readthedocs.io/en/stable/extending_mypy.html#integrating-mypy-into-another-python-application>`_ を参照してください。
 
 pytest-mypy-plugins
--------------------
+------------------------------------------------------------------------------------------
 
-`pytest-mypy-plugins <https://github.com/typeddjango/pytest-mypy-plugins>`_ is
-a plugin for ``pytest`` which defines typing test cases as YAML data.
-The test cases are run through ``mypy`` and the output of ``reveal_type`` can
-be asserted.
+`pytest-mypy-plugins <https://github.com/typeddjango/pytest-mypy-plugins>`_ は、型テスト ケースを YAML データとして定義する ``pytest`` 用のプラグインです。
+テスト ケースは ``mypy`` を通じて実行され、``reveal_type`` の出力をアサートできます。
 
-This project supports complex typing arrangements like ``pytest`` parametrized
-tests and per-test ``mypy`` configuration. It requires that you are using
-``pytest`` to run your tests, and runs ``mypy`` in a subprocess per test case.
+このプロジェクトは、``pytest`` パラメータ化テストやテストごとの ``mypy`` 構成など、複雑な型の配置をサポートしています。
+テストを実行するには ``pytest`` を使用する必要があり、テスト ケースごとにサブプロセスで ``mypy`` を実行します。
 
-This is an example of a parametrized test with ``pytest-mypy-plugins``:
+これは、``pytest-mypy-plugins`` を使用したパラメータ化テストの例です:
 
 .. code-block:: yaml
 
@@ -156,63 +140,43 @@ This is an example of a parametrized test with ``pytest-mypy-plugins``:
       main: |
         reveal_type({[ val }})  # N: Revealed type is '{{ rt }}'
 
-Improving Type Completeness
-===========================
+型の完全性の向上
+==========================================================================================
 
-One of the goals of many libraries is to ensure that they are "fully type
-annotated", meaning that they provide complete and accurate type annotations
-for all functions, classes, and objects. Having full annotations is referred to
-as "type completeness" or "type coverage".
+多くのライブラリの目標の 1 つは、「完全に型注釈されている」ことを確認することです。つまり、すべての関数、クラス、およびオブジェクトに完全かつ正確な型注釈を提供することです。
+完全な注釈を持つことは「型の完全性」または「型カバレッジ」と呼ばれます。
 
-Here are some tips for increasing the type completeness score for your
-library:
+ライブラリの型の完全性スコアを向上させるためのヒントをいくつか紹介します。
 
--  Make type completeness an output of your testing process. Several type
-   checkers have options for generating useful output, warnings, or even
-   reports.
--  If your package includes tests or sample code, consider removing them
-   from the distribution. If there is good reason to include them,
-   consider placing them in a directory that begins with an underscore
-   so they are not considered part of your library’s interface.
--  If your package includes submodules that are meant to be
-   implementation details, rename those files to begin with an
-   underscore.
--  If a symbol is not intended to be part of the library’s interface and
-   is considered an implementation detail, rename it such that it begins
-   with an underscore. It will then be considered private and excluded
-   from the type completeness check.
--  If your package exposes types from other libraries, work with the
-   maintainers of these other libraries to achieve type completeness.
+-  型の完全性をテスト プロセスの出力にします。 いくつかの型チェッカーには、有用な出力、警告、さらにはレポートを生成するためのオプションがあります。
+-  パッケージにテストやサンプル コードが含まれている場合は、それらを配布から削除することを検討してください。 含める正当な理由がある場合は、アンダースコアで始まるディレクトリに配置して、ライブラリのインターフェイスの一部と見なされないようにすることを検討してください。
+-  実装の詳細を意図したサブモジュールがパッケージに含まれている場合は、それらのファイルの名前をアンダースコアで始まるように変更します。
+-  シンボルがライブラリのインターフェイスの一部として意図されておらず、実装の詳細と見なされる場合は、アンダースコアで始まるように名前を変更します。 その後、プライベートと見なされ、型の完全性チェックから除外されます。
+-  パッケージが他のライブラリの型を公開している場合は、これらの他のライブラリのメンテナーと協力して型の完全性を達成します。
 
 .. warning::
 
-    The ways in which different type checkers evaluate and help you achieve
-    better type coverage may differ. Some of the above recommendations may or
-    may not be helpful to you, depending on which type checking tools you use.
+    さまざまな型チェッカーが型カバレッジを評価し、より良い型カバレッジを達成するのに役立つ方法は異なる場合があります。 上記の推奨事項の一部は、使用する型チェック ツールによっては役に立たない場合があります。
 
-``mypy`` disallow options
--------------------------
+``mypy`` 不許可オプション
+------------------------------------------------------------------------------------------
 
-``mypy`` offers several options which can detect untyped code.
-More details can be found in `the mypy documentation on these options
-<https://mypy.readthedocs.io/en/latest/command_line.html#untyped-definitions-and-calls>`_.
+``mypy`` には、型指定されていないコードを検出できるいくつかのオプションがあります。
+詳細については、`これらのオプションに関する mypy ドキュメント <https://mypy.readthedocs.io/en/latest/command_line.html#untyped-definitions-and-calls>`_ を参照してください。
 
-Some basic usages which make ``mypy`` error on untyped data are::
+型指定されていないデータに対して ``mypy`` エラーを発生させる基本的な使用法は次のとおりです::
 
     mypy --disallow-untyped-defs
     mypy --disallow-incomplete-defs
 
-``pyright`` type verification
------------------------------
+``pyright`` 型検証
+------------------------------------------------------------------------------------------
 
-pyright has a special command line flag, ``--verifytypes``, for verifying
-type completeness. You can learn more about it from
-`the pyright documentation on verifying type completeness
-<https://github.com/microsoft/pyright/blob/main/docs/typed-libraries.md#verifying-type-completeness>`_.
+pyright には、型の完全性を検証するための特別なコマンド ライン フラグ ``--verifytypes`` があります。
+詳細については、`型の完全性の検証に関する pyright ドキュメント <https://github.com/microsoft/pyright/blob/main/docs/typed-libraries.md#verifying-type-completeness>`_ を参照してください。
 
-``mypy`` reports
-----------------
+``mypy`` レポート
+------------------------------------------------------------------------------------------
 
-``mypy`` offers several options options for generating reports on its analysis.
-See `the mypy documentation on report generation
-<https://mypy.readthedocs.io/en/stable/command_line.html#report-generation>`_ for details.
+``mypy`` には、分析に関するレポートを生成するためのいくつかのオプションがあります。
+詳細については、`レポート生成に関する mypy ドキュメント <https://mypy.readthedocs.io/en/stable/command_line.html#report-generation>`_ を参照してください。

@@ -1,59 +1,47 @@
 .. _best-practices:
 
-*********************
-Typing Best Practices
-*********************
+******************************************************************************************
+型指定のベストプラクティス
+******************************************************************************************
 
-Introduction
-============
+はじめに
+==========================================================================================
 
-Over time, some best practices have proven themselves as useful when working
-with type hints in Python. Not all practices are applicable in all situations
-and some practices come down to personal style and preference, but they
-are a good default set of recommendations to fall back to, unless there is
-a specific reason to deviate.
+時間が経つにつれて、Python で型ヒントを使用する際に役立つベスト プラクティスが証明されています。 すべてのプラクティスがすべての状況に適用されるわけではなく、一部のプラクティスは個人的なスタイルや好みによるものですが、特定の理由がない限り、立ち戻るためのデフォルトの推奨事項として適しています。 逸脱する。
 
-These best practices are constantly evolving, especially as the typing
-capabilities and ecosystem grow. So expect new best practices to be added
-and existing best practices to be modified or even removed as better practices
-evolve. That is why we would love to hear from your experiences with typing.
-Please see :ref:`contact` on how to join the discussion.
+これらのベスト プラクティスは、特に型指定機能とエコシステムが成長するにつれて、絶えず進化しています。 したがって、型指定に関する経験についてお聞かせいただければ幸いです。 ディスカッションに参加する方法については、:ref:`contact` を参照してください。
 
-Typing Features
-===============
+型指定機能
+==========================================================================================
 
-Type Aliases
-------------
+型エイリアス
+------------------------------------------------------------------------------------------
 
-Use ``TypeAlias`` for type aliases (but not for regular aliases).
+型エイリアスには ``TypeAlias`` を使用します (通常のエイリアスには使用しません)。
 
-Yes::
+はい::
 
     _IntList: TypeAlias = list[int]
     g = os.stat
     Path = pathlib.Path
     ERROR = errno.EEXIST
 
-No::
+いいえ::
 
     _IntList = list[int]
     g: TypeAlias = os.stat
     Path: TypeAlias = pathlib.Path
     ERROR: TypeAlias = errno.EEXIST
 
-Ergonomic Practices
-===================
+エルゴノミック プラクティス
+==========================================================================================
 
-Using ``Any`` and ``object``
-----------------------------
+``Any`` と ``object`` の使用
+------------------------------------------------------------------------------------------
 
-Generally, use ``Any`` when a type cannot be expressed appropriately
-with the current type system or using the correct type is unergonomic.
+一般に、現在の型システムでは型を適切に表現できない場合、または正しい型を使用することが非人間的である場合は、``Any`` を使用します。
 
-If a function accepts every possible object as an argument, for example
-because it's only passed to ``str()``, use ``object`` instead of ``Any`` as
-type annotation. Similarly, if the return value of a callback is ignored,
-annotate it with ``object``::
+たとえば、関数が引数として可能な限りすべてのオブジェクトを受け入れる場合 (たとえば、``str()`` にのみ渡されるため)、型注釈として ``Any`` の代わりに ``object`` を使用します。 同様に、コールバックの戻り値が無視される場合は、次のように注釈を付けます ``object``::
 
     def call_cb_if_int(cb: Callable[[int], object], o: object) -> None:
         if isinstance(o, int):
@@ -61,79 +49,71 @@ annotate it with ``object``::
 
 .. _argument-return-practices:
 
-Arguments and Return Types
---------------------------
+引数と戻り値の型
+------------------------------------------------------------------------------------------
 
-For arguments, prefer protocols and abstract types (``Mapping``,
-``Sequence``, ``Iterable``, etc.). If an argument accepts literally any value,
-use ``object`` instead of ``Any``.
+引数については、プロトコルと抽象型 (``Mapping``, ``Sequence``, ``Iterable`` など) を優先します。 引数が文字通り任意の値を受け入れる場合は、``Any`` の代わりに ``object`` を使用します。
 
-For return values, prefer concrete types (``list``, ``dict``, etc.) for
-concrete implementations. The return values of protocols
-and abstract base classes must be judged on a case-by-case basis.
+戻り値については、具体的な実装には具体的な型 (``list``, ``dict`` など) を優先します。 プロトコルと抽象基本クラスの戻り値は、ケースバイケースで判断する必要があります。
 
-Yes::
+はい::
 
     def map_it(input: Iterable[str]) -> list[int]: ...
     def create_map() -> dict[str, int]: ...
-    def to_string(o: object) -> str: ...  # accepts any object
+    def to_string(o: object) -> str: ...  # 任意のオブジェクトを受け入れます
 
-No::
+いいえ::
 
     def map_it(input: list[str]) -> list[int]: ...
     def create_map() -> MutableMapping[str, int]: ...
     def to_string(o: Any) -> str: ...
 
-Maybe::
+場合によっては::
 
     class MyProto(Protocol):
         def foo(self) -> list[int]: ...
         def bar(self) -> Mapping[str, str]: ...
 
-Avoid union return types, since they require ``isinstance()`` checks.
-Use ``Any`` or ``X | Any`` if necessary.
+``isinstance()`` チェックが必要になるため、共用体の戻り値の型は避けてください。 必要に応じて ``Any`` または ``X | Any`` を使用します。
 
-Stylistic Practices
-===================
+スタイリスティック プラクティス
+==========================================================================================
 
-Shorthand Syntax
-----------------
+省略形の構文
+------------------------------------------------------------------------------------------
 
-Where possible, use shorthand syntax for unions instead of
-``Union`` or ``Optional``. ``None`` should be the last
-element of an union.
+可能な場合は、共用体の省略形の構文を使用し、``Union`` または ``Optional`` は使用しないでください。 ``None`` は共用体の最後の要素である必要があります。
 
-Yes::
+はい::
 
     def foo(x: str | int) -> None: ...
     def bar(x: str | None) -> int | None: ...
 
-No::
+いいえ::
 
     def foo(x: Union[str, int]) -> None: ...
     def bar(x: Optional[str]) -> Optional[int]: ...
     def baz(x: None | str) -> None: ...
 
-Types
------
+型
+------------------------------------------------------------------------------------------
 
-Use ``float`` instead of ``int | float``.
-Use ``None`` instead of ``Literal[None]``.
+``int | float`` の代わりに ``float`` を使用します。
+``Literal[None]`` の代わりに ``None`` を使用します。
 
-Built-in Generics
------------------
+組み込みジェネリクス
+------------------------------------------------------------------------------------------
 
-Use built-in generics instead of the aliases from ``typing``,
-where possible.
+可能な場合は、``typing`` のエイリアスの代わりに組み込みジェネリクスを使用します。
 
-Yes::
+はい::
 
     from collections.abc import Iterable
 
     def foo(x: type[MyClass]) -> list[str]: ...
     def bar(x: Iterable[str]) -> None: ...
 
-No::
+いいえ::
 
     from typing import Iterable, List, Type
 

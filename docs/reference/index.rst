@@ -1,13 +1,13 @@
-*********************
-Type System Reference
-*********************
+******************************************************************************************
+型システムリファレンス
+******************************************************************************************
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: 目次:
 
    generics
    protocols
    best_practices
    quality
-   typing Module Documentation <https://docs.python.org/3/library/typing.html>
+   typing モジュールのドキュメント <https://docs.python.org/3/library/typing.html>
