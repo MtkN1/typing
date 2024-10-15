@@ -1,5 +1,8 @@
 # Python の静的型付け
 
+> [!NOTE]
+> このリポジトリは第三者による日本語訳です。 日本語訳は Python Software Foundation とは一切関係ありません。 このリポジトリは PSF ライセンスに準じて公開しています。
+
 ## ドキュメントとサポート
 
 Python の静的型付けに関するドキュメントは [typing.readthedocs.io](https://typing.readthedocs.io/) にあります。サポートが必要な場合は、[サポートフォーラム](https://github.com/python/typing/discussions) をご利用ください。
