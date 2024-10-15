@@ -1,75 +1,57 @@
 .. _`namedtuple`:
 
-Named Tuples
-============
+名前付きタプル
+==========================================================================================
 
-As with tuples, named tuple classes require some special behaviors for type
-checking.
+タプルと同様に、名前付きタプルクラスには型チェックのための特別な動作が必要です。
 
 
-Defining Named Tuples
----------------------
+名前付きタプルの定義
+------------------------------------------------------------------------------------------
 
-A named tuple class can be defined using a class syntax or a factory function
-call.
+名前付きタプルクラスは、クラス構文またはファクトリ関数呼び出しを使用して定義できます。
 
-Type checkers should support the class syntax::
+型チェッカーはクラス構文をサポートする必要があります::
 
     class Point(NamedTuple):
         x: int
         y: int
         units: str = "meters"
 
-Regardless of whether the class syntax or factory function call is used to define
-a named tuple, type checkers should synthesize a ``__new__`` method based on
-the named tuple fields. This mirrors the runtime behavior. In the example
-above, the synthesized ``__new__`` method would look like the following::
+クラス構文またはファクトリ関数呼び出しのいずれを使用して名前付きタプルを定義する場合でも、型チェッカーは名前付きタプルフィールドに基づいて ``__new__`` メソッドを合成する必要があります。これはランタイムの動作を反映しています。上記の例では、合成された ``__new__`` メソッドは次のようになります::
 
     def __new__(cls, x: int, y: int, units: str = "meters") -> Self:
         ...
 
-The runtime implementation of ``NamedTuple`` enforces that fields with default
-values must come after fields without default values. Type checkers should
-likewise enforce this restriction::
+``NamedTuple`` のランタイム実装は、デフォルト値を持つフィールドがデフォルト値を持たないフィールドの後に来ることを強制します。型チェッカーもこの制限を強制する必要があります::
 
     class Location(NamedTuple):
         altitude: float = 0.0
-        latitude: float  # Type error (previous field has a default value)
+        latitude: float  # 型エラー（前のフィールドにデフォルト値があります）
         longitude: float
 
-A named tuple class can be subclassed, but any fields added by the subclass
-are not considered part of the named tuple type. Type checkers should enforce
-that these newly-added fields do not conflict with the named tuple fields
-in the base class::
+名前付きタプルクラスはサブクラス化できますが、サブクラスによって追加されたフィールドは名前付きタプル型の一部とは見なされません。型チェッカーは、これらの新しく追加されたフィールドが基底クラスの名前付きタプルフィールドと競合しないことを強制する必要があります::
 
     class PointWithName(Point):
         name: str  # OK
-        x: int  # Type error (invalid override of named tuple field)
+        x: int  # 型エラー（名前付きタプルフィールドの無効なオーバーライド）
 
-In Python 3.11 and newer, the class syntax supports generic named tuple classes.
-Type checkers should support this::
+Python 3.11 以降では、クラス構文はジェネリック名前付きタプルクラスをサポートしています。型チェッカーはこれをサポートする必要があります::
 
     class Property[T](NamedTuple):
         name: str
         value: T
 
-    reveal_type(Property("height", 3.4))  # Revealed type is Property[float]
+    reveal_type(Property("height", 3.4))  # 明らかにされた型は Property[float] です
 
-``NamedTuple`` does not support multiple inheritance. Type checkers should
-enforce this limitation::
+``NamedTuple`` は多重継承をサポートしていません。型チェッカーはこの制限を強制する必要があります::
 
-    class Unit(NamedTuple, object):  # Type error
+    class Unit(NamedTuple, object):  # 型エラー
         name: str
 
-The factory function call supports two variants: ``collections.namedtuple`` and
-``typing.NamedTuple``. The latter provides a way to specify the types
-of the fields in the tuple whereas the former does not. The ``namedtuple``
-form allows fields to be specified as a tuple or list of strings or a single
-string with fields separated by whitespace or commas. The ``NamedTuple``
-functional form accepts an iterable of ``(name, type)`` pairs.
-For the ``namedtuple`` form, all fields are assumed to be of type ``Any``.
+ファクトリ関数呼び出しは、``collections.namedtuple`` と ``typing.NamedTuple`` の 2 つのバリアントをサポートしています。後者はタプル内のフィールドの型を指定する方法を提供しますが、前者は提供しません。``namedtuple`` 形式では、フィールドを文字列のタプルまたはリストとして、またはフィールドを空白またはカンマで区切った単一の文字列として指定できます。``NamedTuple`` 機能形式は ``(name, type)`` ペアのイテラブルを受け入れます。``namedtuple`` 形式では、すべてのフィールドは ``Any`` 型と見なされます。
 
-A type checker may support the factory function call in its various forms::
+型チェッカーは、さまざまな形式のファクトリ関数呼び出しをサポートする場合があります::
 
     Point1 = namedtuple('Point1', ['x', 'y'])
     Point2 = namedtuple('Point2', ('x', 'y'))
@@ -79,73 +61,62 @@ A type checker may support the factory function call in its various forms::
     Point5 = NamedTuple('Point5', [('x', int), ('y', int)])
     Point6 = NamedTuple('Point6', (('x', int), ('y', int)))
 
-At runtime, the ``namedtuple`` function disallows field names that are
-illegal Python identifiers and either raises an exception or replaces these
-fields with a parameter name of the form ``_N``. The behavior depends on
-the value of the ``rename`` argument. Type checkers may replicate this
-behavior statically::
+ランタイムでは、``namedtuple`` 関数は不正な Python 識別子であるフィールド名を許可せず、例外を発生させるか、これらのフィールドを ``_N`` 形式のパラメータ名に置き換えます。この動作は ``rename`` 引数の値に依存します。型チェッカーはこの動作を静的に再現する場合があります::
 
-    NT1 = namedtuple("NT1", ["a", "a"])  # Type error (duplicate field name)
-    NT2 = namedtuple("NT2", ["abc", "def"], rename=False)  # Type error (illegal field name)
+    NT1 = namedtuple("NT1", ["a", "a"])  # 型エラー（重複したフィールド名）
+    NT2 = namedtuple("NT2", ["abc", "def"], rename=False)  # 型エラー（不正なフィールド名）
 
     NT3 = namedtuple("NT3", ["abc", "def"], rename=True)  # OK
     NT3(abc="", _1="")  # OK
 
-The ``namedtuple`` function also supports a ``defaults`` keyword argument that
-specifies default values for the fields. Type checkers may support this::
+``namedtuple`` 関数は、フィールドのデフォルト値を指定する ``defaults`` キーワード引数もサポートしています。型チェッカーはこれをサポートする場合があります::
 
     NT4 = namedtuple("NT4", "a b c", defaults=(1, 2))
-    NT4()  # Type error (too few arguments)
+    NT4()  # 型エラー（引数が少なすぎます）
     NT4(1)  # OK
 
 
-Named Tuple Usage
------------------
+名前付きタプルの使用
+------------------------------------------------------------------------------------------
 
-The fields within a named tuple instance can be accessed by name using an
-attribute access (``.``) operator. Type checkers should support this::
+名前付きタプルインスタンス内のフィールドは、属性アクセス（``.``）演算子を使用して名前でアクセスできます。型チェッカーはこれをサポートする必要があります::
 
     p = Point(1, 2)
     assert_type(p.x, int)
     assert_type(p.units, str)
 
-Like normal tuples, elements of a named tuple can also be accessed by index,
-and type checkers should support this::
+通常のタプルと同様に、名前付きタプルの要素にもインデックスでアクセスでき、型チェッカーはこれをサポートする必要があります::
 
     assert_type(p[0], int)
     assert_type(p[2], str)
 
-Type checkers should enforce that named tuple fields cannot be overwritten
-or deleted::
+型チェッカーは、名前付きタプルフィールドを上書きまたは削除できないことを強制する必要があります::
 
-    p.x = 3  # Type error
-    p[0] = 3  # Type error
-    del p.x  # Type error
-    del p[0]  # Type error
+    p.x = 3  # 型エラー
+    p[0] = 3  # 型エラー
+    del p.x  # 型エラー
+    del p[0]  # 型エラー
 
-Like regular tuples, named tuples can be unpacked. Type checkers should understand
-this::
+通常のタプルと同様に、名前付きタプルはアンパックできます。型チェッカーはこれを理解する必要があります::
 
     x, y, units = p
     assert_type(x, int)
     assert_type(units, str)
 
-    x, y = p  # Type error (too few values to unpack)
+    x, y = p  # 型エラー（アンパックする値が少なすぎます）
 
 
-Assignability
--------------
+代入可能性
+------------------------------------------------------------------------------------------
 
-A named tuple is :term:`assignable` to a ``tuple`` with a known length and
-parameterized by types corresponding to the named tuple's individual field
-types::
+名前付きタプルは、名前付きタプルの個々のフィールド型に対応する型でパラメータ化された既知の長さの ``tuple`` に :term:`assignable` です::
 
     p = Point(x=1, y=2, units="inches")
     v1: tuple[int, int, str] = p  # OK
     v2: tuple[Any, ...] = p  # OK
-    v3: tuple[int, int] = p  # Type error (too few elements)
-    v4: tuple[int, str, str] = p  # Type error (incompatible element type)
+    v3: tuple[int, int] = p  # 型エラー（要素が少なすぎます）
+    v4: tuple[int, str, str] = p  # 型エラー（互換性のない要素型）
 
-As with normal tuples, named tuples are covariant in their type parameters::
+通常のタプルと同様に、名前付きタプルはその型パラメータに対して共変です::
 
     v5: tuple[float, float, str] = p  # OK

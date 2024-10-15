@@ -1,175 +1,77 @@
 .. _`glossary`:
 
-Glossary
-========
+用語集
+==========================================================================================
 
-This section defines a few terms that may be used elsewhere in the specification.
+このセクションでは、仕様の他の場所で使用される可能性のあるいくつかの用語を定義します。
 
 .. glossary::
 
    annotation expression
-      An expression that is valid to use within an annotation. This is usually a
-      :term:`type expression`, sometimes with additional :term:`type qualifiers <type qualifier>`.
-      See :ref:`"Type and annotation expression" <annotation-expression>` for details.
+      アノテーション内で使用することが有効な式。 これは通常、追加の :term:`type qualifiers <type qualifier>` を伴う :term:`type expression` です。 詳細については、 :ref:`"Type and annotation expression" <annotation-expression>` を参照してください。
 
    assignable
-      If a type ``B`` is "assignable to" a type ``A``, a  type checker should
-      not error on the assignment ``x: A = b``, where ``b`` is some expression
-      whose type is ``B``. Similarly for function calls and returns: ``f(b)``
-      where ``def f(x: A): ...`` and ``return b`` inside ``def f(...) -> A:
-      ...`` are both valid (not type errors) if and only if ``B`` is assignable
-      to ``A``. In this case ``A`` is "assignable from" ``B``. For :term:`fully
-      static types <fully static type>`, "assignable to" is equivalent to
-      ":term:`subtype` of" and "assignable from" is equivalent to
-      ":term:`supertype` of". For :term:`gradual types <gradual type>`, a type
-      ``B`` is assignable to a type ``A`` if there exist fully static
-      :term:`materializations <materialize>` ``A'`` and ``B'`` of ``A`` and
-      ``B``, respectively, such that ``B'`` is a subtype of ``A'``. See
-      :ref:`type-system-concepts`.
+      型 ``B`` が型 ``A`` に「代入可能」である場合、型チェッカーは ``x: A = b`` の代入でエラーを出さないようにする必要があります。ここで、 ``b`` は型が ``B`` である式です。 同様に、関数呼び出しと戻り値についても同様です。 ``f(b)`` では、 ``def f(x: A): ...`` と ``def f(...) -> A: ...`` 内の ``return b`` は、 ``B`` が ``A`` に代入可能である場合にのみ有効です（型エラーではありません）。 この場合、 ``A`` は ``B`` から「代入可能」です。 :term:`fully static types <fully static type>` の場合、「代入可能」は「 :term:`subtype` 」と同義であり、「代入可能」は「 :term:`supertype` 」と同義です。 :term:`gradual types <gradual type>` の場合、型 ``B`` は型 ``A`` に代入可能です。 ``A`` と ``B`` の完全に静的な :term:`materializations <materialize>` ``A'`` と ``B'`` が存在し、 ``B'`` が ``A'`` のサブタイプである場合に限ります。 詳細については、 :ref:`type-system-concepts` を参照してください。
 
    consistent
-      Two :term:`fully static types <fully static type>` are "consistent with"
-      each other if they are :term:`equivalent`. Two gradual types are
-      "consistent with" each other if they could :term:`materialize` to the
-      same type. See :ref:`type-system-concepts`. If two types are consistent,
-      they are both :term:`assignable` to and from each other.
+      2 つの :term:`fully static types <fully static type>` は、 :term:`equivalent` である場合、「一致」しています。 2 つの漸進的な型は、同じ型に :term:`materialize` できる場合、「一致」しています。 詳細については、 :ref:`type-system-concepts` を参照してください。 2 つの型が一致している場合、それらは両方とも互いに :term:`assignable` です。
 
    consistent subtype
-      "Consistent subtype" is synonymous with ":term:`assignable` to" (and
-      "consistent supertype" is synonymous with "assignable from"). See
-      :ref:`type-system-concepts`.
+      「一貫したサブタイプ」は「 :term:`assignable` 」と同義です（「一貫したスーパータイプ」は「代入可能」と同義です）。 詳細については、 :ref:`type-system-concepts` を参照してください。
 
    distribution
-      The packaged file which is used to publish and distribute
-      a release. (:pep:`426`)
+      リリースを公開および配布するために使用されるパッケージ化されたファイル。 (:pep:`426`)
 
    equivalent
-      Two :term:`fully static types <fully static type>` ``A`` and ``B`` are
-      equivalent if ``A`` is a :term:`subtype` of ``B`` and ``B`` is a
-      :term:`subtype` of ``A``. This implies that ``A`` and ``B`` represent the
-      same set of possible runtime objects. Two gradual types ``A`` and ``B``
-      are equivalent if all :term:`materializations <materialize>` of ``A`` are
-      also materializations of ``B``, and all materializations of ``B`` are
-      also materializations of ``A``.
+      2 つの :term:`fully static types <fully static type>` ``A`` と ``B`` は、 ``A`` が ``B`` の :term:`subtype` であり、 ``B`` が ``A`` の :term:`subtype` である場合、同等です。 これは、 ``A`` と ``B`` が同じセットの可能なランタイムオブジェクトを表すことを意味します。 2 つの漸進的な型 ``A`` と ``B`` は、 ``A`` のすべての :term:`materializations <materialize>` が ``B`` の materializations でもあり、 ``B`` のすべての materializations が ``A`` の materializations でもある場合、同等です。
 
    fully static type
-      A type is "fully static" if it does not contain any :term:`gradual form`.
-      A fully static type represents a set of possible runtime values. Fully
-      static types participate in the :term:`subtype` relation. See
-      :ref:`type-system-concepts`.
+      型に :term:`gradual form` が含まれていない場合、その型は「完全に静的」です。 完全に静的な型は、可能なランタイム値のセットを表します。 完全に静的な型は、 :term:`subtype` 関係に参加します。 詳細については、 :ref:`type-system-concepts` を参照してください。
 
    gradual form
-      A gradual form is an element of a :term:`type expression` which makes the type it is
-      part of not a :term:`fully static type`, but rather a representation of a
-      set of possible static types. See :ref:`type-system-concepts`. The
-      primary gradual form is :ref:`Any`. The ellipsis (``...``) is a gradual
-      form in some, but not all, contexts. It is a gradual form when used in a
-      :ref:`Callable` type, and when used in ``tuple[Any, ...]`` (but not in
-      other :ref:`tuple <tuples>` types).
+      漸進的な形式は、 :term:`type expression` の要素であり、それが一部である型を :term:`fully static type` ではなく、可能な静的型のセットの表現にします。 詳細については、 :ref:`type-system-concepts` を参照してください。 主な漸進的な形式は :ref:`Any` です。 省略記号（ ``...`` ）は、いくつかのコンテキストでは漸進的な形式です。 :ref:`Callable` 型で使用される場合、および ``tuple[Any, ...]`` で使用される場合（ただし、他の :ref:`tuple <tuples>` 型ではない場合）に漸進的な形式です。
 
    gradual type
-      All types in the Python type system are "gradual". A gradual type may be
-      a :term:`fully static type`, or it may be :ref:`Any`, or a type that
-      contains ``Any`` or another :term:`gradual form`. A gradual type does not
-      necessarily represent a single set of possible runtime values; instead it
-      can represent a set of possible static types (a set of possible sets of
-      possible runtime values). Gradual types do not participate in the
-      :term:`subtype` relation, but they do participate in :term:`consistency
-      <consistent>` and :term:`assignability <assignable>`. They can be
-      :term:`materialized <materialize>` to a more static, or fully static,
-      type. See :ref:`type-system-concepts`.
+      Python 型システムのすべての型は「漸進的」です。 漸進的な型は、 :term:`fully static type` 、または :ref:`Any` 、または ``Any`` または他の :term:`gradual form` を含む型である場合があります。 漸進的な型は、必ずしも単一の可能なランタイム値のセットを表すわけではありません。 代わりに、可能な静的型のセット（可能なランタイム値のセットのセット）を表すことができます。 漸進的な型は、 :term:`subtype` 関係には参加しませんが、 :term:`consistency <consistent>` および :term:`assignability <assignable>` には参加します。 それらは、より静的な、または完全に静的な型に :term:`materialized <materialize>` することができます。 詳細については、 :ref:`type-system-concepts` を参照してください。
 
    inline
-      Inline type annotations are annotations that are included in the
-      runtime code using :pep:`526` and
-      :pep:`3107` syntax (the filename ends in ``.py``).
+      インライン型アノテーションは、 :pep:`526` および :pep:`3107` 構文を使用してランタイムコードに含まれるアノテーションです（ファイル名は ``.py`` で終わります）。
 
    materialize
-      A :term:`gradual type` can be materialized to a more static type
-      (possibly a :term:`fully static type`) by replacing :ref:`Any` with any
-      other type, or by replacing the `...` in a :ref:`Callable` type with a
-      list of types, or by replacing ``tuple[Any, ...]`` with a specific-length
-      tuple type. This materialization relation is key to defining
-      :term:`assignability <assignable>` for gradual types. See
-      :ref:`type-system-concepts`.
+      :term:`gradual type` は、 :ref:`Any` を他の任意の型に置き換えるか、 :ref:`Callable` 型の `...` を型のリストに置き換えるか、 ``tuple[Any, ...]`` を特定の長さのタプル型に置き換えることにより、より静的な型（おそらく :term:`fully static type` ）に materialized できます。 この materialization 関係は、漸進的な型の :term:`assignability <assignable>` を定義するための鍵です。 詳細については、 :ref:`type-system-concepts` を参照してください。
 
    module
-      A file containing Python runtime code or stubbed type information.
+      Python ランタイムコードまたはスタブ型情報を含むファイル。
 
    narrow
-      A :term:`fully static type` ``B`` is narrower than a fully static type
-      ``A`` if ``B`` is a :term:`subtype` of ``A`` and ``B`` is not
-      :term:`equivalent` to ``A``. This means that ``B`` represents a proper
-      subset of the possible objects represented by ``A``. "Type narrowing" is
-      when a type checker infers that a name or expression must have a narrower
-      type at some locations in control flow, due to an assignment or a runtime
-      check of its value.
+      :term:`fully static type` ``B`` は、 ``B`` が ``A`` の :term:`subtype` であり、 ``B`` が ``A`` と :term:`equivalent` ではない場合、完全に静的な型 ``A`` よりも狭いです。 これは、 ``B`` が ``A`` によって表される可能なオブジェクトの適切なサブセットを表すことを意味します。 「型の絞り込み」とは、型チェッカーが、代入またはランタイムチェックの値のために、制御フローの一部の場所で名前または式がより狭い型を持たなければならないと推測することです。
 
    nominal
-      A nominal type (e.g. a class name) represents the set of values whose
-      ``__class__`` is that type, or any of its subclasses, transitively. In
-      contrast, see :term:`structural` types.
+      名目型（例：クラス名）は、その型の ``__class__`` またはそのサブクラスのいずれかのサブクラスの値のセットを表します。 対照的に、 :term:`structural` 型を参照してください。
 
    package
-      A directory or directories that namespace Python modules.
-      (Note the distinction between packages and :term:`distributions <distribution>`.
-      While most distributions are named after the one package they install, some
-      distributions install multiple packages.)
+      Python モジュールに名前空間を提供するディレクトリまたはディレクトリ。 （パッケージと :term:`distributions <distribution>` の違いに注意してください。ほとんどのディストリビューションはインストールする 1 つのパッケージにちなんで名付けられていますが、一部のディストリビューションは複数のパッケージをインストールします。）
 
    special form
-      A special form is an object that has a special meaning within the type system,
-      comparable to a keyword in the language grammar. Examples include ``Any``,
-      ``Generic``,  ``Literal``, and ``TypedDict``. Special forms can often but not always be used
-      within :ref:`type expressions <type-expression>`. Special forms can usually
-      be imported from the :py:mod:`typing` module or equivalently from ``typing_extensions``,
-      but some special forms are placed in other modules.
+      特殊形式は、型システム内で特別な意味を持つオブジェクトであり、言語文法のキーワードに匹敵します。 例としては、 ``Any`` 、 ``Generic`` 、 ``Literal`` 、および ``TypedDict`` があります。 特殊形式は、 :ref:`type expressions <type-expression>` 内で使用できる場合がありますが、常にではありません。 特殊形式は通常、 :py:mod:`typing` モジュールまたは同等の ``typing_extensions`` からインポートできますが、一部の特殊形式は他のモジュールに配置されています。
 
    structural
-      A structural type (see e.g. :ref:`Protocols`, :ref:`TypedDict`) defines a
-      set of values not by their ``__class__``, but by their properties (e.g.
-      attributes, methods, dictionary key/value types). :ref:`Callable` types
-      are also structural; a callable type is a subtype of another callable
-      type based on their signatures, not a subclass relationship. In contrast,
-      see :term:`nominal` types.
+      構造型（例： :ref:`Protocols` 、 :ref:`TypedDict` ）は、 ``__class__`` ではなく、プロパティ（例：属性、メソッド、辞書のキー/値の型）によって値のセットを定義します。 :ref:`Callable` 型も構造的です。 呼び出し可能な型は、サブクラス関係ではなく、シグネチャに基づいて他の呼び出し可能な型のサブタイプです。 対照的に、 :term:`nominal` 型を参照してください。
 
    stub
-      A file containing only type information, empty of runtime code
-      (the filename ends in ``.pyi``). See :ref:`stub-files`.
+      ランタイムコードが含まれていない型情報のみを含むファイル（ファイル名は ``.pyi`` で終わります）。 詳細については、 :ref:`stub-files` を参照してください。
 
    subtype
-      A :term:`fully static type` ``B`` is a subtype of a fully static type
-      ``A`` if and only if the set of possible runtime values represented by
-      ``B`` is a subset of the set of possible runtime values represented by
-      ``A``. For :term:`nominal` types (classes), subtyping is defined by
-      inheritance. For :term:`structural` types, subtyping is defined by a
-      shared set of attributes/methods or keys. Subtype is the inverse of
-      :term:`supertype`. A type that is not fully static is not a subtype or
-      supertype of any other type, but via :term:`materialization
-      <materialize>` can be :term:`assignable` to another type. See
-      :ref:`type-system-concepts`.
+      :term:`fully static type` ``B`` は、 ``B`` によって表される可能なランタイム値のセットが ``A`` によって表される可能なランタイム値のセットのサブセットである場合にのみ、完全に静的な型 ``A`` のサブタイプです。 :term:`nominal` 型（クラス）の場合、サブタイプは継承によって定義されます。 :term:`structural` 型の場合、サブタイプは共有される属性/メソッドまたはキーのセットによって定義されます。 サブタイプは :term:`supertype` の逆です。 完全に静的ではない型は、他の型のサブタイプまたはスーパータイプではありませんが、 :term:`materialization <materialize>` を介して他の型に :term:`assignable` できます。 詳細については、 :ref:`type-system-concepts` を参照してください。
 
    supertype
-      A :term:`fully static type` ``A`` is a supertype of a fully static type
-      ``B`` if and only if the set of possible runtime values represented by
-      ``A`` is a superset of the set of possible runtime values represented by
-      ``B``. Supertype is the inverse of :term:`subtype`. See
-      :ref:`type-system-concepts`.
+      :term:`fully static type` ``A`` は、 ``A`` によって表される可能なランタイム値のセットが ``B`` によって表される可能なランタイム値のセットのスーパーセットである場合にのみ、完全に静的な型 ``B`` のスーパータイプです。 スーパータイプは :term:`subtype` の逆です。 詳細については、 :ref:`type-system-concepts` を参照してください。
 
    type expression
-      An expression that represents a type. The type system requires the use of type
-      expressions within :term:`annotation expression` and also in several other contexts.
-      See :ref:`"Type and annotation expression" <type-expression>` for details.
+      型を表す式。 型システムは、 :term:`annotation expression` 内および他のいくつかのコンテキストで型式の使用を要求します。 詳細については、 :ref:`"Type and annotation expression" <type-expression>` を参照してください。
 
    type qualifier
-      A type qualifier is a :term:`special form` that qualifies a :term:`type expression` to
-      form an :term:`annotation expression`. For example, the type qualifier :ref:`Final <uppercase-final>`
-      can be used around a type to indicate that the annotated value may not be overridden or modified.
-      This term is also used for other special forms that modify a type, but using a different
-      syntactic context, such as the :ref:`@final <at-final>` decorator.
+      型修飾子は、 :term:`special form` であり、 :term:`type expression` を修飾して :term:`annotation expression` を形成します。 たとえば、型修飾子 :ref:`Final <uppercase-final>` は、注釈付きの値がオーバーライドまたは変更されないことを示すために型の周りに使用できます。 この用語は、 :ref:`@final <at-final>` デコレータなど、異なる構文コンテキストを使用して型を変更する他の特殊形式にも使用されます。
 
    wide
-      A :term:`fully static type` ``A`` is wider than a fully static type ``B``
-      if and only if ``B`` is a :term:`subtype` of ``A`` and ``B`` is not
-      :term:`equivalent` to ``A``. This means that ``A`` represents a proper
-      superset of the possible values represented by ``B``. See also
-      ":term:`narrow`".
+      :term:`fully static type` ``A`` は、 ``B`` が ``A`` の :term:`subtype` であり、 ``B`` が ``A`` と :term:`equivalent` ではない場合にのみ、完全に静的な型 ``B`` よりも広いです。 これは、 ``A`` が ``B`` によって表される可能な値の適切なスーパーセットを表すことを意味します。 また、 ":term:`narrow`" も参照してください。

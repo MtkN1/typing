@@ -1,36 +1,24 @@
 .. _`type-narrowing`:
 
-Type narrowing
-==============
+型の絞り込み
+==========================================================================================
 
-Type checkers should narrow the types of expressions in
-certain contexts. This behavior is currently largely unspecified.
+型チェッカーは特定のコンテキストで式の型を絞り込むべきです。 この動作は現在ほとんど指定されていません。
 
 .. _`typeguard`:
 
 TypeGuard
----------
+------------------------------------------------------------------------------------------
 
-(Originally specified in :pep:`647`.)
+（元々 :pep:`647` で指定されています。）
 
-The symbol ``TypeGuard``, exported from the ``typing`` module, is a :term:`special form`
-that accepts a single type argument. It is used to annotate the return type of a
-user-defined type guard function. Return statements within a type guard function
-should return bool values, and type checkers should verify that all return paths
-return a bool.
+``TypeGuard`` シンボルは ``typing`` モジュールからエクスポートされる :term:`special form` であり、単一の型引数を受け取ります。 これはユーザー定義の型ガード関数の戻り値の型を注釈するために使用されます。 型ガード関数内の return 文は bool 値を返すべきであり、型チェッカーはすべての return パスが bool を返すことを検証するべきです。
 
-``TypeGuard`` is also valid as the return type of a callable, for example
-in callback protocols and in the ``Callable`` :term:`special form`. In these
-contexts, it is treated as a subtype of bool. For example, ``Callable[..., TypeGuard[int]]``
-is assignable to ``Callable[..., bool]``.
+``TypeGuard`` はコールバックプロトコルや ``Callable`` :term:`special form` などの戻り値の型としても有効です。 これらのコンテキストでは、bool のサブタイプとして扱われます。 例えば、``Callable[..., TypeGuard[int]]`` は ``Callable[..., bool]`` に代入可能です。
 
-When ``TypeGuard`` is used to annotate the return type of a function or
-method that accepts at least one parameter, that function or method is
-treated by type checkers as a user-defined type guard. The type argument
-provided for ``TypeGuard`` indicates the type that has been validated by
-the function.
+``TypeGuard`` が少なくとも 1 つのパラメータを受け取る関数またはメソッドの戻り値の型を注釈するために使用される場合、その関数またはメソッドは型チェッカーによってユーザー定義の型ガードとして扱われます。 ``TypeGuard`` に提供される型引数は、関数によって検証された型を示します。
 
-User-defined type guards can be generic functions, as shown in this example:
+ユーザー定義の型ガードは、次の例のようにジェネリック関数にすることができます。
 
 ::
 
@@ -45,18 +33,11 @@ User-defined type guards can be generic functions, as shown in this example:
         else:
             reveal_type(names)  # tuple[str, ...]
 
+型チェッカーは、ユーザー定義の型ガードに最初の位置引数として渡される式に対して型の絞り込みを適用するべきです。 型ガード関数が複数の引数を受け取る場合、それらの追加の引数式には型の絞り込みは適用されません。
 
-Type checkers should assume that type narrowing should be applied to the
-expression that is passed as the first positional argument to a user-defined
-type guard. If the type guard function accepts more than one argument, no
-type narrowing is applied to those additional argument expressions.
+型ガード関数がインスタンスメソッドまたはクラスメソッドとして実装されている場合、最初の位置引数は 2 番目のパラメータ（「self」または「cls」）にマップされます。
 
-If a type guard function is implemented as an instance method or class method,
-the first positional argument maps to the second parameter (after "self" or
-"cls").
-
-Here are some examples of user-defined type guard functions that accept more
-than one argument:
+次に、複数の引数を受け取るユーザー定義の型ガード関数の例を示します。
 
 ::
 
@@ -70,27 +51,11 @@ than one argument:
     def is_set_of(val: set[Any], type: type[_T]) -> TypeGuard[Set[_T]]:
         return all(isinstance(x, type) for x in val)
 
+ユーザー定義の型ガード関数の戻り値の型は通常、最初の引数の型よりも厳密に「狭い」型を参照します（つまり、より一般的な型に代入できるより具体的な型です）。 ただし、戻り値の型が厳密に狭い必要はありません。 これにより、上記の例のように ``list[str]`` が ``list[object]`` に代入できない場合などのケースが許容されます。
 
-The return type of a user-defined type guard function will normally refer to
-a type that is strictly "narrower" than the type of the first argument (that
-is, it's a more specific type that can be assigned to the more general type).
-However, it is not required that the return type be strictly narrower. This
-allows for cases like the example above where ``list[str]`` is not assignable
-to ``list[object]``.
+条件文にユーザー定義の型ガード関数への呼び出しが含まれており、その関数が true を返す場合、型チェッカーは型ガード関数に最初の位置引数として渡された式が TypeGuard の戻り値の型で指定された型を持つと仮定するべきです。 ただし、条件コードブロック内でさらに絞り込まれるまでの間です。
 
-When a conditional statement includes a call to a user-defined type guard
-function, and that function returns true, the expression passed as the first
-positional argument to the type guard function should be assumed by a static
-type checker to take on the type specified in the TypeGuard return type,
-unless and until it is further narrowed within the conditional code block.
-
-Some built-in type guards provide narrowing for both positive and negative
-tests (in both the ``if`` and ``else`` clauses). For example, consider the
-type guard for an expression of the form ``x is None``. If ``x`` has a type that
-is a union of None and some other type, it will be narrowed to ``None`` in the
-positive case and the other type in the negative case. User-defined type
-guards apply narrowing only in the positive case (the ``if`` clause). The type
-is not narrowed in the negative case.
+一部の組み込み型ガードは、正のテストと負のテストの両方に対して絞り込みを提供します（``if`` および ``else`` 節の両方）。 例えば、``x is None`` 形式の式の型ガードを考えてみましょう。 ``x`` が None と他の型のユニオン型を持っている場合、正の場合には ``None`` に絞り込まれ、負の場合には他の型に絞り込まれます。 ユーザー定義の型ガードは正の場合（``if`` 節）にのみ絞り込みを適用します。 負の場合には型は絞り込まれません。
 
 ::
 
@@ -113,33 +78,23 @@ is not narrowed in the negative case.
 .. _`typeis`:
 
 TypeIs
-------
+------------------------------------------------------------------------------------------
 
-(Originally specified in :pep:`742`.)
+（元々 :pep:`742` で指定されています。）
 
-The :term:`special form` ``TypeIs`` is similar in usage, behavior, and runtime
-implementation as ``TypeGuard``.
+:term:`special form` ``TypeIs`` は、使用方法、動作、およびランタイム実装が ``TypeGuard`` と類似しています。
 
-``TypeIs`` accepts a single type argument and can be used as the return type
-of a function. A function annotated as returning a ``TypeIs`` is called a
-"type narrowing function". Type narrowing functions must return ``bool``
-values, and the type checker should verify that all return paths return
-``bool``.
+``TypeIs`` は単一の型引数を受け取り、関数の戻り値の型として使用できます。 ``TypeIs`` を返すように注釈された関数は「型絞り込み関数」と呼ばれます。 型絞り込み関数は ``bool`` 値を返す必要があり、型チェッカーはすべての return パスが ``bool`` を返すことを検証するべきです。
 
-Type narrowing functions must accept at least one positional argument. The type
-narrowing behavior is applied to the first positional argument passed to
-the function. The function may accept additional arguments, but they are
-not affected by type narrowing. If a type narrowing function is implemented as
-an instance method or class method, the first positional argument maps
-to the second parameter (after ``self`` or ``cls``).
+型絞り込み関数は少なくとも 1 つの位置引数を受け取る必要があります。 型絞り込み動作は関数に渡される最初の位置引数に適用されます。 関数は追加の引数を受け取ることができますが、それらは型絞り込みの影響を受けません。 型絞り込み関数がインスタンスメソッドまたはクラスメソッドとして実装されている場合、最初の位置引数は 2 番目のパラメータ（``self`` または ``cls`` の後）にマップされます。
 
-To specify the behavior of ``TypeIs``, we use the following terminology:
+``TypeIs`` の動作を指定するために、次の用語を使用します。
 
-* I = ``TypeIs`` input type
-* R = ``TypeIs`` return type
-* A = Type of argument passed to type narrowing function (pre-narrowed)
-* NP = Narrowed type (positive; used when ``TypeIs`` returned ``True``)
-* NN = Narrowed type (negative; used when ``TypeIs`` returned ``False``)
+* I = ``TypeIs`` 入力型
+* R = ``TypeIs`` 戻り値の型
+* A = 型絞り込み関数に渡される引数の型（絞り込み前）
+* NP = 絞り込まれた型（正の場合；``TypeIs`` が ``True`` を返した場合に使用）
+* NN = 絞り込まれた型（負の場合；``TypeIs`` が ``False`` を返した場合に使用）
 
   ::
 
@@ -151,20 +106,11 @@ To specify the behavior of ``TypeIs``, we use the following terminology:
         else:
             assert_type(val, NN)
 
-The return type ``R`` must be :term:`assignable` to ``I``. The type checker
-should emit an error if this condition is not met.
+戻り値の型 ``R`` は ``I`` に :term:`assignable` でなければなりません。 この条件が満たされない場合、型チェッカーはエラーを出すべきです。
 
-Formally, type *NP* should be narrowed to :math:`A \land R`,
-the intersection of *A* and *R*, and type *NN* should be narrowed to
-:math:`A \land \neg R`, the intersection of *A* and the complement of *R*.
-In practice, the theoretic types for strict type guards cannot be expressed
-precisely in the Python type system. Type checkers should fall back on
-practical approximations of these types. As a rule of thumb, a type checker
-should use the same type narrowing logic -- and get results that are consistent
-with -- its handling of :py:func:`isinstance`. This guidance allows for changes
-and improvements if the type system is extended in the future.
+形式的には、型 *NP* は :math:`A \land R` に絞り込まれるべきであり、型 *NN* は :math:`A \land \neg R` に絞り込まれるべきです。 実際には、厳密な型ガードの理論的な型は Python 型システムで正確に表現することはできません。 型チェッカーはこれらの型の実用的な近似に頼るべきです。 経験則として、型チェッカーは :py:func:`isinstance` の処理と同じ型絞り込みロジックを使用し、一貫した結果を得るべきです。 このガイダンスにより、将来的に型システムが拡張された場合の変更や改善が許容されます。
 
-Type narrowing is applied in both the positive and negative case::
+型絞り込みは正の場合と負の場合の両方に適用されます::
 
     from typing import TypeIs, assert_type
 
@@ -177,8 +123,7 @@ Type narrowing is applied in both the positive and negative case::
         else:
             assert_type(x, int)
 
-The final narrowed type may be narrower than **R**, due to the constraints of the
-argument's previously-known type::
+最終的に絞り込まれた型は、引数の既知の型の制約により **R** よりも狭くなる場合があります::
 
     from collections.abc import Awaitable
     from typing import Any, TypeIs, assert_type
@@ -189,43 +134,31 @@ argument's previously-known type::
 
     def f(x: Awaitable[int] | int) -> None:
         if isawaitable(x):
-            # Type checkers may also infer the more precise type
-            # "Awaitable[int] | (int & Awaitable[Any])"
+            # 型チェッカーはより正確な型 "Awaitable[int] | (int & Awaitable[Any])" を推論することもあります
             assert_type(x, Awaitable[int])
         else:
             assert_type(x, int)
 
-It is an error to narrow to a type that is not :term:`assignable` to the input
-type::
+入力型に :term:`assignable` でない型に絞り込むことはエラーです::
 
     from typing import TypeIs
 
-    def is_str(x: int) -> TypeIs[str]:  # Type checker error
+    def is_str(x: int) -> TypeIs[str]:  # 型チェッカーエラー
         ...
 
-``TypeIs`` is also valid as the return type of a callable, for example
-in callback protocols and in the ``Callable`` :term:`special form`. In these
-contexts, it is treated as a subtype of bool. For example, ``Callable[..., TypeIs[int]]``
-is assignable to ``Callable[..., bool]``.
+``TypeIs`` はコールバックプロトコルや ``Callable`` :term:`special form` などの戻り値の型としても有効です。 これらのコンテキストでは、bool のサブタイプとして扱われます。 例えば、``Callable[..., TypeIs[int]]`` は ``Callable[..., bool]`` に代入可能です。
 
-Unlike ``TypeGuard``, ``TypeIs`` is invariant in its argument type:
-``TypeIs[B]`` is not a subtype of ``TypeIs[A]``,
-even if ``B`` is a subtype of ``A``.
-To see why, consider the following example::
+``TypeGuard`` とは異なり、``TypeIs`` はその引数型において不変です： ``TypeIs[B]`` は ``TypeIs[A]`` のサブタイプではありません、たとえ ``B`` が ``A`` のサブタイプであってもです。 次の例を考えてみましょう::
 
     def takes_narrower(x: int | str, narrower: Callable[[object], TypeIs[int]]):
         if narrower(x):
-            print(x + 1)  # x is an int
+            print(x + 1)  # x は int です
         else:
-            print("Hello " + x)  # x is a str
+            print("Hello " + x)  # x は str です
 
     def is_bool(x: object) -> TypeIs[bool]:
         return isinstance(x, bool)
 
-    takes_narrower(1, is_bool)  # Error: is_bool is not a TypeIs[int]
+    takes_narrower(1, is_bool)  # エラー: is_bool は TypeIs[int] ではありません
 
-(Note that ``bool`` is a subtype of ``int``.)
-This code fails at runtime, because the narrower returns ``False`` (1 is not a ``bool``)
-and the ``else`` branch is taken in ``takes_narrower()``.
-If the call ``takes_narrower(1, is_bool)`` was allowed, type checkers would fail to
-detect this error.
+（``bool`` は ``int`` のサブタイプであることに注意してください。） このコードはランタイムで失敗します。なぜなら、narrower は ``False`` を返し（1 は ``bool`` ではありません）、``takes_narrower()`` の ``else`` ブランチが実行されるためです。 ``takes_narrower(1, is_bool)`` の呼び出しが許可されていた場合、型チェッカーはこのエラーを検出できません。

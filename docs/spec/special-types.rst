@@ -1,32 +1,27 @@
 .. _`special-types`:
 
-Special types in annotations
-============================
+アノテーションにおける特別な型
+==========================================================================================
 
 .. _`any`:
 
 ``Any``
--------
+------------------------------------------------------------------------------------------
 
-``Any`` represents an unknown static type.
+``Any`` は未知の静的型を表します。
 
-Every type is :term:`assignable` to ``Any``, and ``Any`` is assignable to every
-type.
+すべての型は ``Any`` に :term:`assignable` であり、``Any`` はすべての型に割り当て可能です。
 
-See :ref:`type-system-concepts` for more discussion of ``Any``.
+``Any`` についての詳細な議論は :ref:`type-system-concepts` を参照してください。
 
-A function parameter without an annotation is assumed to be annotated with
-``Any``. If a generic type is used without specifying type parameters,
-they are assumed to be ``Any``::
+アノテーションのない関数パラメータは ``Any`` でアノテートされていると見なされます。 ジェネリック型が型パラメータを指定せずに使用される場合、それらは ``Any`` と見なされます::
 
   from collections.abc import Mapping
 
-  def use_map(m: Mapping) -> None:  # Same as Mapping[Any, Any]
+  def use_map(m: Mapping) -> None:  # Mapping[Any, Any] と同じ
       ...
 
-This rule also applies to ``tuple``, in annotation context it is equivalent
-to ``tuple[Any, ...]``. As well, a bare
-``Callable`` in an annotation is equivalent to ``Callable[..., Any]``::
+このルールは ``tuple`` にも適用され、アノテーションコンテキストでは ``tuple[Any, ...]`` と同等です。 同様に、アノテーション内の裸の ``Callable`` は ``Callable[..., Any]`` と同等です::
 
   from collections.abc import Callable
 
@@ -34,186 +29,134 @@ to ``tuple[Any, ...]``. As well, a bare
       ...
 
   check_args(())           # OK
-  check_args((42, 'abc'))  # Also OK
-  check_args(3.14)         # Flagged as error by a type checker
+  check_args((42, 'abc'))  # これも OK
+  check_args(3.14)         # 型チェッカーによってエラーとしてフラグが立てられる
 
-  # A list of arbitrary callables is accepted by this function
+  # 任意のコール可能オブジェクトのリストはこの関数によって受け入れられます
   def apply_callbacks(cbs: list[Callable]) -> None:
       ...
 
-``Any`` can also be used as a base class. This can be useful for
-avoiding type checker errors with classes that can duck type anywhere or
-are highly dynamic.
+``Any`` は基底クラスとしても使用できます。 これは、どこでもダックタイプできるクラスや非常に動的なクラスで型チェッカーのエラーを回避するのに役立ちます。
 
 .. _`none`:
 
 ``None``
---------
+------------------------------------------------------------------------------------------
 
-When used in a type hint, the expression ``None`` is considered
-equivalent to ``type(None)``.
+型ヒントで使用される場合、式 ``None`` は ``type(None)`` と同等と見なされます。
 
 .. _`noreturn`:
 
 ``NoReturn``
-------------
+------------------------------------------------------------------------------------------
 
-The ``typing`` module provides a :term:`special form` ``NoReturn`` to annotate functions
-that never return normally. For example, a function that unconditionally
-raises an exception::
+``typing`` モジュールは、通常は決して戻らない関数をアノテートするための :term:`special form` ``NoReturn`` を提供します。 たとえば、無条件に例外を発生させる関数::
 
   from typing import NoReturn
 
   def stop() -> NoReturn:
       raise RuntimeError('no way')
 
-The ``NoReturn`` annotation is used for functions such as ``sys.exit``.
-Static type checkers will ensure that functions annotated as returning
-``NoReturn`` truly never return, either implicitly or explicitly::
+``NoReturn`` アノテーションは ``sys.exit`` などの関数に使用されます。 静的型チェッカーは、``NoReturn`` を返すとアノテートされた関数が本当に戻らないことを確認します。暗黙的または明示的に::
 
   import sys
   from typing import NoReturn
 
-    def f(x: int) -> NoReturn:  # Error, f(0) implicitly returns None
+    def f(x: int) -> NoReturn:  # エラー、f(0) は暗黙的に None を返す
         if x != 0:
             sys.exit(1)
 
-The checkers will also recognize that the code after calls to such functions
-is unreachable and will behave accordingly::
+チェッカーは、そのような関数への呼び出し後のコードが到達不能であることを認識し、それに応じて動作します::
 
-  # continue from first example
+  # 最初の例から続ける
   def g(x: int) -> int:
       if x > 0:
           return x
       stop()
-      return 'whatever works'  # Error might be not reported by some checkers
-                               # that ignore errors in unreachable blocks
+      return 'whatever works'  # 一部のチェッカーは到達不能なブロック内のエラーを無視するため、エラーが報告されない場合があります
 
 .. _`never`:
 
 ``Never``
----------
+------------------------------------------------------------------------------------------
 
-Since Python 3.11, the ``typing`` module contains a :term:`special form`
-``Never``. It represents the bottom type, a type that represents the empty set
-of Python objects.
+Python 3.11 以降、``typing`` モジュールには :term:`special form` ``Never`` が含まれています。 これは、空の Python オブジェクトのセットを表すボトム型を表します。
 
-The ``Never`` type is equivalent to ``NoReturn``, which is discussed above.
-The ``NoReturn`` type is conventionally used in return annotations of
-functions, and ``Never`` is typically used in other locations, but the two
-types are completely interchangeable.
+``Never`` 型は上記の ``NoReturn`` と同等です。 ``NoReturn`` 型は関数の戻り値のアノテーションに慣習的に使用され、``Never`` は他の場所で使用されることが一般的ですが、2 つの型は完全に交換可能です。
 
 .. _`numeric-promotions`:
 
-Special cases for ``float`` and ``complex``
--------------------------------------------
+``float`` および ``complex`` の特別なケース
+------------------------------------------------------------------------------------------
 
-Python's numeric types ``complex``, ``float`` and ``int`` are not
-subtypes of each other, but to support common use cases, the type
-system contains a straightforward shortcut:
-when an argument is annotated as having
-type ``float``, an argument of type ``int`` is acceptable; similar,
-for an argument annotated as having type ``complex``, arguments of
-type ``float`` or ``int`` are acceptable.
+Python の数値型 ``complex``、``float`` および ``int`` は互いのサブタイプではありませんが、一般的なユースケースをサポートするために、型システムには簡単なショートカットが含まれています。
+引数が ``float`` 型としてアノテートされている場合、``int`` 型の引数は許容されます。同様に、引数が ``complex`` 型としてアノテートされている場合、``float`` または ``int`` 型の引数は許容されます。
 
 .. _`type-brackets`:
 
 ``type[]``
-----------
+------------------------------------------------------------------------------------------
 
-Sometimes you want to talk about class objects, in particular class
-objects that inherit from a given class.  This can be spelled as
-``type[C]`` where ``C`` is a class.  To clarify: while ``C`` (when
-used as an annotation) refers to instances of class ``C``, ``type[C]``
-refers to *subclasses* of ``C``.  (This is a similar distinction as
-between ``object`` and ``type``.)
+クラスオブジェクト、特に特定のクラスを継承するクラスオブジェクトについて話したい場合があります。 これは ``type[C]`` として表記できます。 ``C`` はクラスです。 明確にするために: ``C`` (アノテーションで使用される場合) はクラス ``C`` のインスタンスを指しますが、``type[C]`` は ``C`` の *サブクラス* を指します。 (これは ``object`` と ``type`` の間の区別と似ています。)
 
-For example, suppose we have the following classes::
+たとえば、次のクラスがあるとします::
 
-  class User: ...  # Abstract base for User classes
+  class User: ...  # User クラスの抽象基底
   class BasicUser(User): ...
   class ProUser(User): ...
   class TeamUser(User): ...
 
-And suppose we have a function that creates an instance of one of
-these classes if you pass it a class object::
+そして、クラスオブジェクトを渡すとこれらのクラスのインスタンスを作成する関数があるとします::
 
   def new_user(user_class):
       user = user_class()
-      # (Here we could write the user object to a database)
+      # (ここでユーザーオブジェクトをデータベースに書き込むことができます)
       return user
 
-Without subscripting ``type[]`` the best we could do to annotate ``new_user()``
-would be::
+``type[]`` をサブスクリプトしない場合、``new_user()`` をアノテートするためにできる最善の方法は次のとおりです::
 
   def new_user(user_class: type) -> User:
       ...
 
-However using ``type[]`` and a type variable with an upper bound we
-can do much better::
+ただし、``type[]`` と上限を持つ型変数を使用すると、はるかに優れた方法が可能です::
 
   U = TypeVar('U', bound=User)
   def new_user(user_class: type[U]) -> U:
       ...
 
-Now when we call ``new_user()`` with a specific subclass of ``User`` a
-type checker will infer the correct type of the result::
+これで、特定の ``User`` サブクラスを使用して ``new_user()`` を呼び出すと、型チェッカーは結果の正しい型を推測します::
 
-  joe = new_user(BasicUser)  # Inferred type is BasicUser
+  joe = new_user(BasicUser)  # 推測された型は BasicUser です
 
-The value corresponding to ``type[C]`` must be an actual class object
-that's a subtype of ``C``, not a :term:`special form` or other kind of type.
-In other words, in the
-above example calling e.g. ``new_user(BasicUser | ProUser)`` is
-rejected by the type checker (in addition to failing at runtime
-because you can't instantiate a union).
+``type[C]`` に対応する値は、``C`` のサブタイプである実際のクラスオブジェクトでなければなりません。 つまり、上記の例では、``new_user(BasicUser | ProUser)`` を呼び出すと、型チェッカーによって拒否されます (ランタイムで失敗することに加えて、結合をインスタンス化できないため)。
 
-Note that it is legal to use a union of classes as the parameter for
-``type[]``, as in::
+``type[]`` のパラメータとしてクラスの結合を使用することは合法です。次のように::
 
   def new_non_team_user(user_class: type[BasicUser | ProUser]):
       user = new_user(user_class)
       ...
 
-``type[]`` distributes over unions:
-``type[A | B]`` is :term:`equivalent` to ``type[A] | type[B]``.
+``type[]`` は結合に分配されます:
+``type[A | B]`` は ``type[A] | type[B]`` と :term:`equivalent` です。
 
-However, the actual argument passed in at runtime must still be a
-concrete class object, e.g. in the above example::
+ただし、ランタイムで渡される実際の引数は具体的なクラスオブジェクトでなければなりません。上記の例では::
 
   new_non_team_user(ProUser)  # OK
-  new_non_team_user(TeamUser)  # Disallowed by type checker
+  new_non_team_user(TeamUser)  # 型チェッカーによって許可されていません
 
-``type[Any]`` is also supported (see below for its meaning).
+``type[Any]`` もサポートされています (その意味については以下を参照してください)。
 
-``type[T]`` where ``T`` is a type variable is allowed when annotating the
-first argument of a class method (see the relevant section).
+``T`` が型変数である場合、クラスメソッドの最初の引数をアノテートする場合に ``type[T]`` が許可されます (関連セクションを参照してください)。
 
-Any other special constructs like ``tuple`` or ``Callable`` are not allowed
-as an argument to ``type``.
+``tuple`` や ``Callable`` などの他の特別な構成要素は、``type`` の引数として許可されていません。
 
-There are some concerns with this feature: for example when
-``new_user()`` calls ``user_class()`` this implies that all subclasses
-of ``User`` must support this in their constructor signature.  However
-this is not unique to ``type[]``: class methods have similar concerns.
-A type checker ought to flag violations of such assumptions, but by
-default constructor calls that match the constructor signature in the
-indicated base class (``User`` in the example above) should be
-allowed.  A program containing a complex or extensible class hierarchy
-might also handle this by using a factory class method.
+この機能にはいくつかの懸念があります。たとえば、``new_user()`` が ``user_class()`` を呼び出すと、``User`` のすべてのサブクラスがそのコンストラクタシグネチャでこれをサポートする必要があることを意味します。 ただし、これは ``type[]`` に固有のものではありません。クラスメソッドにも同様の懸念があります。 型チェッカーはそのような仮定の違反をフラグ付けする必要がありますが、デフォルトでは、指定された基底クラス (上記の例では ``User``) のコンストラクタシグネチャに一致するコンストラクタ呼び出しが許可されるべきです。 複雑または拡張可能なクラス階層を含むプログラムは、ファクトリクラスメソッドを使用してこれを処理することもできます。
 
-When ``type`` is parameterized it requires exactly one parameter.
-Plain ``type`` without brackets, the root of Python's metaclass
-hierarchy, is equivalent to ``type[Any]``.
+``type`` がパラメータ化される場合、正確に 1 つのパラメータが必要です。 かっこなしのプレーンな ``type`` は、Python のメタクラス階層のルートであり、``type[Any]`` と同等です。
 
-Regarding the behavior of ``type[Any]`` (or ``type``),
-accessing attributes of a variable with this type only provides
-attributes and methods defined by ``type`` (for example,
-``__repr__()`` and ``__mro__``).  Such a variable can be called with
-arbitrary arguments, and the return type is ``Any``.
+``type[Any]`` (または ``type``) の動作に関しては、この型の変数の属性にアクセスすると、``type`` によって定義された属性とメソッド (たとえば、``__repr__()`` および ``__mro__``) のみが提供されます。 そのような変数は任意の引数で呼び出すことができ、戻り値の型は ``Any`` です。
 
-``type`` is covariant in its parameter, because ``type[Derived]`` is a
-subtype of ``type[Base]``::
+``type`` はそのパラメータに対して共変です。なぜなら、``type[Derived]`` は ``type[Base]`` のサブタイプだからです::
 
   def new_pro_user(pro_user_class: type[ProUser]):
       user = new_user(pro_user_class)  # OK

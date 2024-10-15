@@ -1,109 +1,63 @@
 .. _`type-annotations`:
 
-Type annotations
-================
+型注釈
+==========================================================================================
 
-The meaning of annotations
---------------------------
+注釈の意味
+------------------------------------------------------------------------------------------
 
-The type system leverages :pep:`3107`-style annotations with a number of
-extensions described in sections below.  In its basic form, type
-hinting is used by filling function annotation slots with classes::
+型システムは、以下のセクションで説明するいくつかの拡張を持つ :pep:`3107` スタイルの注釈を活用します。 基本的な形式では、型ヒントはクラスで関数注釈スロットを埋めることによって使用されます::
 
   def greeting(name: str) -> str:
       return 'Hello ' + name
 
-This states that the expected type of the ``name`` argument is
-``str``.  Analogically, the expected return type is ``str``.
+これは、``name`` 引数の期待される型が ``str`` であることを示しています。 同様に、期待される戻り値の型は ``str`` です。
 
-Expressions whose type is :term:`assignable` to a specific argument type are
-also accepted for that argument. Similarly, an expression whose type is
-assignable to the annotated return type can be returned from the function.
+特定の引数型に :term:`assignable` な式もその引数に対して受け入れられます。 同様に、注釈付きの戻り値の型に代入可能な式は、関数から返すことができます。
 
 .. _`missing-annotations`:
 
-Any function without annotations can be treated as having :ref:`Any`
-annotations on all arguments and the return type. Type checkers may also
-optionally infer more precise types for missing annotations.
+注釈のない関数はすべて、すべての引数と戻り値の型に :ref:`Any` 注釈があるものとして扱うことができます。 型チェッカーは、欠落している注釈に対してより正確な型を推測することもオプションで行うことができます。
 
-Type checkers may choose to entirely ignore (not type check) the bodies of
-functions with no annotations, but this behavior is not required.
+型チェッカーは、注釈のない関数の本体を完全に無視する（型チェックしない）こともできますが、この動作は必須ではありません。
 
-It is recommended but not required that checked functions have
-annotations for all arguments and the return type.  For a checked
-function, the default annotation for arguments and for the return type
-is ``Any``.  An exception is the first argument of instance and
-class methods. If it is not annotated, then it is assumed to have the
-type of the containing class for instance methods, and a type object
-type corresponding to the containing class object for class methods.
-For example, in class ``A`` the first argument of an instance method
-has the implicit type ``A``. In a class method, the precise type of
-the first argument cannot be represented using the available type
-notation.
+すべての引数と戻り値に注釈を付けることが推奨されますが、必須ではありません。 チェックされた関数の場合、引数と戻り値のデフォルトの注釈は ``Any`` です。 例外は、インスタンスメソッドとクラスメソッドの最初の引数です。 それが注釈されていない場合、それはインスタンスメソッドの場合は含まれているクラスの型を持つと見なされ、クラスメソッドの場合は含まれているクラスオブジェクトに対応する型オブジェクト型を持つと見なされます。 たとえば、クラス ``A`` では、インスタンスメソッドの最初の引数は暗黙的に ``A`` 型を持ちます。 クラスメソッドでは、最初の引数の正確な型は利用可能な型表記を使用して表すことはできません。
 
-(Note that the return type of ``__init__`` ought to be annotated with
-``-> None``.  The reason for this is subtle.  If ``__init__`` assumed
-a return annotation of ``-> None``, would that mean that an
-argument-less, un-annotated ``__init__`` method should still be
-type-checked?  Rather than leaving this ambiguous or introducing an
-exception to the exception, we simply say that ``__init__`` ought to
-have a return annotation; the default behavior is thus the same as for
-other methods.)
+（注：``__init__`` の戻り値の型は ``-> None`` で注釈を付ける必要があります。 これは微妙な理由です。 ``__init__`` が ``-> None`` の戻り注釈を持つと仮定すると、引数なしの注釈なしの ``__init__`` メソッドは依然として型チェックされるべきでしょうか？ これを曖昧にしたり、例外に対する例外を導入する代わりに、``__init__`` に戻り注釈を付ける必要があると単に言います。 デフォルトの動作は他のメソッドと同じです。）
 
-A type checker is expected to check the body of a checked function for
-consistency with the given annotations.  The annotations may also be
-used to check correctness of calls appearing in other checked functions.
+型チェッカーは、与えられた注釈と一致するかどうかを確認するために、チェックされた関数の本体をチェックすることが期待されます。 注釈は、他のチェックされた関数に現れる呼び出しの正確性を確認するためにも使用される場合があります。
 
-Type checkers are expected to attempt to infer as much information as
-necessary.  The minimum requirement is to handle the builtin
-decorators ``@property``, ``@staticmethod`` and ``@classmethod``.
+型チェッカーは、必要な情報をできるだけ多く推測しようとすることが期待されます。 最低限の要件は、組み込みのデコレータ ``@property``、``@staticmethod``、および ``@classmethod`` を処理することです。
 
 .. _valid-types:
 
-Type and annotation expressions
--------------------------------
+型と注釈の式
+------------------------------------------------------------------------------------------
 
-The terms *type expression* and *annotation expression* denote specific
-subsets of Python expressions that are used in the type system.  All
-type expressions are also annotation expressions, but not all annotation
-expressions are type expressions.
+*型式* および *注釈式* という用語は、型システムで使用される特定のサブセットの Python 式を指します。 すべての型式は注釈式でもありますが、すべての注釈式が型式であるわけではありません。
 
 .. _`type-expression`:
 
-A *type expression* is any expression that validly expresses a type. Type
-expressions are always acceptable in annotations and also in various other
-places. Specifically, type expressions are used in the following locations:
+*型式* は、型を正しく表現する任意の式です。 型式は常に注釈式として受け入れられ、さまざまな他の場所でも使用されます。 具体的には、型式は次の場所で使用されます。
 
-* In a type annotation (always as part of an annotation expression)
-* The first argument to :ref:`cast() <cast>`
-* The second argument to :ref:`assert_type() <assert-type>`
-* The bounds and constraints of a ``TypeVar`` (whether created through the
-  old syntax or the native syntax in Python 3.12)
-* The definition of a type alias (whether created through the ``type`` statement,
-  the old assignment syntax, or the ``TypeAliasType`` constructor)
-* The type arguments of a generic class (which may appear in a base class
-  or in a constructor call)
-* The definitions of fields in the functional forms for creating
-  :ref:`TypedDict <typeddict>` and :ref:`NamedTuple <namedtuple>` types
-* The base type in the definition of a :ref:`NewType <newtype>`
+* 型注釈内（常に注釈式の一部として）
+* :ref:`cast() <cast>` の最初の引数
+* :ref:`assert_type() <assert-type>` の2番目の引数
+* ``TypeVar`` の境界および制約（古い構文または Python 3.12 のネイティブ構文のいずれかを使用して作成された場合）
+* 型エイリアスの定義（``type`` ステートメント、古い代入構文、または ``TypeAliasType`` コンストラクタを使用して作成された場合）
+* ジェネリッククラスの型引数（ベースクラスまたはコンストラクタ呼び出しに現れる場合）
+* :ref:`TypedDict <typeddict>` および :ref:`NamedTuple <namedtuple>` 型を作成するための機能形式のフィールドの定義
+* :ref:`NewType <newtype>` の定義
 
 .. _`annotation-expression`:
 
-An *annotation expression* is an expression that is acceptable to use in
-an annotation context (a function parameter annotation, function return
-annotation, or variable annotation). Generally, an annotation expression
-is a type expression, optionally surrounded by one or more :term:`type qualifiers <type qualifier>`
-or by `Annotated`. Each type qualifier is valid only in some contexts. Note
-that while annotation expressions are the only expressions valid as type
-annotations in the type system, the Python language itself makes no such
-restriction: any expression is allowed.
+*注釈式* は、注釈コンテキスト（関数パラメータ注釈、関数戻り注釈、または変数注釈）で使用することが許可される式です。 一般に、注釈式は型式であり、1つ以上の :term:`type qualifiers <type qualifier>` または `Annotated` で囲まれている場合があります。 各型修飾子は特定のコンテキストでのみ有効です。 注釈式は型システムで型注釈として有効な唯一の式ですが、Python 言語自体にはそのような制限はありません。 任意の式が許可されます。
 
-Annotations must be valid expressions that evaluate without raising
-exceptions at the time the function is defined (but see :ref:`forward-references`).
+注釈は、関数が定義された時点で例外を発生させずに評価される有効な式でなければなりません（ただし、:ref:`forward-references` を参照してください）。
 
 .. _`expression-grammar`:
 
-The following grammar describes the allowed elements of type and annotation expressions:
+次の文法は、型式および注釈式で許可される要素を説明しています。
 
 .. productionlist:: expression-grammar
     annotation_expression: <Required> '[' `annotation_expression` ']'
@@ -189,69 +143,44 @@ The following grammar describes the allowed elements of type and annotation expr
     type_expression_list: '[' `type_expression` (',' `type_expression`)* ']'
                         : | '[' ']'
 
-Notes:
+注：
 
-* The grammar assumes the code has already been parsed as Python code, and
-  loosely follows the structure of the AST. Syntactic details like comments
-  and whitespace are ignored.
+* 文法は、コードがすでに Python コードとして解析されていることを前提としており、AST の構造に緩やかに従います。 コメントや空白などの構文的な詳細は無視されます。
 
-* ``<Name>`` refers to a :term:`special form`. Most special forms must be imported
-  from :py:mod:`typing` or ``typing_extensions``, except for ``None``,  ``InitVar``,
-  ``type``, and ``tuple``. The latter two have aliases in :py:mod:`typing`: :py:class:`typing.Type`
-  and :py:class:`typing.Tuple`.  ``InitVar`` must be imported from :py:mod:`dataclasses`.
-  ``Callable`` may be imported from either :py:mod:`typing` or :py:mod:`collections.abc`.
-  Special forms may be aliased
-  (e.g., ``from typing import Literal as L``), and they may be referred to by a
-  qualified name (e.g., ``typing.Literal``). There are other special forms that are not
-  acceptable in any annotation or type expression, including ``Generic``, ``Protocol``,
-  and ``TypedDict``.
+* ``<Name>`` は :term:`special form` を指します。 ほとんどの特殊形式は :py:mod:`typing` または ``typing_extensions`` からインポートする必要がありますが、``None``、``InitVar``、``type``、および ``tuple`` は例外です。 後者の2つには :py:mod:`typing` にエイリアスがあります： :py:class:`typing.Type` および :py:class:`typing.Tuple`。 ``InitVar`` は :py:mod:`dataclasses` からインポートする必要があります。 ``Callable`` は :py:mod:`typing` または :py:mod:`collections.abc` からインポートできます。 特殊形式はエイリアス化できます（例：``from typing import Literal as L``）、および修飾名で参照できます（例：``typing.Literal``）。 注釈や型式で許可されていない他の特殊形式もあります。 これには ``Generic``、``Protocol``、および ``TypedDict`` が含まれます。
 
-* Any leaf denoted as ``name`` may also be a qualified name (i.e., ``module '.' name``
-  or ``package '.' module '.' name``, with any level of nesting).
+* ``name`` として示される任意のリーフは、修飾名（つまり、``module '.' name`` または ``package '.' module '.' name``、任意のレベルのネストを持つ）でもかまいません。
 
-* Comments in parentheses denote additional restrictions not expressed in the
-  grammar, or brief descriptions of the meaning of a construct.
+* 括弧内のコメントは、文法で表現されていない追加の制限や構成の意味を簡単に説明しています。
 
 .. _ `string-annotations`:
 
 .. _`forward-references`:
 
-String annotations
-------------------
+文字列注釈
+------------------------------------------------------------------------------------------
 
-When a type hint cannot be evaluated at runtime, that
-definition may be expressed as a string literal, to be resolved later.
+型ヒントが実行時に評価できない場合、その定義は後で解決される文字列リテラルとして表現できます。
 
-A situation where this occurs commonly is the definition of a
-container class, where the class being defined occurs in the signature
-of some of the methods.  For example, the following code (the start of
-a simple binary tree implementation) does not work::
+これが一般的に発生する状況は、クラスが定義されているコンテナクラスの定義です。 たとえば、次のコード（単純な二分木の実装の開始）は機能しません::
 
   class Tree:
       def __init__(self, left: Tree, right: Tree):
           self.left = left
           self.right = right
 
-To address this, we write::
+これに対処するために、次のように書きます::
 
   class Tree:
       def __init__(self, left: 'Tree', right: 'Tree'):
           self.left = left
           self.right = right
 
-The string literal should contain a valid Python expression (i.e.,
-``compile(lit, '', 'eval')`` should be a valid code object) and it
-should evaluate without errors once the module has been fully loaded.
-The local and global namespace in which it is evaluated should be the
-same namespaces in which default arguments to the same function would
-be evaluated.
+文字列リテラルには有効な Python 式が含まれている必要があります（つまり、``compile(lit, '', 'eval')`` は有効なコードオブジェクトである必要があります）し、モジュールが完全にロードされた後にエラーなしで評価される必要があります。 それが評価されるローカルおよびグローバル名前空間は、同じ関数のデフォルト引数が評価される名前空間と同じである必要があります。
 
-Moreover, the expression should be parseable as a valid type hint, i.e.,
-it is constrained by the rules from :ref:`the expression grammar <expression-grammar>`.
+さらに、式は有効な型ヒントとして解析可能である必要があります。 つまり、:ref:`the expression grammar <expression-grammar>` のルールによって制約されます。
 
-If a triple quote is used, the string should be parsed as though it is
-implicitly surrounded by parentheses. This allows newline characters to be
-used within the string literal::
+トリプルクォートが使用される場合、文字列は暗黙的に括弧で囲まれているかのように解析される必要があります。 これにより、文字列リテラル内で改行文字を使用できます::
 
     value: """
         int |
@@ -259,19 +188,14 @@ used within the string literal::
         list[Any]
     """
 
-It is allowable to use string literals as *part* of a type hint, for
-example::
+文字列リテラルを型ヒントの *一部* として使用することも許可されます。 たとえば::
 
     class Tree:
         ...
         def leaves(self) -> list['Tree']:
             ...
 
-A common use for forward references is when e.g. Django models are
-needed in the signatures.  Typically, each model is in a separate
-file, and has methods taking arguments whose type involves other models.
-Because of the way circular imports work in Python, it is often not
-possible to import all the needed models directly::
+前方参照の一般的な使用例は、たとえば Django モデルがシグネチャで必要な場合です。 通常、各モデルは別々のファイルにあり、他のモデルを含む引数を持つメソッドがあります。 Python での循環インポートの方法のため、すべての必要なモデルを直接インポートすることはしばしば不可能です::
 
     # File models/a.py
     from models.b import B
@@ -287,11 +211,7 @@ possible to import all the needed models directly::
     from models.a import A
     from models.b import B
 
-Assuming main is imported first, this will fail with an ImportError at
-the line ``from models.a import A`` in models/b.py, which is being
-imported from models/a.py before a has defined class A.  The solution
-is to switch to module-only imports and reference the models by their
-_module_._class_ name::
+main が最初にインポートされると仮定すると、これは models/a.py からインポートされる前に models/b.py の ``from models.a import A`` 行で ImportError が発生します。 解決策は、モジュールのみのインポートに切り替え、モデルをその _module_._class_ 名で参照することです::
 
     # File models/a.py
     from models import b
@@ -307,12 +227,10 @@ _module_._class_ name::
     from models.a import A
     from models.b import B
 
-Annotating generator functions and coroutines
----------------------------------------------
+ジェネレータ関数とコルーチンの注釈
+------------------------------------------------------------------------------------------
 
-The return type of generator functions can be annotated by
-the generic type ``Generator[yield_type, send_type,
-return_type]`` provided by ``typing.py`` module::
+ジェネレータ関数の戻り値の型は、``typing.py`` モジュールによって提供されるジェネリック型 ``Generator[yield_type, send_type, return_type]`` によって注釈できます::
 
   def echo_round() -> Generator[int, float, str]:
       res = yield 0
@@ -320,9 +238,7 @@ return_type]`` provided by ``typing.py`` module::
           res = yield round(res)
       return 'OK'
 
-Coroutines introduced in :pep:`492` are annotated with the same syntax as
-ordinary functions. However, the return type annotation corresponds to the
-type of ``await`` expression, not to the coroutine type::
+:pep:`492` で導入されたコルーチンは、通常の関数と同じ構文で注釈されます。 ただし、戻り値の型注釈はコルーチン型ではなく ``await`` 式の型に対応します::
 
   async def spam(ignored: int) -> str:
       return 'spam'
@@ -330,11 +246,7 @@ type of ``await`` expression, not to the coroutine type::
   async def foo() -> None:
       bar = await spam(42)  # type is str
 
-The generic ABC ``collections.abc.Coroutine`` can be used
-to specify awaitables that also support
-``send()`` and ``throw()`` methods. The variance and order of type variables
-correspond to those of ``Generator``, namely ``Coroutine[T_co, T_contra, V_co]``,
-for example::
+ジェネリック ABC ``collections.abc.Coroutine`` を使用して、``send()`` および ``throw()`` メソッドをサポートする awaitable を指定できます。 型変数の分散と順序は ``Generator`` のものに対応し、``Coroutine[T_co, T_contra, V_co]`` です。 たとえば::
 
   from collections.abc import Coroutine
   c: Coroutine[list[str], str, int]
@@ -343,9 +255,7 @@ for example::
   async def bar() -> None:
       x = await c  # type is int
 
-The generic ABCs ``Awaitable``,
-``AsyncIterable``, and ``AsyncIterator`` can be used for situations where more precise
-types cannot be specified::
+ジェネリック ABC ``Awaitable``、``AsyncIterable``、および ``AsyncIterator`` は、より正確な型を指定できない状況で使用できます::
 
   def op() -> collections.abc.Awaitable[str]:
       if cond:
@@ -355,16 +265,10 @@ types cannot be specified::
 
 .. _`annotating-methods`:
 
-Annotating instance and class methods
--------------------------------------
+インスタンスメソッドとクラスメソッドの注釈
+------------------------------------------------------------------------------------------
 
-In most cases the first argument of class and instance methods
-does not need to be annotated, and it is assumed to have the
-type of the containing class for instance methods, and a type object
-type corresponding to the containing class object for class methods.
-In addition, the first argument in an instance method can be annotated
-with a type variable. In this case the return type may use the same
-type variable, thus making that method a generic function. For example::
+ほとんどの場合、クラスメソッドおよびインスタンスメソッドの最初の引数には注釈を付ける必要はなく、インスタンスメソッドの場合は含まれているクラスの型を持つと見なされ、クラスメソッドの場合は含まれているクラスオブジェクトに対応する型オブジェクト型を持つと見なされます。 さらに、インスタンスメソッドの最初の引数には型変数で注釈を付けることができます。 この場合、戻り値の型は同じ型変数を使用することができ、そのメソッドをジェネリック関数にします。 たとえば::
 
   T = TypeVar('T', bound='Copyable')
   class Copyable:
@@ -375,8 +279,7 @@ type variable, thus making that method a generic function. For example::
   c = C()
   c2 = c.copy()  # type here should be C
 
-The same applies to class methods using ``type[]`` in an annotation
-of the first argument::
+同じことが、最初の引数の注釈に ``type[]`` を使用するクラスメソッドにも当てはまります::
 
   T = TypeVar('T', bound='C')
   class C:
@@ -387,6 +290,4 @@ of the first argument::
   class D(C): ...
   d = D.factory()  # type here should be D
 
-Note that some type checkers may apply restrictions on this use, such as
-requiring an appropriate upper bound for the type variable used
-(see examples).
+一部の型チェッカーは、この使用に制限を適用する場合があります。 たとえば、使用される型変数に適切な上限を要求するなどです（例を参照）。

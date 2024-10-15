@@ -1,9 +1,9 @@
-Specification for the Python type system
+Python 型システムの仕様
 ========================================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: 目次:
 
    type-system
    meta

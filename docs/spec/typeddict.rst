@@ -1,46 +1,26 @@
 .. _`typed-dictionaries`:
 
-Typed dictionaries
-==================
+型付き辞書
+==========================================================================================
 
 .. _`typeddict`:
 
 TypedDict
----------
+------------------------------------------------------------------------------------------
 
-(Originally specified in :pep:`589`.)
+(元々は :pep:`589` で指定されていました。)
 
-A TypedDict type represents dictionary objects with a specific set of
-string keys, and with specific value types for each valid key.  Each
-string key can be either required (it must be present) or
-non-required (it doesn't need to exist).
+TypedDict 型は特定のセットの文字列キーを持ち、各有効なキーに対して特定の値の型を持つ辞書オブジェクトを表します。 各文字列キーは必須 (存在しなければならない) または非必須 (存在する必要はない) のいずれかです。
 
-There are two ways of defining TypedDict types.  The first uses
-a class-based syntax.  The second is an alternative
-assignment-based syntax that is provided for backwards compatibility,
-to allow the feature to be backported to older Python versions.  The
-rationale is similar to why :pep:`484` supports a comment-based
-annotation syntax for Python 2.7: type hinting is particularly useful
-for large existing codebases, and these often need to run on older
-Python versions.  The two syntax options parallel the syntax variants
-supported by ``typing.NamedTuple``.  Other features include
-TypedDict inheritance and totality (specifying whether keys are
-required or not).
+TypedDict 型を定義する方法は 2 つあります。 1 つ目はクラスベースの構文を使用します。 2 つ目は代替の代入ベースの構文で、後方互換性のために提供されています。 この機能を古い Python バージョンにバックポートできるようにするためです。 理由は :pep:`484` が Python 2.7 のためにコメントベースの注釈構文をサポートする理由と似ています: 型ヒントは特に大規模な既存のコードベースに役立ち、これらはしばしば古い Python バージョンで実行する必要があります。 2 つの構文オプションは ``typing.NamedTuple`` がサポートする構文のバリエーションと並行しています。 その他の機能には TypedDict の継承と全体性 (キーが必須かどうかを指定する) が含まれます。
 
-This section also provides a sketch of how a type checker is expected to
-support type checking operations involving TypedDict objects. Similar to
-:pep:`484`, this discussion is left somewhat vague on purpose, to allow
-experimentation with a wide variety of different type checking approaches. In
-particular, :term:`assignability <assignable>` should be :term:`structural`: a
-more specific TypedDict type can be assignable to a more general TypedDict
-type, without any inheritance relationship between them.
+このセクションでは、TypedDict オブジェクトを含む型チェック操作を型チェッカーがサポートする方法の概要も提供します。 :pep:`484` と同様に、この議論は意図的に曖昧にされています。 これは、さまざまな型チェックアプローチの実験を許可するためです。 特に、:term:`assignability <assignable>` は :term:`structural` である必要があります。 より具体的な TypedDict 型は、これらの間に継承関係がなくても、より一般的な TypedDict 型に割り当て可能である必要があります。
 
 
-Class-based Syntax
-^^^^^^^^^^^^^^^^^^
+クラスベースの構文
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A TypedDict type can be defined using the class definition syntax with
-``typing.TypedDict`` as the sole base class::
+TypedDict 型は、唯一の基底クラスとして ``typing.TypedDict`` を使用してクラス定義構文を使用して定義できます::
 
     from typing import TypedDict
 
@@ -48,140 +28,99 @@ A TypedDict type can be defined using the class definition syntax with
         name: str
         year: int
 
-``Movie`` is a TypedDict type with two items: ``'name'`` (with type
-``str``) and ``'year'`` (with type ``int``).
+``Movie`` は 2 つの項目を持つ TypedDict 型です: ``'name'`` (型 ``str``) と ``'year'`` (型 ``int``)。
 
-A type checker should validate that the body of a class-based
-TypedDict definition conforms to the following rules:
+型チェッカーは、クラスベースの TypedDict 定義の本体が次のルールに従っていることを検証する必要があります:
 
-* The class body should only contain lines with item definitions of the
-  form ``key: value_type``, optionally preceded by a docstring.  The
-  syntax for item definitions is identical to attribute annotations,
-  but there must be no initializer, and the key name actually refers
-  to the string value of the key instead of an attribute name.
+* クラス本体には、オプションでドキュメント文字列が前に付いた ``key: value_type`` の形式の項目定義のみが含まれている必要があります。 項目定義の構文は属性注釈と同じですが、初期化子はなく、キー名は属性名ではなくキーの文字列値を指します。
 
-* Type comments cannot be used with the class-based syntax, for
-  consistency with the class-based ``NamedTuple`` syntax.  Instead,
-  `Alternative Syntax`_ provides an
-  alternative, assignment-based syntax for backwards compatibility.
+* 一貫性のために、クラスベースの ``NamedTuple`` 構文と同様に、クラスベースの構文では型コメントを使用できません。 代わりに、`代替構文`_ は後方互換性のための代替の代入ベースの構文を提供します。
 
-* String literal forward references are valid in the value types.
+* 文字列リテラルの前方参照は値の型で有効です。
 
-* Methods are not allowed, since the runtime type of a TypedDict
-  object will always be just ``dict`` (it is never a subclass of
-  ``dict``).
+* メソッドは許可されていません。 これは、TypedDict オブジェクトのランタイム型は常に ``dict`` であり、``dict`` のサブクラスにはならないためです。
 
-* Specifying a metaclass is not allowed.
+* メタクラスの指定は許可されていません。
 
-* TypedDicts may be made generic by adding ``Generic[T]`` among the
-  bases (or, in Python 3.12 and higher, by using the new
-  syntax for generic classes).
+* TypedDict は、基底クラスに ``Generic[T]`` を追加することでジェネリックにすることができます (または、Python 3.12 以降では、ジェネリッククラスの新しい構文を使用します)。
 
-An empty TypedDict can be created by only including ``pass`` in the
-body (if there is a docstring, ``pass`` can be omitted)::
+本体に ``pass`` のみを含めることで空の TypedDict を作成できます (ドキュメント文字列がある場合は ``pass`` を省略できます)::
 
     class EmptyDict(TypedDict):
         pass
 
 
-Using TypedDict Types
-^^^^^^^^^^^^^^^^^^^^^
+TypedDict 型の使用
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Here is an example of how the type ``Movie`` can be used::
+次に、型 ``Movie`` を使用する方法の例を示します::
 
     movie: Movie = {'name': 'Blade Runner',
                     'year': 1982}
 
-An explicit ``Movie`` type annotation is generally needed, as
-otherwise an ordinary dictionary type could be assumed by a type
-checker, for backwards compatibility.  When a type checker can infer
-that a constructed dictionary object should be a TypedDict, an
-explicit annotation can be omitted.  A typical example is a dictionary
-object as a function argument.  In this example, a type checker is
-expected to infer that the dictionary argument should be understood as
-a TypedDict::
+明示的な ``Movie`` 型の注釈が一般的に必要です。 これは、後方互換性のために、型チェッカーによって通常の辞書型が仮定される可能性があるためです。 型チェッカーが構築された辞書オブジェクトが TypedDict であると推論できる場合、明示的な注釈を省略できます。 典型的な例は、関数引数としての辞書オブジェクトです。 この例では、型チェッカーは辞書引数が TypedDict として理解されるべきであると推論することが期待されます::
 
     def record_movie(movie: Movie) -> None: ...
 
     record_movie({'name': 'Blade Runner', 'year': 1982})
 
-Another example where a type checker should treat a dictionary display
-as a TypedDict is in an assignment to a variable with a previously
-declared TypedDict type::
+型チェッカーが辞書表示を TypedDict として扱うべき別の例は、以前に宣言された TypedDict 型の変数への代入です::
 
     movie: Movie
     ...
     movie = {'name': 'Blade Runner', 'year': 1982}
 
-Operations on ``movie`` can be checked by a static type checker::
+``movie`` に対する操作は静的型チェッカーによってチェックできます::
 
-    movie['director'] = 'Ridley Scott'  # Error: invalid key 'director'
-    movie['year'] = '1982'  # Error: invalid value type ("int" expected)
+    movie['director'] = 'Ridley Scott'  # エラー: 無効なキー 'director'
+    movie['year'] = '1982'  # エラー: 無効な値の型 ("int" が期待される)
 
-The code below should be rejected, since ``'title'`` is not a valid
-key, and the ``'name'`` key is missing::
+次のコードは拒否されるべきです。 ``'title'`` は有効なキーではなく、``'name'`` キーが欠落しているためです::
 
     movie2: Movie = {'title': 'Blade Runner',
                      'year': 1982}
 
-The created TypedDict type object is not a real class object.  Here
-are the only uses of the type a type checker is expected to allow:
+作成された TypedDict 型オブジェクトは実際のクラスオブジェクトではありません。 型チェッカーが許可することが期待される型の唯一の使用法は次のとおりです:
 
-* It can be used in type annotations and in any context where an
-  arbitrary type hint is valid, such as in type aliases and as the
-  target type of a cast.
+* 型注釈や型エイリアス、キャストのターゲット型など、任意の型ヒントが有効なコンテキストで使用できます。
 
-* It can be used as a callable object with keyword arguments
-  corresponding to the TypedDict items.  Non-keyword arguments are not
-  allowed.  Example::
+* TypedDict 項目に対応するキーワード引数を持つ呼び出し可能オブジェクトとして使用できます。 非キーワード引数は許可されていません。 例::
 
       m = Movie(name='Blade Runner', year=1982)
 
-  When called, the TypedDict type object returns an ordinary
-  dictionary object at runtime::
+  呼び出されたとき、TypedDict 型オブジェクトはランタイムで通常の辞書オブジェクトを返します::
 
       print(type(m))  # <class 'dict'>
 
-* It can be used as a base class, but only when defining a derived
-  TypedDict.  This is discussed in more detail below.
+* 基底クラスとして使用できますが、派生 TypedDict を定義する場合のみです。 これは以下で詳しく説明します。
 
-In particular, TypedDict type objects cannot be used in
-``isinstance()`` tests such as ``isinstance(d, Movie)``. The reason is
-that there is no existing support for checking types of dictionary
-item values, since ``isinstance()`` does not work with many
-types, including common ones like ``list[str]``.  This would be needed
-for cases like this::
+特に、TypedDict 型オブジェクトは ``isinstance()`` テスト (例: ``isinstance(d, Movie)``) で使用できません。 その理由は、辞書項目値の型をチェックする既存のサポートがないためです。 ``isinstance()`` は多くの型で機能しません。 これには、``list[str]`` のような一般的な型も含まれます。 これは次のような場合に必要です::
 
     class Strings(TypedDict):
         items: list[str]
 
-    print(isinstance({'items': [1]}, Strings))    # Should be False
-    print(isinstance({'items': ['x']}, Strings))  # Should be True
+    print(isinstance({'items': [1]}, Strings))    # False であるべき
+    print(isinstance({'items': ['x']}, Strings))  # True であるべき
 
-The above use case is not supported.  This is consistent with how
-``isinstance()`` is not supported for ``list[str]``.
+上記の使用例はサポートされていません。 これは、``isinstance()`` が ``list[str]`` に対してサポートされていないことと一致しています。
 
 
-Inheritance
-^^^^^^^^^^^
+継承
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-It is possible for a TypedDict type to inherit from one or more
-TypedDict types using the class-based syntax.  In this case the
-``TypedDict`` base class should not be included.  Example::
+TypedDict 型は、クラスベースの構文を使用して 1 つ以上の TypedDict 型から継承することができます。 この場合、``TypedDict`` 基底クラスは含めないでください。 例::
 
     class BookBasedMovie(Movie):
         based_on: str
 
-Now ``BookBasedMovie`` has keys ``name``, ``year``, and ``based_on``. It is
-equivalent to this definition, since TypedDict types use :term:`structural`
-:term:`assignability <assignable>`::
+これで ``BookBasedMovie`` には ``name``、``year``、および ``based_on`` のキーがあります。 これは次の定義と同等です。 TypedDict 型は :term:`structural` :term:`assignability <assignable>` を使用するためです::
 
     class BookBasedMovie(TypedDict):
         name: str
         year: int
         based_on: str
 
-Here is an example of multiple inheritance::
+次に、複数の継承の例を示します::
 
     class X(TypedDict):
         x: int
@@ -192,30 +131,26 @@ Here is an example of multiple inheritance::
     class XYZ(X, Y):
         z: bool
 
-The TypedDict ``XYZ`` has three items: ``x`` (type ``int``), ``y``
-(type ``str``), and ``z`` (type ``bool``).
+TypedDict ``XYZ`` には 3 つの項目があります: ``x`` (型 ``int``)、``y`` (型 ``str``)、および ``z`` (型 ``bool``)。
 
-A TypedDict cannot inherit from both a TypedDict type and a
-non-TypedDict base class other than ``Generic``.
+TypedDict は、TypedDict 型と ``Generic`` 以外の非 TypedDict 基底クラスの両方から継承することはできません。
 
-Additional notes on TypedDict class inheritance:
+TypedDict クラスの継承に関する追加の注意事項:
 
-* Changing a field type of a parent TypedDict class in a subclass is not allowed.
-  Example::
+* サブクラスで親 TypedDict クラスのフィールド型を変更することは許可されていません。 例::
 
    class X(TypedDict):
       x: str
 
    class Y(X):
-      x: int  # Type check error: cannot overwrite TypedDict field "x"
+      x: int  # 型チェックエラー: TypedDict フィールド "x" を上書きできません
 
-  In the example outlined above TypedDict class annotations returns
-  type ``str`` for key ``x``::
+  上記の例では、TypedDict クラスの注釈はキー ``x`` に対して型 ``str`` を返します::
 
    print(Y.__annotations__)  # {'x': <class 'str'>}
 
 
-* Multiple inheritance does not allow conflict types for the same name field::
+* 同じ名前のフィールドに対して競合する型を持つことは許可されていません::
 
    class X(TypedDict):
       x: int
@@ -223,87 +158,62 @@ Additional notes on TypedDict class inheritance:
    class Y(TypedDict):
       x: str
 
-   class XYZ(X, Y):  # Type check error: cannot overwrite TypedDict field "x" while merging
+   class XYZ(X, Y):  # 型チェックエラー: マージ中に TypedDict フィールド "x" を上書きできません
       xyz: bool
 
 
-Totality
-^^^^^^^^
+全体性
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default, all keys must be present in a TypedDict.  It is possible
-to override this by specifying *totality*.  Here is how to do this
-using the class-based syntax::
+デフォルトでは、TypedDict のすべてのキーが存在する必要があります。 *全体性* を指定することでこれを上書きすることができます。 クラスベースの構文を使用してこれを行う方法は次のとおりです::
 
     class Movie(TypedDict, total=False):
         name: str
         year: int
 
-This means that a ``Movie`` TypedDict can have any of the keys omitted. Thus
-these are valid::
+これは、``Movie`` TypedDict が任意のキーを省略できることを意味します。 したがって、次のように有効です::
 
     m: Movie = {}
     m2: Movie = {'year': 2015}
 
-A type checker is only expected to support a literal ``False`` or
-``True`` as the value of the ``total`` argument.  ``True`` is the
-default, and makes all items defined in the class body be required.
+型チェッカーは、``total`` 引数の値としてリテラル ``False`` または ``True`` のみをサポートすることが期待されます。 ``True`` はデフォルトであり、クラス本体で定義されたすべての項目を必須にします。
 
-The totality flag only applies to items defined in the body of the
-TypedDict definition.  Inherited items won't be affected, and instead
-use totality of the TypedDict type where they were defined.  This makes
-it possible to have a combination of required and non-required keys in
-a single TypedDict type. Alternatively, ``Required`` and ``NotRequired``
-(see below) can be used to mark individual items as required or non-required.
+全体性フラグは、TypedDict 定義の本体で定義された項目にのみ適用されます。 継承された項目は影響を受けず、それらが定義された TypedDict 型の全体性を使用します。 これにより、単一の TypedDict 型で必須キーと非必須キーの組み合わせを持つことができます。 代わりに、個々の項目を必須または非必須としてマークするために ``Required`` および ``NotRequired`` (以下を参照) を使用できます。
 
 .. _typeddict-functional-syntax:
 
-Alternative Syntax
-^^^^^^^^^^^^^^^^^^
+代替構文
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This section provides an alternative syntax that can be backported to
-older Python versions such as 3.5 and 2.7 that don't support the
-variable definition syntax introduced in :pep:`526`.  It
-resembles the traditional syntax for defining named tuples::
+このセクションでは、:pep:`526` で導入された変数定義構文をサポートしない 3.5 や 2.7 などの古い Python バージョンにバックポートできる代替構文を提供します。 これは、名前付きタプルを定義するための従来の構文に似ています::
 
     Movie = TypedDict('Movie', {'name': str, 'year': int})
 
-It is also possible to specify totality using the alternative syntax::
+代替構文を使用して全体性を指定することもできます::
 
     Movie = TypedDict('Movie',
                       {'name': str, 'year': int},
                       total=False)
 
-The semantics are equivalent to the class-based syntax.  This syntax
-doesn't support inheritance, however.  The
-motivation for this is keeping the backwards compatible syntax as
-simple as possible while covering the most common use cases.
+意味論はクラスベースの構文と同等です。 ただし、この構文は継承をサポートしていません。 これの動機は、後方互換性のある構文をできるだけシンプルに保ちながら、最も一般的な使用例をカバーすることです。
 
-A type checker is only expected to accept a dictionary display expression
-as the second argument to ``TypedDict``.  In particular, a variable that
-refers to a dictionary object does not need to be supported, to simplify
-implementation.
+型チェッカーは、``TypedDict`` の 2 番目の引数として辞書表示式のみを受け入れることが期待されます。 特に、辞書オブジェクトを参照する変数は、実装を簡素化するためにサポートする必要はありません。
 
 
-Assignability
-^^^^^^^^^^^^^
+割り当て可能性
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-First, any TypedDict type is :term:`assignable` to ``Mapping[str, object]``.
+まず、任意の TypedDict 型は ``Mapping[str, object]`` に :term:`assignable` です。
 
-Second, a TypedDict type ``B`` is :term:`assignable` to a TypedDict ``A`` if
-and only if both of these conditions are satisfied:
+次に、TypedDict 型 ``B`` は、次の 2 つの条件が満たされている場合に限り、TypedDict ``A`` に :term:`assignable` です:
 
-* For each key in ``A``, ``B`` has the corresponding key and the corresponding
-  value type in ``B`` is :term:`consistent` with the value type in ``A``.
+* ``A`` の各キーに対して、``B`` は対応するキーを持ち、``B`` の対応する値の型は ``A`` の値の型と :term:`consistent` です。
 
-* For each required key in ``B``, the corresponding key is required
-  in ``A``.  For each non-required key in ``B``, the corresponding key
-  is not required in ``A``.
+* ``B`` の各必須キーに対して、対応するキーは ``A`` で必須です。 ``B`` の各非必須キーに対して、対応するキーは ``A`` で非必須です。
 
-Discussion:
+議論:
 
-* Value types behave invariantly, since TypedDict objects are mutable.
-  This is similar to mutable container types such as ``List`` and
-  ``Dict``.  Example where this is relevant::
+* 値の型は不変に動作します。 これは、TypedDict オブジェクトが変更可能であるためです。 これは、``List`` や ``Dict`` などの変更可能なコンテナ型と同様です。 これが関連する例::
 
       class A(TypedDict):
           x: int | None
@@ -315,12 +225,10 @@ Discussion:
           a['x'] = None
 
       b: B = {'x': 0}
-      f(b)  # Type check error: 'B' not assignable to 'A'
-      b['x'] + 1  # Runtime error: None + 1
+      f(b)  # 型チェックエラー: 'B' は 'A' に割り当て可能ではありません
+      b['x'] + 1  # ランタイムエラー: None + 1
 
-* A TypedDict type with a required key is not :term:`assignable` to a TypedDict
-  type where the same key is a non-required key, since the latter allows keys
-  to be deleted.  Example where this is relevant::
+* 必須キーを持つ TypedDict 型は、同じキーが非必須キーである TypedDict 型に :term:`assignable` ではありません。 これは、後者がキーを削除できるためです。 これが関連する例::
 
       class A(TypedDict, total=False):
           x: int
@@ -332,14 +240,10 @@ Discussion:
           del a['x']
 
       b: B = {'x': 0}
-      f(b)  # Type check error: 'B' not assignable to 'A'
-      b['x'] + 1  # Runtime KeyError: 'x'
+      f(b)  # 型チェックエラー: 'B' は 'A' に割り当て可能ではありません
+      b['x'] + 1  # ランタイム KeyError: 'x'
 
-* A TypedDict type ``A`` with no key ``'x'`` is not :term:`assignable` to a
-  TypedDict type with a non-required key ``'x'``, since at runtime the key
-  ``'x'`` could be present and have an :term:`inconsistent <consistent>` type
-  (which may not be visible through ``A`` due to :term:`structural`
-  assignability). Example::
+* キー ``'x'`` を持たない TypedDict 型 ``A`` は、非必須キー ``'x'`` を持つ TypedDict 型に :term:`assignable` ではありません。 これは、ランタイムでキー ``'x'`` が存在し、:term:`inconsistent <consistent>` 型を持つ可能性があるためです (これは :term:`structural` assignability によって ``A`` を通じて表示されない場合があります)。 例::
 
       class A(TypedDict, total=False):
           x: int
@@ -356,16 +260,13 @@ Discussion:
            a['y'] = 1
 
        def g(b: B) -> None:
-           f(b)  # Type check error: 'B' not assignable to 'A'
+           f(b)  # 型チェックエラー: 'B' は 'A' に割り当て可能ではありません
 
        c: C = {'x': 0, 'y': 'foo'}
        g(c)
-       c['y'] + 'bar'  # Runtime error: int + str
+       c['y'] + 'bar'  # ランタイムエラー: int + str
 
-* A TypedDict isn't :term:`assignable` to any ``Dict[...]`` type, since
-  dictionary types allow destructive operations, including ``clear()``.  They
-  also allow arbitrary keys to be set, which would compromise type safety.
-  Example::
+* TypedDict は、任意の ``Dict[...]`` 型に :term:`assignable` ではありません。 これは、辞書型が破壊的な操作を許可するためです。 これには ``clear()`` も含まれます。 また、任意のキーを設定することも許可されており、これにより型の安全性が損なわれる可能性があります。 例::
 
       class A(TypedDict):
           x: int
@@ -377,17 +278,13 @@ Discussion:
           d['y'] = 0
 
       def g(a: A) -> None:
-          f(a)  # Type check error: 'A' not assignable to Dict[str, int]
+          f(a)  # 型チェックエラー: 'A' は Dict[str, int] に割り当て可能ではありません
 
       b: B = {'x': 0, 'y': 'foo'}
       g(b)
-      b['y'] + 'bar'  # Runtime error: int + str
+      b['y'] + 'bar'  # ランタイムエラー: int + str
 
-* A TypedDict with all ``int`` values is not :term:`assignable` to
-  ``Mapping[str, int]``, since there may be additional non-``int`` values not
-  visible through the type, due to :term:`structural` assignability. These can
-  be accessed using the ``values()`` and ``items()`` methods in ``Mapping``,
-  for example.  Example::
+* すべての ``int`` 値を持つ TypedDict は、``Mapping[str, int]`` に :term:`assignable` ではありません。 これは、:term:`structural` assignability によって型を通じて表示されない追加の非 ``int`` 値が存在する可能性があるためです。 これらは、たとえば ``Mapping`` の ``values()`` および ``items()`` メソッドを使用してアクセスできます。 例::
 
       class A(TypedDict):
           x: int
@@ -399,138 +296,85 @@ Discussion:
       def sum_values(m: Mapping[str, int]) -> int:
           n = 0
           for v in m.values():
-              n += v  # Runtime error
+              n += v  # ランタイムエラー
           return n
 
       def f(a: A) -> None:
-          sum_values(a)  # Error: 'A' not assignable to Mapping[str, int]
+          sum_values(a)  # エラー: 'A' は Mapping[str, int] に割り当て可能ではありません
 
       b: B = {'x': 0, 'y': 'foo'}
       f(b)
 
 
-Supported and Unsupported Operations
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+サポートされている操作とサポートされていない操作
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Type checkers should support restricted forms of most ``dict``
-operations on TypedDict objects.  The guiding principle is that
-operations not involving ``Any`` types should be rejected by type
-checkers if they may violate runtime type safety.  Here are some of
-the most important type safety violations to prevent:
+型チェッカーは、TypedDict オブジェクトに対するほとんどの ``dict`` 操作の制限された形式をサポートする必要があります。 指針となる原則は、ランタイムの型安全性を侵害する可能性がある操作を型チェッカーが拒否するべきであるということです。 ここでは、回避するための最も重要な型安全性の違反のいくつかを示します:
 
-1. A required key is missing.
+1. 必須キーが欠落している。
 
-2. A value has an invalid type.
+2. 値が無効な型を持っている。
 
-3. A key that is not defined in the TypedDict type is added.
+3. TypedDict 型に定義されていないキーが追加される。
 
-A key that is not a literal should generally be rejected, since its
-value is unknown during type checking, and thus can cause some of the
-above violations.  (`Use of Final Values and Literal Types`_
-generalizes this to cover final names and literal types.)
+キーがリテラルでない場合は一般的に拒否されるべきです。 これは、型チェック中にその値が不明であり、上記の違反のいくつかを引き起こす可能性があるためです。 (`Final 値とリテラル型の使用`_ は、これを最終名とリテラル型をカバーするように一般化します。)
 
-The use of a key that is not known to exist should be reported as an error,
-even if this wouldn't necessarily generate a runtime type error.  These are
-often mistakes, and these may insert values with an invalid type if
-:term:`structural` :term:`assignability <assignable>` hides the types of
-certain items. For example, ``d['x'] = 1`` should generate a type check error
-if ``'x'`` is not a valid key for ``d`` (which is assumed to be a TypedDict
-type).
+キーが存在することが知られていない場合の使用は、ランタイム型エラーを生成しない場合でもエラーとして報告されるべきです。 これらはしばしば間違いであり、:term:`structural` :term:`assignability <assignable>` が特定の項目の型を隠す場合、無効な型の値を挿入する可能性があります。 たとえば、``d['x'] = 1`` は、``'x'`` が ``d`` の有効なキーでない場合、型チェックエラーを生成するべきです (これは TypedDict 型であると仮定されます)。
 
-Extra keys included in TypedDict object construction should also be
-caught.  In this example, the ``director`` key is not defined in
-``Movie`` and is expected to generate an error from a type checker::
+TypedDict オブジェクトの構築に含まれる余分なキーもキャッチされるべきです。 この例では、``director`` キーは ``Movie`` に定義されておらず、型チェッカーからエラーが生成されることが期待されます::
 
     m: Movie = dict(
         name='Alien',
         year=1979,
-        director='Ridley Scott')  # error: Unexpected key 'director'
+        director='Ridley Scott')  # エラー: 予期しないキー 'director'
 
-Type checkers should reject the following operations on TypedDict
-objects as unsafe, even though they are valid for normal dictionaries:
+型チェッカーは、次の操作を TypedDict オブジェクトに対して安全でないとして拒否するべきです。 これらは通常の辞書に対しては有効です:
 
-* Operations with arbitrary ``str`` keys (instead of string literals
-  or other expressions with known string values) should generally be
-  rejected.  This involves both destructive operations such as setting
-  an item and read-only operations such as subscription expressions.
-  As an exception to the above rule, ``d.get(e)`` and ``e in d``
-  should be allowed for TypedDict objects, for an arbitrary expression
-  ``e`` with type ``str``.  The motivation is that these are safe and
-  can be useful for introspecting TypedDict objects.  The static type
-  of ``d.get(e)`` should be ``object`` if the string value of ``e``
-  cannot be determined statically.
+* 任意の ``str`` キー (文字列リテラルや既知の文字列値を持つ他の式ではなく) を使用した操作は一般的に拒否されるべきです。 これは、項目の設定などの破壊的な操作と、サブスクリプション式などの読み取り専用操作の両方を含みます。 上記のルールの例外として、``d.get(e)`` および ``e in d`` は、任意の ``str`` 型の式 ``e`` に対して TypedDict オブジェクトに対して許可されるべきです。 動機は、これらが安全であり、TypedDict オブジェクトを調査するのに役立つ可能性があるためです。 ``d.get(e)`` の静的型は、文字列値が静的に決定できない場合、``object`` であるべきです。
 
-* ``clear()`` is not safe since it could remove required keys, some of which
-  may not be directly visible because of :term:`structural`
-  :term:`assignability <assignable>`.  ``popitem()`` is similarly unsafe, even
-  if all known keys are not required (``total=False``).
+* ``clear()`` は、必須キーを削除する可能性があるため安全ではありません。 これには、:term:`structural` :term:`assignability <assignable>` によって直接表示されないキーも含まれます。 ``popitem()`` も同様に安全ではありません。 すべての既知のキーが必須でない場合 (``total=False``) でも同様です。
 
-* ``del obj['key']`` should be rejected unless ``'key'`` is a
-  non-required key.
+* ``del obj['key']`` は、``'key'`` が非必須キーでない限り拒否されるべきです。
 
-Type checkers may allow reading an item using ``d['x']`` even if
-the key ``'x'`` is not required, instead of requiring the use of
-``d.get('x')`` or an explicit ``'x' in d`` check.  The rationale is
-that tracking the existence of keys is difficult to implement in full
-generality, and that disallowing this could require many changes to
-existing code.
+型チェッカーは、キー ``'x'`` が必須でない場合でも、``d['x']`` を使用して項目を読み取ることを許可する場合があります。 代わりに、``d.get('x')`` または明示的な ``'x' in d`` チェックを要求する代わりにです。 動機は、キーの存在を追跡することは完全に一般的に実装するのが難しいことであり、これを許可しないと既存のコードに多くの変更が必要になる可能性があるためです。
 
-The exact type checking rules are up to each type checker to decide.
-In some cases potentially unsafe operations may be accepted if the
-alternative is to generate false positive errors for idiomatic code.
+正確な型チェックルールは各型チェッカーが決定するものです。 一部のケースでは、潜在的に安全でない操作が受け入れられる場合があります。 これは、代替が慣用的なコードに対して誤検知エラーを生成する場合です。
 
 
-Use of Final Values and Literal Types
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Final 値とリテラル型の使用
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Type checkers should allow :ref:`final names <uppercase-final>` with
-string values to be used instead of string literals in operations on
-TypedDict objects.  For example, this is valid::
+型チェッカーは、TypedDict オブジェクトに対する操作で文字列値を持つ :ref:`final names <uppercase-final>` を文字列リテラルの代わりに使用することを許可するべきです。 たとえば、これは有効です::
 
    YEAR: Final = 'year'
 
    m: Movie = {'name': 'Alien', 'year': 1979}
    years_since_epoch = m[YEAR] - 1970
 
-Similarly, an expression with a suitable :ref:`literal type <literal>`
-can be used instead of a literal value::
+同様に、適切な :ref:`literal type <literal>` を持つ式をリテラル値の代わりに使用できます::
 
    def get_value(movie: Movie,
                  key: Literal['year', 'name']) -> int | str:
        return movie[key]
 
-Type checkers are only expected to support actual string literals, not
-final names or literal types, for specifying keys in a TypedDict type
-definition.  Also, only a boolean literal can be used to specify
-totality in a TypedDict definition.  The motivation for this is to
-make type declarations self-contained, and to simplify the
-implementation of type checkers.
+型チェッカーは、TypedDict 型定義でキーを指定するために実際の文字列リテラルのみをサポートすることが期待されます。 また、TypedDict 定義で全体性を指定するためにブールリテラルのみを使用できます。 動機は、型宣言を自己完結型にし、型チェッカーの実装を簡素化することです。
 
 
-Backwards Compatibility
-^^^^^^^^^^^^^^^^^^^^^^^
+後方互換性
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To retain backwards compatibility, type checkers should not infer a
-TypedDict type unless it is sufficiently clear that this is desired by
-the programmer.  When unsure, an ordinary dictionary type should be
-inferred.  Otherwise existing code that type checks without errors may
-start generating errors once TypedDict support is added to the type
-checker, since TypedDict types are more restrictive than dictionary
-types.  In particular, they aren't subtypes of dictionary types.
+後方互換性を維持するために、型チェッカーは、プログラマーがこれを望んでいることが十分に明確でない限り、TypedDict 型を推論しないべきです。 確信が持てない場合は、通常の辞書型が推論されるべきです。 そうしないと、TypedDict サポートが型チェッカーに追加されると、型チェックエラーなしで型チェックされる既存のコードがエラーを生成し始める可能性があります。 これは、TypedDict 型が辞書型よりも制限が厳しいためです。 特に、辞書型のサブタイプではありません。
 
 .. _`required-notrequired`:
 
-``Required`` and ``NotRequired``
---------------------------------
+``Required`` および ``NotRequired``
+------------------------------------------------------------------------------------------
 
-(Originally specified in :pep:`655`.)
+(元々は :pep:`655` で指定されていました。)
 
 .. _`required`:
 
-The ``typing.Required`` :term:`type qualifier` is used to indicate that a
-variable declared in a TypedDict definition is a required key:
-
-::
+``typing.Required`` :term:`type qualifier` は、TypedDict 定義で宣言された変数が必須キーであることを示すために使用されます::
 
    class Movie(TypedDict, total=False):
        title: Required[str]
@@ -538,72 +382,48 @@ variable declared in a TypedDict definition is a required key:
 
 .. _`notrequired`:
 
-Additionally the ``typing.NotRequired`` :term:`type qualifier` is used to
-indicate that a variable declared in a TypedDict definition is a
-potentially-missing key:
+さらに、``typing.NotRequired`` :term:`type qualifier` は、TypedDict 定義で宣言された変数が存在する可能性のあるキーであることを示すために使用されます::
 
-::
-
-   class Movie(TypedDict):  # implicitly total=True
+   class Movie(TypedDict):  # 暗黙的に total=True
        title: str
        year: NotRequired[int]
 
-It is an error to use ``Required[]`` or ``NotRequired[]`` in any
-location that is not an item of a TypedDict.
-Type checkers must enforce this restriction.
+``Required[]`` または ``NotRequired[]`` を TypedDict の項目以外の場所で使用することはエラーです。 型チェッカーはこの制限を強制する必要があります。
 
-It is valid to use ``Required[]`` and ``NotRequired[]`` even for
-items where it is redundant, to enable additional explicitness if desired:
-
-::
+必要に応じて、冗長であっても ``Required[]`` および ``NotRequired[]`` を使用することが有効です::
 
    class Movie(TypedDict):
-       title: Required[str]  # redundant
+       title: Required[str]  # 冗長
        year: NotRequired[int]
 
-It is an error to use both ``Required[]`` and ``NotRequired[]`` at the
-same time:
-
-::
+同時に ``Required[]`` と ``NotRequired[]`` を使用することはエラーです::
 
    class Movie(TypedDict):
        title: str
-       year: NotRequired[Required[int]]  # ERROR
+       year: NotRequired[Required[int]]  # エラー
 
-Type checkers must enforce this restriction.
-The runtime implementations of ``Required[]`` and ``NotRequired[]``
-may also enforce this restriction.
+型チェッカーはこの制限を強制する必要があります。 ``Required[]`` および ``NotRequired[]`` のランタイム実装もこの制限を強制する場合があります。
 
-The :ref:`alternative functional syntax <typeddict-functional-syntax>`
-for TypedDict also supports
-``Required[]``, ``NotRequired[]``, and ``ReadOnly[]``:
-
-::
+TypedDict の :ref:`代替機能構文 <typeddict-functional-syntax>` も ``Required[]``、``NotRequired[]``、および ``ReadOnly[]`` をサポートします::
 
    Movie = TypedDict('Movie', {'name': str, 'year': NotRequired[int]})
 
 
-Interaction with ``total=False``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``total=False`` との相互作用
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Any TypedDict declared with ``total=False`` is equivalent
-to a TypedDict with an implicit ``total=True`` definition with all of its
-keys marked as ``NotRequired[]``.
+``total=False`` で宣言された TypedDict は、すべてのキーが ``NotRequired[]`` としてマークされた暗黙的な ``total=True`` 定義を持つ TypedDict と同等です。
 
-Therefore:
+したがって::
 
-::
-
-   class _MovieBase(TypedDict):  # implicitly total=True
+   class _MovieBase(TypedDict):  # 暗黙的に total=True
        title: str
 
    class Movie(_MovieBase, total=False):
        year: int
 
 
-is equivalent to:
-
-::
+は次のように同等です::
 
    class _MovieBase(TypedDict):
        title: str
@@ -612,13 +432,10 @@ is equivalent to:
        year: NotRequired[int]
 
 
-Interaction with ``Annotated[]``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``Annotated[]`` との相互作用
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``Required[]`` and ``NotRequired[]`` can be used with ``Annotated[]``,
-in any nesting order:
-
-::
+``Required[]`` および ``NotRequired[]`` は ``Annotated[]`` と一緒に使用できます。 任意のネスト順序で::
 
    class Movie(TypedDict):
        title: str
@@ -630,23 +447,20 @@ in any nesting order:
        title: str
        year: Annotated[NotRequired[int], ValueRange(-9999, 9999)]  # ok
 
-In particular allowing ``Annotated[]`` to be the outermost annotation
-for an item allows better interoperability with non-typing uses of
-annotations, which may always want ``Annotated[]`` as the outermost annotation
-(`discussion <https://bugs.python.org/issue46491>`__).
+特に、項目の最外部の注釈として ``Annotated[]`` を許可することで、注釈の非型付け使用との相互運用性が向上します。 これにより、常に ``Annotated[]`` を最外部の注釈として使用することができます (`discussion <https://bugs.python.org/issue46491>`__)。
 
 
-Read-only Items
----------------
+読み取り専用項目
+------------------------------------------------------------------------------------------
 
-(Originally specified in :pep:`705`.)
+(元々は :pep:`705` で指定されていました。)
 
 .. _`readonly`:
 
-``typing.ReadOnly`` type qualifier
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``typing.ReadOnly`` 型修飾子
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``typing.ReadOnly`` :term:`type qualifier` is used to indicate that an item declared in a ``TypedDict`` definition may not be mutated (added, modified, or removed)::
+``typing.ReadOnly`` :term:`type qualifier` は、``TypedDict`` 定義で宣言された項目が変更 (追加、変更、削除) できないことを示すために使用されます::
 
     from typing import ReadOnly
 
@@ -655,17 +469,15 @@ The ``typing.ReadOnly`` :term:`type qualifier` is used to indicate that an item 
         members: ReadOnly[list[str]]
 
     blur: Band = {"name": "blur", "members": []}
-    blur["name"] = "Blur"  # OK: "name" is not read-only
-    blur["members"] = ["Damon Albarn"]  # Type check error: "members" is read-only
-    blur["members"].append("Damon Albarn")  # OK: list is mutable
+    blur["name"] = "Blur"  # OK: "name" は読み取り専用ではありません
+    blur["members"] = ["Damon Albarn"]  # 型チェックエラー: "members" は読み取り専用です
+    blur["members"].append("Damon Albarn")  # OK: リストは変更可能です
 
 
-Interaction with other special types
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+他の特殊な型との相互作用
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``ReadOnly[]`` can be used with ``Required[]``, ``NotRequired[]`` and ``Annotated[]``, in any nesting order:
-
-::
+``ReadOnly[]`` は ``Required[]``、``NotRequired[]``、および ``Annotated[]`` と一緒に使用できます。 任意のネスト順序で::
 
     class Movie(TypedDict):
         title: ReadOnly[Required[str]]  # OK
@@ -678,10 +490,10 @@ Interaction with other special types
         year: Annotated[NotRequired[ReadOnly[int]], ValueRange(-9999, 9999)]  # OK
 
 
-Inheritance
-^^^^^^^^^^^
+継承
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Subclasses can redeclare read-only items as non-read-only, allowing them to be mutated::
+サブクラスは読み取り専用項目を非読み取り専用として再宣言し、変更できるようにすることができます::
 
     class NamedDict(TypedDict):
         name: ReadOnly[str]
@@ -692,26 +504,26 @@ Subclasses can redeclare read-only items as non-read-only, allowing them to be m
 
     album: Album = { "name": "Flood", "year": 1990 }
     album["year"] = 1973
-    album["name"] = "Dark Side Of The Moon"  # OK: "name" is not read-only in Album
+    album["name"] = "Dark Side Of The Moon"  # OK: "name" は Album では読み取り専用ではありません
 
-If a read-only item is not redeclared, it remains read-only::
+読み取り専用項目が再宣言されていない場合、それは読み取り専用のままです::
 
     class Album(NamedDict):
         year: int
 
     album: Album = { "name": "Flood", "year": 1990 }
-    album["name"] = "Dark Side Of The Moon"  # Type check error: "name" is read-only in Album
+    album["name"] = "Dark Side Of The Moon"  # 型チェックエラー: "name" は Album では読み取り専用です
 
-Subclasses can narrow value types of read-only items::
+サブクラスは読み取り専用項目の値の型を狭めることができます::
 
     class AlbumCollection(TypedDict):
         albums: ReadOnly[Collection[Album]]
 
     class RecordShop(AlbumCollection):
         name: str
-        albums: ReadOnly[list[Album]]  # OK: "albums" is read-only in AlbumCollection
+        albums: ReadOnly[list[Album]]  # OK: "albums" は AlbumCollection では読み取り専用です
 
-Subclasses can require items that are read-only but not required in the superclass::
+サブクラスは、スーパークラスで読み取り専用だが必須ではない項目を必須にすることができます::
 
     class OptionalName(TypedDict):
         name: ReadOnly[NotRequired[str]]
@@ -719,50 +531,36 @@ Subclasses can require items that are read-only but not required in the supercla
     class RequiredName(OptionalName):
         name: ReadOnly[Required[str]]
 
-    d: RequiredName = {}  # Type check error: "name" required
+    d: RequiredName = {}  # 型チェックエラー: "name" が必要です
 
-Subclasses can combine these rules::
+サブクラスはこれらのルールを組み合わせることができます::
 
     class OptionalIdent(TypedDict):
         ident: ReadOnly[NotRequired[str | int]]
 
     class User(OptionalIdent):
-        ident: str  # Required, mutable, and not an int
+        ident: str  # 必須、変更可能、および int ではない
 
-Note that these are just consequences of :term:`structural` typing, but they
-are highlighted here as the behavior now differs from the rules specified in
-:pep:`589`.
+これらはすべて :term:`structural` 型付けの結果にすぎませんが、ここで強調されています。 これは、動作が :pep:`589` で指定されたルールと異なるためです。
 
-Assignability
-^^^^^^^^^^^^^
+割り当て可能性
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-*This section updates the assignability rules described above that were created
-prior to the introduction of ReadOnly*
+*このセクションは、ReadOnly の導入前に作成された上記の割り当て可能性ルールを更新します*
 
-A TypedDict type ``B`` is :term:`assignable` to a TypedDict type ``A`` if ``B``
-is :term:`structurally <structural>` assignable to ``A``. This is true if and
-only if all of the following are satisfied:
+TypedDict 型 ``B`` は、``B`` が ``A`` に :term:`structurally <structural>` 割り当て可能である場合、TypedDict 型 ``A`` に :term:`assignable` です。 これは、次のすべてが満たされている場合にのみ当てはまります:
 
-* For each item in ``A``, ``B`` has the corresponding key, unless the item in
-  ``A`` is read-only, not required, and of top value type
-  (``ReadOnly[NotRequired[object]]``).
-* For each item in ``A``, if ``B`` has the corresponding key, the corresponding
-  value type in ``B`` is assignable to the value type in ``A``.
-* For each non-read-only item in ``A``, its value type is assignable to the
-  corresponding value type in ``B``, and the corresponding key is not read-only
-  in ``B``.
-* For each required key in ``A``, the corresponding key is required in ``B``.
-* For each non-required key in ``A``, if the item is not read-only in ``A``,
-  the corresponding key is not required in ``B``.
+* ``A`` の各項目に対して、``B`` は対応するキーを持ちます。 ただし、項目が読み取り専用で、必須ではなく、トップ値型 (``ReadOnly[NotRequired[object]]``) の場合を除きます。
+* ``A`` の各項目に対して、``B`` が対応するキーを持つ場合、``B`` の対応する値の型は ``A`` の値の型に割り当て可能です。
+* ``A`` の各非読み取り専用項目に対して、その値の型は ``B`` の対応する値の型に割り当て可能であり、対応するキーは ``B`` で読み取り専用ではありません。
+* ``A`` の各必須キーに対して、対応するキーは ``B`` で必須です。
+* ``A`` の各非必須キーに対して、項目が ``A`` で読み取り専用でない場合、対応するキーは ``B`` で必須ではありません。
 
-Discussion:
+議論:
 
-* All non-specified items in a TypedDict implicitly have value type
-  ``ReadOnly[NotRequired[object]]``.
+* TypedDict で指定されていないすべての項目は暗黙的に値型 ``ReadOnly[NotRequired[object]]`` を持ちます。
 
-* Read-only items behave covariantly, as they cannot be mutated. This is
-  similar to container types such as ``Sequence``, and different from
-  non-read-only items, which behave invariantly. Example::
+* 読み取り専用項目は変更できないため、共変に動作します。 これは、``Sequence`` などのコンテナ型と同様であり、非読み取り専用項目とは異なります。 例::
 
     class A(TypedDict):
         x: ReadOnly[int | None]
@@ -774,15 +572,9 @@ Discussion:
         print(a["x"] or 0)
 
     b: B = {"x": 1}
-    f(b)  # Accepted by type checker
+    f(b)  # 型チェッカーによって受け入れられます
 
-* A TypedDict type ``A`` with no explicit key ``'x'`` is not :term:`assignable`
-  to a TypedDict type ``B`` with a non-required key ``'x'``, since at runtime
-  the key ``'x'`` could be present and have an :term:`inconsistent
-  <consistent>` type (which may not be visible through ``A`` due to
-  :term:`structural` typing). The only exception to this rule is if the item in
-  ``B`` is read-only, and the value type is of top type (``object``). For
-  example::
+* 明示的なキー ``'x'`` を持たない TypedDict 型 ``A`` は、非必須キー ``'x'`` を持つ TypedDict 型 ``B`` に :term:`assignable` ではありません。 これは、ランタイムでキー ``'x'`` が存在し、:term:`structural` 型付けによって ``A`` を通じて表示されない :term:`inconsistent <consistent>` 型を持つ可能性があるためです。 このルールの唯一の例外は、項目が読み取り専用であり、値型がトップ型 (``object``) である場合です。 例::
 
     class A(TypedDict):
         x: int
@@ -792,14 +584,12 @@ Discussion:
         y: ReadOnly[NotRequired[object]]
 
     a: A = { "x": 1 }
-    b: B = a  # Accepted by type checker
+    b: B = a  # 型チェッカーによって受け入れられます
 
-Update method
-^^^^^^^^^^^^^
+更新メソッド
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In addition to existing type checking rules, type checkers should error if a
-TypedDict with a read-only item is updated with another TypedDict that declares
-that key::
+既存の型チェックルールに加えて、型チェッカーは、読み取り専用項目を持つ TypedDict がそのキーを宣言する別の TypedDict で更新された場合にエラーを出すべきです::
 
     class A(TypedDict):
         x: ReadOnly[int]
@@ -807,23 +597,23 @@ that key::
 
     a1: A = { "x": 1, "y": 2 }
     a2: A = { "x": 3, "y": 4 }
-    a1.update(a2)  # Type check error: "x" is read-only in A
+    a1.update(a2)  # 型チェックエラー: "x" は A で読み取り専用です
 
-Unless the declared value is of bottom type (:data:`~typing.Never`)::
+宣言された値がボトム型 (:data:`~typing.Never`) でない限り::
 
     class B(TypedDict):
         x: NotRequired[typing.Never]
         y: ReadOnly[int]
 
     def update_a(a: A, b: B) -> None:
-        a.update(b)  # Accepted by type checker: "x" cannot be set on b
+        a.update(b)  # 型チェッカーによって受け入れられます: "x" は b に設定できません
 
-Note: Nothing will ever match the ``Never`` type, so an item annotated with it must be absent.
+注: 何も ``Never`` 型に一致しないため、これで注釈された項目は存在しない必要があります。
 
-Keyword argument typing
-^^^^^^^^^^^^^^^^^^^^^^^
+キーワード引数の型付け
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As discussed in the section :ref:`unpack-kwargs`, an unpacked ``TypedDict`` can be used to annotate ``**kwargs``. Marking one or more of the items of a ``TypedDict`` used in this way as read-only will have no effect on the type signature of the method. However, it *will* prevent the item from being modified in the body of the function::
+セクション :ref:`unpack-kwargs` で説明されているように、アンパックされた ``TypedDict`` は ``**kwargs`` を注釈するために使用できます。 この方法で使用される ``TypedDict`` の 1 つ以上の項目を読み取り専用としてマークしても、メソッドの型シグネチャには影響しません。 ただし、関数の本体で項目が変更されるのを防ぎます::
 
     class Args(TypedDict):
         key1: int
@@ -837,6 +627,6 @@ As discussed in the section :ref:`unpack-kwargs`, an unpacked ``TypedDict`` can 
         def __call__(self, **kwargs: Unpack[Args]) -> None: ...
 
     def impl(**kwargs: Unpack[ReadOnlyArgs]) -> None:
-        kwargs["key1"] = 3  # Type check error: key1 is readonly
+        kwargs["key1"] = 3  # 型チェックエラー: key1 は読み取り専用です
 
-    fn: Function = impl  # Accepted by type checker: function signatures are identical
+    fn: Function = impl  # 型チェッカーによって受け入れられます: 関数シグネチャは同一です

@@ -1,137 +1,92 @@
 .. _distributing-type:
 
-Distributing type information
-=============================
+型情報の配布
+==========================================================================================
 
 .. _stub-files:
 
-Stub files
-----------
+スタブファイル
+------------------------------------------------------------------------------------------
 
-(Originally specified in :pep:`484`.)
+（元々 :pep:`484` で指定されています。）
 
-*Stub files*, also called *type stubs*, provide type information for untyped
-Python packages and modules. Stub files serve multiple purposes:
+*スタブファイル*、または *タイプスタブ* は、型情報を持たない Python パッケージおよびモジュールの型情報を提供します。 スタブファイルは複数の目的を果たします:
 
-* They are the only way to add type information to extension modules.
-* They can provide type information for packages that do not wish to
-  add them inline.
-* They can be distributed separately from the package or module that they
-  provide types for. The latter is referred to as the *implementation*.
-  This allows stubs to be developed at a different pace or by different
-  authors, which is especially useful when adding type annotations to
-  existing packages.
-* They can act as documentation, succinctly explaining the external
-  API of a package, without including implementation details or private
-  members.
+* 拡張モジュールに型情報を追加する唯一の方法です。
+* インラインで型情報を追加したくないパッケージに型情報を提供できます。
+* 提供する型のパッケージまたはモジュールとは別に配布できます。 後者は *実装* と呼ばれます。 これにより、スタブを異なるペースで、または異なる著者によって開発することができ、特に既存のパッケージに型注釈を追加する場合に便利です。
+* 実装の詳細やプライベートメンバーを含まずに、パッケージの外部 API を簡潔に説明するドキュメントとして機能します。
 
-Stub files use a subset of the constructs used in Python source files, as
-described in :ref:`stub-file-supported-constructs` below. Type checkers should
-parse a stub that uses only such constructs without error and not interpret any
-construct in a manner contradictory to this specification. However, type
-checkers are not required to implement checks for all of these constructs and
-can elect to ignore unsupported ones. Additionally, type checkers can support
-constructs not described here.
+スタブファイルは、以下の :ref:`stub-file-supported-constructs` で説明されているように、Python ソースファイルで使用される構文のサブセットを使用します。 型チェッカーは、そのような構文のみを使用するスタブをエラーなしで解析し、この仕様に矛盾しない方法で解釈する必要があります。 ただし、型チェッカーはこれらの構文すべてのチェックを実装する必要はなく、サポートされていないものを無視することを選択できます。 さらに、型チェッカーはここで説明されていない構文をサポートすることもできます。
 
-If a stub file is found for a module, the type checker should not read the
-corresponding "real" module. See :ref:`mro` for more information.
+モジュールのスタブファイルが見つかった場合、型チェッカーは対応する「実際の」モジュールを読み取らないでください。 詳細については :ref:`mro` を参照してください。
 
 .. _stub-file-syntax:
 
-Syntax
-^^^^^^
+構文
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Stub files are syntactically valid Python files with a ``.pyi`` suffix. They
-should be parseable (e.g., with :py:func:`ast.parse`) in all Python versions
-that are supported by the implementation and that are still supported
-by the CPython project. For example, defining a type alias using the
-``type`` keyword is only accepted by the Python parser in Python 3.12 and later,
-so stubs supporting Python 3.11 or earlier versions should not use this syntax.
-This allows type checkers implemented in Python to parse stub files using
-functionality from the standard library.
-Type checkers may choose to support syntactic features from newer Python versions
-in stub files, but stubs that rely on such features may not be portable to all
-type checkers. Type checkers may also choose to support Python versions that
-are no longer supported by CPython; if so, they cannot rely on standard library
-functionality to parse stub files.
+スタブファイルは、``.pyi`` サフィックスを持つ構文的に有効な Python ファイルです。 それらは、実装によってサポートされるすべての Python バージョンで（および CPython プロジェクトによってまだサポートされているバージョンで）解析可能である必要があります（例： :py:func:`ast.parse` を使用して）。 たとえば、``type`` キーワードを使用して型エイリアスを定義することは、Python 3.12 以降の Python パーサーによってのみ受け入れられるため、Python 3.11 以前のバージョンをサポートするスタブはこの構文を使用しないでください。 これにより、標準ライブラリの機能を使用してスタブファイルを解析するために Python で実装された型チェッカーが可能になります。 型チェッカーは、スタブファイルで新しい Python バージョンの構文機能をサポートすることを選択できますが、そのような機能に依存するスタブはすべての型チェッカーに移植可能ではない場合があります。 型チェッカーは、CPython によってもはやサポートされていない Python バージョンをサポートすることも選択できます。 その場合、スタブファイルを解析するために標準ライブラリの機能に依存することはできません。
 
-Type checkers should evaluate all :term:`annotation expressions <annotation expression>` as if they are quoted.
-Consequently, forward references do not need to be quoted, and type system
-features that do not depend on Python syntax changes are supported in stubs regardless
-of the Python version supported. For example, the use of the ``|`` operator
-to create unions (``X | Y``) was introduced in Python 3.10, but may be used
-even in stubs that support Python 3.9 and older versions.
+型チェッカーは、すべての :term:`annotation expressions <annotation expression>` を引用符で囲まれているかのように評価する必要があります。 したがって、前方参照を引用符で囲む必要はなく、Python 構文の変更に依存しない型システム機能は、サポートされる Python バージョンに関係なくスタブでサポートされます。 たとえば、共用体を作成するための ``|`` 演算子の使用（``X | Y``）は Python 3.10 で導入されましたが、Python 3.9 およびそれ以前のバージョンをサポートするスタブでも使用できます。
 
 .. _stub-file-supported-constructs:
 
-Supported Constructs
-^^^^^^^^^^^^^^^^^^^^
+サポートされている構文
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Type checkers should fully support these constructs:
+型チェッカーは、これらの構文を完全にサポートする必要があります:
 
-* All features from the ``typing`` module of the latest released Python version
-  that use :ref:`supported syntax <stub-file-syntax>`
-* Comments, including type declaration (``# type: X``) and error suppression
-  (``# type: ignore``) comments
-* Import statements, including the standard :ref:`import-conventions` and cyclic
-  imports
-* Aliases, including type aliases, at both the module and class level
+* 最新リリースの Python バージョンの ``typing`` モジュールのすべての機能（:ref:`supported syntax <stub-file-syntax>` を使用）
+* コメント、型宣言（``# type: X``）およびエラー抑制（``# type: ignore``）コメントを含む
+* 標準の :ref:`import-conventions` および循環インポートを含むインポート文
+* モジュールおよびクラスレベルのエイリアスを含むエイリアス
 * :ref:`Simple version and platform checks <version-and-platform-checks>`
 
-The constructs in the following subsections may be supported in a more limited
-fashion, as described below.
+次の小節の構文は、以下に説明するように、より限定的にサポートされる場合があります。
 
-Value Expressions
-"""""""""""""""""
+値の式
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-In locations where value expressions can appear, such as the right-hand side of
-assignment statements and function parameter defaults, type checkers should
-support the following expressions:
+代入文の右辺や関数パラメータのデフォルトなど、値の式が現れる場所では、型チェッカーは次の式をサポートする必要があります:
 
-* The ellipsis literal, ``...``, which can stand in for any value
-* Any value that is a
-  :ref:`legal parameter for typing.Literal <literal-legal-parameters>`
-* Floating point literals, such as ``3.14``
-* Complex literals, such as ``1 + 2j``
+* 任意の値の代わりに使用できる省略記号リテラル ``...``
+* :ref:`legal parameter for typing.Literal <literal-legal-parameters>` である任意の値
+* 浮動小数点リテラル（例：``3.14``）
+* 複素数リテラル（例：``1 + 2j``）
 
-Module Level Attributes
-"""""""""""""""""""""""
+モジュールレベルの属性
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Type checkers should support module-level variable annotations, with and without
-assignments::
+型チェッカーは、代入の有無にかかわらず、モジュールレベルの変数注釈をサポートする必要があります::
 
     x: int
     x: int = 0
     x = 0  # type: int
     x = ...  # type: int
 
-The :ref:`Literal shortcut using Final <literal-final-interactions>` should be
-supported::
+:ref:`Literal shortcut using Final <literal-final-interactions>` はサポートされる必要があります::
 
-    x: Final = 0  # type is Literal[0]
+    x: Final = 0  # 型は Literal[0]
 
-When the type of a variable is omitted or disagrees from the assigned value,
-type checker behavior is undefined::
+変数の型が省略されている場合や、割り当てられた値と一致しない場合、型チェッカーの動作は未定義です::
 
-    x = 0  # behavior undefined
-    x: Final = ...  # behavior undefined
-    x: int = ""  # behavior undefined
+    x = 0  # 動作未定義
+    x: Final = ...  # 動作未定義
+    x: int = ""  # 動作未定義
 
-Classes
-"""""""
+クラス
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Class definition syntax follows general Python syntax, but type checkers
-are expected to understand only the following constructs in class bodies:
+クラス定義の構文は一般的な Python の構文に従いますが、型チェッカーはクラス本体内の次の構文のみを理解することが期待されます:
 
-* The ellipsis literal ``...`` is used for empty class bodies. Using ``pass`` in
-  class bodies is undefined.
-* Instance attributes follow the same rules as module level attributes
-  (see above).
-* Method definitions (see below) and properties.
-* Aliases.
-* Inner class definitions.
+* 省略記号リテラル ``...`` は空のクラス本体に使用されます。 クラス本体で ``pass`` を使用することは未定義です。
+* インスタンス属性は、上記のモジュールレベルの属性と同じルールに従います。
+* メソッド定義（以下を参照）およびプロパティ。
+* エイリアス。
+* 内部クラス定義。
 
-Yes::
+はい::
 
     class Simple: ...
 
@@ -144,136 +99,84 @@ Yes::
         IntList: TypeAlias = list[int]
         class Inner: ...
 
-Functions and Methods
-"""""""""""""""""""""
+関数とメソッド
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Function and method definition follows general Python syntax. Using a function
-or method body other than the ellipsis literal is undefined::
+関数およびメソッド定義は一般的な Python の構文に従います。 省略記号リテラル以外の関数またはメソッド本体を使用することは未定義です::
 
-    def foo(): ...  # compatible
-    def bar(): pass  # behavior undefined
+    def foo(): ...  # 互換性あり
+    def bar(): pass  # 動作未定義
 
 .. _stub-decorators:
 
-Decorators
-""""""""""
+デコレータ
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Type checkers are expected to understand the effects of all decorators defined
-in the ``typing`` module, plus these additional ones:
+型チェッカーは、``typing`` モジュールで定義されたすべてのデコレータの効果を理解することが期待されており、次の追加のデコレータも理解することが期待されます:
 
  * ``classmethod``
  * ``staticmethod``
- * ``property`` (including ``.setter`` and ``.deleter``)
+ * ``property``（``.setter`` および ``.deleter`` を含む）
  * ``abc.abstractmethod``
  * ``dataclasses.dataclass``
  * ``warnings.deprecated``
- * functions decorated with ``@typing.dataclass_transform``
+ * ``@typing.dataclass_transform`` で装飾された関数
 
-The Typeshed Project
-^^^^^^^^^^^^^^^^^^^^
+Typeshed プロジェクト
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The `typeshed project <https://github.com/python/typeshed>`_ contains type
-stubs for the standard library (vendored or handled specially by type checkers)
-and type stubs for third-party libraries that don't ship their own type information
-(typically distributed via PyPI). Policies regarding the
-stubs collected there are decided separately and described in the project's
-documentation.
+`typeshed プロジェクト <https://github.com/python/typeshed>`_ には、標準ライブラリの型スタブ（型チェッカーによってベンダー提供されるか特別に処理される）および独自の型情報を提供しないサードパーティライブラリの型スタブが含まれています（通常は PyPI 経由で配布されます）。 そこに収集されたスタブに関するポリシーは別途決定され、プロジェクトのドキュメントに記載されています。
 
 .. _packaging-typed-libraries:
 
-Type information in libraries
------------------------------
+ライブラリ内の型情報
+------------------------------------------------------------------------------------------
 
-(Originally specified in :pep:`561`.)
+（元々 :pep:`561` で指定されています。）
 
-There are several motivations and methods of supporting typing in a package.
-This specification recognizes three types of packages that users of typing wish to
-create:
+パッケージで型付けをサポートする動機と方法はさまざまです。 この仕様は、型付けを使用するユーザーが作成したい 3 種類のパッケージを認識しています:
 
-1. The package maintainer would like to add type information inline.
+1. パッケージメンテナは、インラインで型情報を追加したいと考えています。
 
-2. The package maintainer would like to add type information via stubs.
+2. パッケージメンテナは、スタブを使用して型情報を追加したいと考えています。
 
-3. A third party or package maintainer would like to share stub files for
-   a package, but the maintainer does not want to include them in the source
-   of the package.
+3. サードパーティまたはパッケージメンテナは、パッケージのためのスタブファイルを共有したいと考えていますが、メンテナはそれらをパッケージのソースに含めたくありません。
 
-This specification aims to support all three scenarios and make them simple to add to
-packaging and deployment.
+この仕様は、これらの 3 つのシナリオすべてをサポートし、それらをパッケージングおよびデプロイメントに簡単に追加できるようにすることを目的としています。
 
-The two major parts of this specification are the packaging specifications
-and the resolution order for resolving module type information.
+この仕様の主要な部分は、パッケージング仕様とモジュール型情報の解決順序です。
 
+型情報のパッケージング
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Packaging Type Information
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+型情報のパッケージングおよび配布をできるだけ簡単かつ容易にするために、既存のフレームワークを通じてパッケージングおよび配布が行われます。
 
-In order to make packaging and distributing type information as simple and
-easy as possible, packaging and distribution is done through existing
-frameworks.
+コードの型チェックをサポートしたいパッケージメンテナは、型付けをサポートするパッケージに ``py.typed`` という名前のマーカーファイルを追加する必要があります。 このマーカーは再帰的に適用されます: トップレベルパッケージに含まれている場合、そのすべてのサブパッケージも型チェックをサポートする必要があります。
 
-Package maintainers who wish to support type checking of their code MUST add
-a marker file named ``py.typed`` to their package supporting typing. This marker applies
-recursively: if a top-level package includes it, all its sub-packages MUST support
-type checking as well.
+このファイルをパッケージに含めるには、メンテナは ``setuptools`` の ``package_data`` などの既存のパッケージングオプションを使用できます。 詳細については、:ref:`the guide to providing type annotations <providing-type-annotations>` を参照してください。
 
-To have this file including with the package, maintainers can use existing packaging
-options such as ``package_data`` in ``setuptools``. For more details, see
-:ref:`the guide to providing type annotations <providing-type-annotations>`.
+名前空間パッケージ（:pep:`420` を参照）では、競合を避けるために、明確にするために、``py.typed`` ファイルは名前空間のサブモジュールに配置する必要があります。
 
-For namespace packages (see :pep:`420`), the ``py.typed`` file should be in the
-submodules of the namespace, to avoid conflicts and for clarity.
+この仕様は、モジュールのみの配布や名前空間パッケージ内の単一ファイルモジュールの一部として型情報を配布することをサポートしていません。
 
-This specification does not support distributing typing information as part of
-module-only distributions or single-file modules within namespace packages.
+単一ファイルモジュールはパッケージにリファクタリングされ、上記のようにパッケージが型付けをサポートすることを示す必要があります。
 
-The single-file module should be refactored into a package
-and indicate that the package supports typing as described
-above.
+スタブのみのパッケージ
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Stub-only Packages
-""""""""""""""""""
+すべての型情報を含むスタブファイルを配布したいパッケージメンテナの場合、``*.pyi`` スタブが対応する ``*.py`` ファイルと一緒にあることが望ましいです。 ただし、スタブは別のパッケージに配置して別々に配布することもできます。 サードパーティもスタブファイルを配布したい場合、この方法が役立ちます。 スタブパッケージの名前は、``foopkg`` という名前のパッケージの型スタブの場合、``foopkg-stubs`` というスキームに従う必要があります。
 
-For package maintainers wishing to ship stub files containing all of their
-type information, it is preferred that the ``*.pyi`` stubs are alongside the
-corresponding ``*.py`` files. However, the stubs can also be put in a separate
-package and distributed separately. Third parties can also find this method
-useful if they wish to distribute stub files. The name of the stub package
-MUST follow the scheme ``foopkg-stubs`` for type stubs for the package named
-``foopkg``.
+パッケージを含む配布物の名前（つまり、PyPI 上のプロジェクト名）は、規定された ``*-stubs`` パッケージ名と異なる場合があります。 配布物の名前は ``types-*`` であってはなりません。これは、通常、typeshed によって提供されるスタブのみのパッケージに使用されるためです。
 
-Note the name of the distribution (i.e. the project name on PyPI) containing
-the package MAY be different than the mandated ``*-stubs`` package name.
-The name of the distribution SHOULD NOT be ``types-*``, since this is
-conventionally used for stub-only packages provided by typeshed.
+スタブのみのパッケージには ``py.typed`` マーカーを追加する必要はありません。 ``*-stubs`` という名前だけで、型情報のソースであることを示すのに十分です。
 
-For stub-only packages adding a ``py.typed`` marker is not
-needed since the name ``*-stubs`` is enough to indicate it is a source of typing
-information.
+スタブファイルを配布しようとするサードパーティは、パッケージのメンテナに連絡して、パッケージと一緒に配布することをお勧めします。 メンテナがスタブファイルや型情報をインラインで維持またはパッケージ化したくない場合、サードパーティのスタブのみのパッケージを作成できます。
 
-Third parties seeking to distribute stub files are encouraged to contact the
-maintainer of the package about distribution alongside the package. If the
-maintainer does not wish to maintain or package stub files or type information
-:term:`inline`, then a third party stub-only package can be created.
+さらに、スタブのみの配布物は、通常の依存関係データを通じて、ランタイムパッケージのバージョンを示すことができます。 たとえば、スタブパッケージ ``flyingcircus-stubs`` は、``dependencies`` フィールドを通じて、ランタイム ``flyingcircus`` 配布物のバージョンを示すことができます。
 
-In addition, stub-only distributions MAY indicate which version(s)
-of the runtime package are targeted by indicating the runtime distribution's
-version(s) through normal dependency data. For example, the
-stub package ``flyingcircus-stubs`` can indicate the versions of the
-runtime ``flyingcircus`` distribution it supports through ``dependencies``
-field in ``pyproject.toml``.
+名前空間パッケージ（:pep:`420` を参照）では、スタブのみのパッケージはルート名前空間パッケージにのみ ``-stubs`` サフィックスを使用する必要があります。 すべてのスタブのみの名前空間パッケージは ``__init__.pyi`` ファイルを省略する必要があります。 スタブのみのパッケージには ``py.typed`` マーカーファイルは必要ありませんが、インライン型を持つパッケージと同様に、競合を避けるために名前空間のサブモジュールに配置する必要があります。
 
-For namespace packages (see :pep:`420`), stub-only packages should
-use the ``-stubs`` suffix on only the root namespace package.
-All stub-only namespace packages should omit ``__init__.pyi`` files. ``py.typed``
-marker files are not necessary for stub-only packages, but similarly
-to packages with inline types, if used, they should be in submodules of the namespace to
-avoid conflicts and for clarity.
-
-For example, if the ``pentagon`` and ``hexagon`` are separate distributions
-installing within the namespace package ``shapes.polygons``
-The corresponding types-only distributions should produce packages
-laid out as follows::
+たとえば、``pentagon`` および ``hexagon`` が名前空間パッケージ ``shapes.polygons`` 内にインストールされる別々の配布物である場合、対応する型のみの配布物は次のようにレイアウトされたパッケージを生成する必要があります::
 
     shapes-stubs
     └── polygons
@@ -285,133 +188,74 @@ laid out as follows::
         └── hexagon
             └── __init__.pyi
 
-Partial Stub Packages
-"""""""""""""""""""""
+部分的なスタブパッケージ
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Many stub packages will only have part of the type interface for libraries
-completed, especially initially. For the benefit of type checking and code
-editors, packages can be "partial". This means modules not found in the stub
-package SHOULD be searched for in parts five and six of the module resolution
-order below, namely :term:`inline` packages and any third-party stubs the type
-checker chooses to vendor.
+多くのスタブパッケージは、特に最初はライブラリの型インターフェースの一部しか完成していない場合があります。 型チェックおよびコードエディタの利便性のために、パッケージは「部分的」であることができます。 これは、スタブパッケージに見つからないモジュールが、モジュール解決順序の第 5 部および第 6 部で検索されるべきであることを意味します。 具体的には、:term:`inline` パッケージおよび型チェッカーがベンダー提供する任意のサードパーティスタブです。
 
-Type checkers should merge the stub package and runtime package
-directories. This can be thought of as the functional equivalent of copying the
-stub package into the same directory as the corresponding runtime package
-and type checking the combined directory structure. Thus type
-checkers MUST maintain the normal resolution order of checking ``*.pyi`` before
-``*.py`` files.
+型チェッカーは、スタブパッケージとランタイムパッケージのディレクトリをマージする必要があります。 これは、スタブパッケージを対応するランタイムパッケージと同じディレクトリにコピーし、結合されたディレクトリ構造を型チェックするのと同等の機能と見なすことができます。 したがって、型チェッカーは ``*.pyi`` ファイルを ``*.py`` ファイルの前にチェックする通常の解決順序を維持する必要があります。
 
-If a stub package distribution is partial it MUST include ``partial\n`` in a
-``py.typed`` file.  For stub-packages distributing within a namespace
-package (see :pep:`420`), the ``py.typed`` file should be in the
-submodules of the namespace.
+スタブパッケージ配布物が部分的である場合、``py.typed`` ファイルに ``partial\n`` を含める必要があります。 名前空間パッケージ内で配布されるスタブパッケージの場合、``py.typed`` ファイルは名前空間のサブモジュールに配置する必要があります。
 
-Type checkers should treat namespace packages within stub-packages as
-incomplete since multiple distributions may populate them.
-Regular packages within namespace packages in stub-package distributions
-are considered complete unless a ``py.typed`` with ``partial\n`` is included.
+型チェッカーは、スタブパッケージ内の名前空間パッケージを不完全として扱う必要があります。これは、複数の配布物がそれらを埋める可能性があるためです。 スタブパッケージ配布物内の名前空間パッケージ内の通常のパッケージは、``py.typed`` に ``partial\n`` が含まれていない限り、完全と見なされます。
 
 .. _mro:
 
-Import resolution ordering
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+インポート解決順序
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The following is the order in which type checkers supporting this specification SHOULD
-resolve modules containing type information:
+この仕様をサポートする型チェッカーは、次の順序で型情報を含むモジュールを解決する必要があります:
 
+1. 手動でパスの先頭に配置された :term:`Stubs <stub>` または Python ソース。 型チェッカーはこれを提供し、ユーザーが使用するスタブを完全に制御し、壊れたスタブやパッケージの :term:`inline` 型をパッチすることを許可する必要があります。 mypy では、``$MYPYPATH`` 環境変数を使用できます。
 
-1. :term:`Stubs <stub>` or Python source manually put in the beginning of the path. Type
-   checkers SHOULD provide this to allow the user complete control of which
-   stubs to use, and to patch broken stubs or :term:`inline` types from packages.
-   In mypy the ``$MYPYPATH`` environment variable can be used for this.
+2. ユーザーコード - 型チェッカーが実行しているファイル。
 
-2. User code - the files the type checker is running on.
+3. 標準ライブラリの Typeshed スタブ。 これらは通常、型チェッカーによってベンダー提供されますが、型チェッカーはユーザーがカスタムまたは変更されたバージョンの typeshed を含むディレクトリへのパスを提供するオプションを提供する必要があります。 このオプションが提供される場合、型チェッカーはこのステップで標準ライブラリの型の正規のソースとしてこれを使用する必要があります。
 
-3. Typeshed stubs for the standard library. These will usually be vendored by
-   type checkers, but type checkers SHOULD provide an option for users to
-   provide a path to a directory containing a custom or modified version of
-   typeshed; if this option is provided, type checkers SHOULD use this as the
-   canonical source for standard-library types in this step.
+4. :term:`Stub <stub>` パッケージ - これらのパッケージは、インストールされたインラインパッケージよりも優先される必要があります。 それらは、パッケージ ``foopkg`` のために ``foopkg-stubs`` という名前のディレクトリに見つけることができます。
 
-4. :term:`Stub <stub>` packages - these packages SHOULD supersede any installed inline
-   package. They can be found in directories named ``foopkg-stubs`` for
-   package ``foopkg``.
+5. ``py.typed`` マーカーファイルを持つパッケージ - インストールされたパッケージを上書きするものがなく、型チェックにオプトインしている場合、パッケージにバンドルされた型（``.pyi`` タイプスタブファイルまたは ``.py`` ファイル内のインライン型）が使用されるべきです。
 
-5. Packages with a ``py.typed`` marker file - if there is nothing overriding
-   the installed package, *and* it opts into type checking, the types
-   bundled with the package SHOULD be used (be they in ``.pyi`` type
-   stub files or inline in ``.py`` files).
+6. 型チェッカーが追加のサードパーティスタブ（typeshed からまたは他の場所から）をベンダー提供することを選択した場合、これらはモジュール解決順序の最後に来るべきです。
 
-6. If the type checker chooses to additionally vendor any third-party stubs
-   (from typeshed or elsewhere), these SHOULD come last in the module
-   resolution order.
+型チェッカーがステップ 4 で目的のモジュールを持たないスタブのみの名前空間パッケージを識別した場合、ステップ 5/6 に進む必要があります。 型チェッカーは、``__init__.pyi`` がないことによって名前空間パッケージを識別する必要があります。 これにより、異なるサブパッケージがインライン対スタブのみを独立して選択できるようになります。
 
-If typecheckers identify a stub-only namespace package without the desired module
-in step 4, they should continue to step 5/6. Typecheckers should identify namespace packages
-by the absence of ``__init__.pyi``.  This allows different subpackages to
-independently opt for inline vs stub-only.
-
-Type checkers that check a different Python version than the version they run
-on MUST find the type information in the ``site-packages``/``dist-packages``
-of that Python version. This can be queried e.g.
-``pythonX.Y -c 'import site; print(site.getsitepackages())'``. It is also recommended
-that the type checker allow for the user to point to a particular Python
-binary, in case it is not in the path.
+実行されているバージョンとは異なる Python バージョンをチェックする型チェッカーは、その Python バージョンの ``site-packages``/``dist-packages`` で型情報を見つける必要があります。 これは、たとえば ``pythonX.Y -c 'import site; print(site.getsitepackages())'`` でクエリできます。 型チェッカーがパスにない場合に特定の Python バイナリを指すようにユーザーに許可することも推奨されます。
 
 .. _library-interface:
 
-Library interface (public and private symbols)
-----------------------------------------------
+ライブラリインターフェース（公開および非公開シンボル）
+------------------------------------------------------------------------------------------
 
-If a ``py.typed`` module is present, a type checker will treat all modules
-within that package (i.e. all files that end in ``.py`` or ``.pyi``) as
-importable unless the file name begins with an underscore. These modules
-comprise the supported interface for the library.
+``py.typed`` モジュールが存在する場合、型チェッカーはそのパッケージ内のすべてのモジュール（つまり、``.py`` または ``.pyi`` で終わるすべてのファイル）をインポート可能と見なします。 これらのモジュールは、ライブラリのサポートされているインターフェースを構成します。
 
-Each module exposes a set of symbols. Some of these symbols are
-considered "private” — implementation details that are not part of the
-library’s interface. Type checkers can use the following rules
-to determine which symbols are visible outside of the package.
+各モジュールは一連のシンボルを公開します。 これらのシンボルの一部は「非公開」と見なされます。これは、ライブラリのインターフェースの一部ではない実装の詳細です。 型チェッカーは、次のルールを使用して、どのシンボルがパッケージの外部に表示されるかを判断できます。
 
--  Symbols whose names begin with an underscore (but are not dunder
-   names) are considered private.
--  Imported symbols are considered private by default. A fixed set of
-   :ref:`import forms <import-conventions>` re-export imported symbols.
--  A module can expose an ``__all__`` symbol at the module level that
-   provides a list of names that are considered part of the interface.
-   This overrides all other rules above, allowing imported symbols or
-   symbols whose names begin with an underscore to be included in the
-   interface.
--  Local variables within a function (including nested functions) are
-   always considered private.
+- 名前がアンダースコアで始まるシンボル（ただし、ダンダーネームは除く）は非公開と見なされます。
+- インポートされたシンボルはデフォルトで非公開と見なされます。 固定されたセットの :ref:`import forms <import-conventions>` は、インポートされたシンボルを再エクスポートします。
+- モジュールは、モジュールレベルで ``__all__`` シンボルを公開し、インターフェースの一部と見なされる名前のリストを提供できます。 これにより、上記の他のすべてのルールが上書きされ、インポートされたシンボルやアンダースコアで始まる名前のシンボルをインターフェースに含めることができます。
+- 関数内のローカル変数（ネストされた関数を含む）は常に非公開と見なされます。
 
-The following idioms are supported for defining the values contained
-within ``__all__``. These restrictions allow type checkers to statically
-determine the value of ``__all__``.
+次のイディオムは、``__all__`` に含まれる値を定義するためにサポートされています。 これらの制限により、型チェッカーは ``__all__`` の値を静的に決定できます。
 
--  ``__all__ = ('a', b')``
--  ``__all__ = ['a', b']``
--  ``__all__ += ['a', b']``
--  ``__all__ += submodule.__all__``
--  ``__all__.extend(['a', b'])``
--  ``__all__.extend(submodule.__all__)``
--  ``__all__.append('a')``
--  ``__all__.remove('a')``
+- ``__all__ = ('a', b')``
+- ``__all__ = ['a', b']``
+- ``__all__ += ['a', b']``
+- ``__all__ += submodule.__all__``
+- ``__all__.extend(['a', b'])``
+- ``__all__.extend(submodule.__all__)``
+- ``__all__.append('a')``
+- ``__all__.remove('a')``
 
 .. _import-conventions:
 
-Import Conventions
-------------------
+インポートの慣例
+------------------------------------------------------------------------------------------
 
-By convention, certain import forms indicate to type checkers that an imported
-symbol is re-exported and should be considered part of the importing module's
-public interface. All other imported symbols are considered private by default.
+慣例により、特定のインポート形式は、インポートされたシンボルが再エクスポートされ、インポートモジュールの公開インターフェースの一部と見なされることを型チェッカーに示します。 他のすべてのインポートされたシンボルはデフォルトで非公開と見なされます。
 
-The following import forms re-export symbols:
+次のインポート形式はシンボルを再エクスポートします:
 
-* ``import X as X`` (a redundant module alias): re-exports ``X``.
-* ``from Y import X as X`` (a redundant symbol alias): re-exports ``X``.
-* ``from Y import *``: if ``Y`` defines a module-level ``__all__`` list,
-  re-exports all names in ``__all__``; otherwise, re-exports  all public symbols
-  in ``Y``'s global scope.
+* ``import X as X``（冗長なモジュールエイリアス）: ``X`` を再エクスポートします。
+* ``from Y import X as X``（冗長なシンボルエイリアス）: ``X`` を再エクスポートします。
+* ``from Y import *``: ``Y`` がモジュールレベルの ``__all__`` リストを定義している場合、``__all__`` のすべての名前を再エクスポートします。 そうでない場合、``Y`` のグローバルスコープ内のすべての公開シンボルを再エクスポートします。

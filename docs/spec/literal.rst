@@ -1,67 +1,49 @@
 .. _`literal-types`:
 
-Literals
-========
+リテラル
+==========================================================================================
 
 .. _`literal`:
 
 ``Literal``
------------
+------------------------------------------------------------------------------------------
 
-(Originally specified in :pep:`586`.)
+（元々 :pep:`586` で指定されています。）
 
+コアセマンティクス
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Core Semantics
-^^^^^^^^^^^^^^
+このセクションでは、リテラル型の基本的な動作を概説します。
 
-This section outlines the baseline behavior of literal types.
+コアの動作
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Core behavior
-"""""""""""""
+リテラル型は、変数が特定の具体的な値を持つことを示します。 たとえば、変数 ``foo`` の型を ``Literal[3]`` と定義する場合、``foo`` は正確に ``3`` と等しくなければならず、他の値は許可されません。
 
-Literal types indicate that a variable has a specific and
-concrete value. For example, if we define some variable ``foo`` to have
-type ``Literal[3]``, we are declaring that ``foo`` must be exactly equal
-to ``3`` and no other value.
+型 ``T`` のメンバーである値 ``v`` が与えられた場合、型 ``Literal[v]`` は ``T`` のサブタイプです。 たとえば、``Literal[3]`` は ``int`` のサブタイプです。
 
-Given some value ``v`` that is a member of type ``T``, the type ``Literal[v]``
-is a subtype of ``T``. For example, ``Literal[3]`` is a subtype of ``int``.
+親型のすべてのメソッドはリテラル型によって直接継承されます。 したがって、型 ``Literal[3]`` の変数 ``foo`` がある場合、``foo`` は ``int`` の ``__add__`` メソッドを継承するため、``foo + 5`` のような操作を行うことは安全です。 ``foo + 5`` の結果の型は ``int`` です。
 
-All methods from the parent type will be directly inherited by the
-literal type. So, if we have some variable ``foo`` of type ``Literal[3]``
-it’s safe to do things like ``foo + 5`` since ``foo`` inherits ``int``’s
-``__add__`` method. The resulting type of ``foo + 5`` is ``int``.
+この「継承」動作は、:ref:`NewTypes <newtype>` を処理する方法と同じです。
 
-This "inheriting" behavior is identical to how we
-:ref:`handle NewTypes <newtype>`.
+2 つのリテラルの同値性
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Equivalence of two Literals
-"""""""""""""""""""""""""""
-
-Two types ``Literal[v1]`` and ``Literal[v2]`` are equivalent when
-both of the following conditions are true:
+2 つの型 ``Literal[v1]`` と ``Literal[v2]`` は、次の 2 つの条件が両方とも真である場合に同値です。
 
 1. ``type(v1) == type(v2)``
 2. ``v1 == v2``
 
-For example, ``Literal[20]`` and ``Literal[0x14]`` are equivalent.
-However, ``Literal[0]`` and ``Literal[False]`` are *not* equivalent
-despite that ``0 == False`` evaluates to 'true' at runtime: ``0``
-has type ``int`` and ``False`` has type ``bool``.
+たとえば、``Literal[20]`` と ``Literal[0x14]`` は同値です。 ただし、``Literal[0]`` と ``Literal[False]`` は同値ではありません。これは、ランタイムで ``0 == False`` が 'true' と評価されるにもかかわらず、``0`` は ``int`` 型であり、``False`` は ``bool`` 型であるためです。
 
-Shortening unions of literals
-"""""""""""""""""""""""""""""
+リテラルの共用体の短縮
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Literals are parameterized with one or more values. When a Literal is
-parameterized with more than one value, it's treated as exactly equivalent
-to the union of those types. That is, ``Literal[v1, v2, v3]`` is equivalent
-to ``Literal[v1] | Literal[v2] | Literal[v3]``.
+リテラルは 1 つ以上の値でパラメータ化されます。 リテラルが複数の値でパラメータ化される場合、それはこれらの型の共用体とまったく同等に扱われます。 つまり、``Literal[v1, v2, v3]`` は ``Literal[v1] | Literal[v2] | Literal[v3]`` と同等です。
 
-This shortcut helps make writing signatures for functions that accept
-many different literals more ergonomic — for example, functions like
-``open(...)``::
+このショートカットは、多くの異なるリテラルを受け入れる関数のシグネチャを記述する際に、より使いやすくするのに役立ちます。 たとえば、``open(...)`` のような関数::
 
-   # Note: this is a simplification of the true type signature.
+   # 注: これは実際の型シグネチャの簡略化です。
    _PathType = str | bytes | int
 
    @overload
@@ -73,51 +55,41 @@ many different literals more ergonomic — for example, functions like
             mode: Literal["rb", "wb", "ab", "xb", "r+b", "w+b", "a+b", "x+b"],
             ) -> IO[bytes]: ...
 
-   # Fallback overload for when the user isn't using literal types
+   # ユーザーがリテラル型を使用していない場合のフォールバックオーバーロード
    @overload
    def open(path: _PathType, mode: str) -> IO[Any]: ...
 
-The provided values do not all have to be members of the same type.
-For example, ``Literal[42, "foo", True]`` is a legal type.
+提供される値はすべて同じ型のメンバーである必要はありません。 たとえば、``Literal[42, "foo", True]`` は合法な型です。
 
-However, Literal **must** be parameterized with at least one type.
-Types like ``Literal[]`` or ``Literal`` are illegal.
+ただし、リテラルは少なくとも 1 つの型でパラメータ化する必要があります。 ``Literal[]`` や ``Literal`` のような型は違法です。
 
+合法および違法なパラメータ化
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Legal and illegal parameterizations
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+このセクションでは、合法な ``Literal[...]`` 型を正確に構成するもの、つまりどの値がパラメータとして使用できるか、使用できないかについて説明します。
 
-This section describes what exactly constitutes a legal ``Literal[...]`` type:
-what values may and may not be used as parameters.
-
-In short, a ``Literal[...]`` type may be parameterized by one or more literal
-expressions, and nothing else.
+簡単に言えば、``Literal[...]`` 型は 1 つ以上のリテラル式でパラメータ化され、それ以外は何もできません。
 
 .. _literal-legal-parameters:
 
-Legal parameters for ``Literal`` at type check time
-"""""""""""""""""""""""""""""""""""""""""""""""""""
+型チェック時の ``Literal`` の合法なパラメータ
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-``Literal`` may be parameterized with literal ints, byte and unicode strings,
-bools, Enum values and ``None``. So for example, all of
-the following would be legal::
+``Literal`` はリテラルの整数、バイトおよびユニコード文字列、ブール値、列挙値、および ``None`` でパラメータ化できます。 したがって、次のすべてが合法です::
 
    Literal[26]
-   Literal[0x1A]  # Exactly equivalent to Literal[26]
+   Literal[0x1A]  # Literal[26] と完全に同等
    Literal[-4]
    Literal["hello world"]
    Literal[b"hello world"]
    Literal[u"hello world"]
    Literal[True]
-   Literal[Color.RED]  # Assuming Color is some enum
+   Literal[Color.RED]  # Color が何らかの列挙であると仮定
    Literal[None]
 
-**Note:** Since the type ``None`` is inhabited by just a single
-value, the types ``None`` and ``Literal[None]`` are exactly equivalent.
-Type checkers may simplify ``Literal[None]`` into just ``None``.
+**注:** 型 ``None`` は単一の値によって占有されるため、型 ``None`` と ``Literal[None]`` は完全に同等です。 型チェッカーは ``Literal[None]`` を単に ``None`` に簡略化する場合があります。
 
-``Literal`` may also be parameterized by other literal types, or type aliases
-to other literal types. For example, the following is legal::
+``Literal`` は他のリテラル型や他のリテラル型への型エイリアスでもパラメータ化できます。 たとえば、次のようにすることができます::
 
     ReadOnlyMode         = Literal["r", "r+"]
     WriteAndTruncateMode = Literal["w", "w+", "wt", "w+t"]
@@ -127,86 +99,55 @@ to other literal types. For example, the following is legal::
     AllModes = Literal[ReadOnlyMode, WriteAndTruncateMode,
                        WriteNoTruncateMode, AppendMode]
 
-This feature is again intended to help make using and reusing literal types
-more ergonomic.
+この機能は、リテラル型の使用と再利用をより使いやすくするために設計されています。
 
-**Note:** As a consequence of the above rules, type checkers are also expected
-to support types that look like the following::
+**注:** 上記のルールの結果として、型チェッカーは次のような型もサポートすることが期待されます::
 
     Literal[Literal[Literal[1, 2, 3], "foo"], 5, None]
 
-This should be exactly equivalent to the following type::
+これは次の型と完全に同等である必要があります::
 
     Literal[1, 2, 3, "foo", 5, None]
 
-...and also to the following type::
+...そして次の型とも同等です::
 
     Literal[1, 2, 3, "foo", 5] | None
 
-**Note:** String literal types like ``Literal["foo"]`` should subtype either
-bytes or unicode in the same way regular string literals do at runtime.
+**注:** ``Literal["foo"]`` のような文字列リテラル型は、通常の文字列リテラルがランタイムで行うのと同じ方法でバイトまたはユニコードをサブタイプ化する必要があります。
 
-For example, in Python 3, the type ``Literal["foo"]`` is equivalent to
-``Literal[u"foo"]``, since ``"foo"`` is equivalent to ``u"foo"`` in Python 3.
+たとえば、Python 3 では、型 ``Literal["foo"]`` は ``Literal[u"foo"]`` と同等です。これは、Python 3 では ``"foo"`` が ``u"foo"`` と同等であるためです。
 
-Similarly, in Python 2, the type ``Literal["foo"]`` is equivalent to
-``Literal[b"foo"]`` -- unless the file includes a
-``from __future__ import unicode_literals`` import, in which case it would be
-equivalent to ``Literal[u"foo"]``.
+同様に、Python 2 では、型 ``Literal["foo"]`` は ``Literal[b"foo"]`` と同等です。 ただし、ファイルに ``from __future__ import unicode_literals`` インポートが含まれている場合は、``Literal[u"foo"]`` と同等です。
 
-Illegal parameters for ``Literal`` at type check time
-"""""""""""""""""""""""""""""""""""""""""""""""""""""
+型チェック時の ``Literal`` の違法なパラメータ
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-The following parameters are intentionally disallowed by design:
+次のパラメータは設計上意図的に禁止されています。
 
-- Arbitrary expressions like ``Literal[3 + 4]`` or
-  ``Literal["foo".replace("o", "b")]``.
+- ``Literal[3 + 4]`` や ``Literal["foo".replace("o", "b")]`` のような任意の式。
 
-  - Rationale: Literal types are meant to be a
-    minimal extension to the typing ecosystem and requiring type
-    checkers to interpret potentially expressions inside types adds too
-    much complexity.
+  - 理由: リテラル型は型付けエコシステムへの最小限の拡張を意図しており、型チェッカーが型内の潜在的な式を解釈することを要求することは複雑さを増しすぎます。
 
-  - As a consequence, complex numbers like ``Literal[4 + 3j]`` and
-    ``Literal[-4 + 2j]`` are also prohibited. For consistency, literals like
-    ``Literal[4j]`` that contain just a single complex number are also
-    prohibited.
+  - この結果として、``Literal[4 + 3j]`` や ``Literal[-4 + 2j]`` のような複素数も禁止されています。 一貫性のために、単一の複素数を含む ``Literal[4j]`` のようなリテラルも禁止されています。
 
-  - The only exceptions to this rule are the unary ``-`` (minus) and unary ``+`` (plus) for ints: types
-    like ``Literal[-5]`` and ``Literal[+1]`` are *accepted*.
+  - このルールの唯一の例外は、整数に対する単項 ``-``（マイナス）および単項 ``+``（プラス）です。 ``Literal[-5]`` および ``Literal[+1]`` のような型は受け入れられます。
 
--  Tuples containing valid literal types like ``Literal[(1, "foo", "bar")]``.
-   The user could always express this type as
-   ``tuple[Literal[1], Literal["foo"], Literal["bar"]]`` instead. Also,
-   tuples are likely to be confused with the ``Literal[1, 2, 3]``
-   shortcut.
+- 有効なリテラル型を含むタプル（例: ``Literal[(1, "foo", "bar")]``）。 ユーザーはこの型を ``tuple[Literal[1], Literal["foo"], Literal["bar"]]`` として表現することができます。 また、タプルは ``Literal[1, 2, 3]`` のショートカットと混同される可能性があります。
 
--  Mutable literal data structures like dict literals, list literals, or
-   set literals: literals are always implicitly final and immutable. So,
-   ``Literal[{"a": "b", "c": "d"}]`` is illegal.
+- ミュータブルなリテラルデータ構造（例: 辞書リテラル、リストリテラル、またはセットリテラル）。 リテラルは常に暗黙的に最終的であり、変更不可能です。 したがって、``Literal[{"a": "b", "c": "d"}]`` は違法です。
 
--  Any other types: for example, ``Literal[Path]``, or
-   ``Literal[some_object_instance]`` are illegal. This includes typevars: if
-   ``T`` is a typevar,  ``Literal[T]`` is not allowed. Typevars can vary over
-   only types, never over values.
+- その他の型（例: ``Literal[Path]`` や ``Literal[some_object_instance]``）は違法です。 これには型変数が含まれます。 ``T`` が型変数である場合、``Literal[T]`` は許可されません。 型変数は値ではなく型に対してのみ変化します。
 
-The following are provisionally disallowed for simplicity. We can consider
-allowing them in the future.
+次のものは簡単のために暫定的に禁止されています。 将来的に許可することを検討できます。
 
--  Floats: e.g. ``Literal[3.14]``. Representing Literals of infinity or NaN
-   in a clean way is tricky; real-world APIs are unlikely to vary their
-   behavior based on a float parameter.
+- 浮動小数点数（例: ``Literal[3.14]``）。 無限大や NaN のリテラルをクリーンに表現することは難しく、実際の API は浮動小数点数のパラメータに基づいて動作を変えることはほとんどありません。
 
--  Any: e.g. ``Literal[Any]``. ``Any`` is a type, and ``Literal[...]`` is
-   meant to contain values only. It is also unclear what ``Literal[Any]``
-   would actually semantically mean.
+- ``Any``（例: ``Literal[Any]``）。 ``Any`` は型であり、``Literal[...]`` は値のみを含むことを意図しています。 また、``Literal[Any]`` が実際に何を意味するのかも不明です。
 
-Parameters at runtime
-"""""""""""""""""""""
+ランタイムでのパラメータ
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Although the set of parameters ``Literal[...]`` may contain at type check time
-is very small, the actual implementation of ``typing.Literal`` will not perform
-any checks at runtime. For example::
+型チェック時に ``Literal[...]`` が含むことができるパラメータのセットは非常に小さいですが、``typing.Literal`` の実際の実装はランタイムでチェックを行いません。 たとえば::
 
    def my_function(x: Literal[1 + 2]) -> int:
        return x * 3
@@ -214,131 +155,96 @@ any checks at runtime. For example::
    x: Literal = 3
    y: Literal[my_function] = my_function
 
-The type checker should reject this program: all three uses of
-``Literal`` are *invalid* according to this spec. However, Python itself
-should execute this program with no errors.
+型チェッカーはこのプログラムを拒否する必要があります。 3 つの ``Literal`` の使用はすべてこの仕様に従って無効です。 ただし、Python 自体はこのプログラムをエラーなしで実行する必要があります。
 
-This is partly to help us preserve flexibility in case we want to expand the
-scope of what ``Literal`` can be used for in the future, and partly because
-it is not possible to detect all illegal parameters at runtime to begin with.
-For example, it is impossible to distinguish between ``Literal[1 + 2]`` and
-``Literal[3]`` at runtime.
+これは、将来的に ``Literal`` の使用範囲を拡大する場合の柔軟性を保持するための一部であり、部分的にはランタイムで違法なパラメータをすべて検出することが不可能であるためです。 たとえば、ランタイムで ``Literal[1 + 2]`` と ``Literal[3]`` を区別することは不可能です。
 
-Literals, enums, and forward references
-"""""""""""""""""""""""""""""""""""""""
+リテラル、列挙、および前方参照
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-One potential ambiguity is between literal strings and forward
-references to literal enum members. For example, suppose we have the
-type ``Literal["Color.RED"]``. Does this literal type
-contain a string literal or a forward reference to some ``Color.RED``
-enum member?
+1 つの潜在的な曖昧さは、リテラル文字列とリテラル列挙メンバーへの前方参照の間にあります。 たとえば、``Literal["Color.RED"]`` 型があるとします。 このリテラル型には文字列リテラルが含まれていますか、それとも ``Color.RED`` 列挙メンバーへの前方参照ですか？
 
-In cases like these, we always assume the user meant to construct a
-literal string. If the user wants a forward reference, they must wrap
-the entire literal type in a string -- e.g. ``"Literal[Color.RED]"``.
+このような場合、常にユーザーがリテラル文字列を構築しようとしたと仮定します。 ユーザーが前方参照を望む場合、リテラル型全体を文字列でラップする必要があります。 例: ``"Literal[Color.RED]"``。
 
-Type inference
-^^^^^^^^^^^^^^
+型推論
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This section describes a few rules regarding type inference and
-literals, along with some examples.
+このセクションでは、リテラルと型推論に関するいくつかのルールと例を説明します。
 
-Backwards compatibility
-"""""""""""""""""""""""
+後方互換性
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-When type checkers add support for Literal, it's important they do so
-in a way that maximizes backwards-compatibility. Type checkers should
-ensure that code that used to type check continues to do so after support
-for Literal is added on a best-effort basis.
+型チェッカーがリテラルのサポートを追加する場合、後方互換性を最大化する方法で行うことが重要です。 型チェッカーは、リテラルのサポートが追加された後も、以前に型チェックされていたコードが引き続き型チェックされることを最善の努力で保証する必要があります。
 
-This is particularly important when performing type inference. For
-example, given the statement ``x = "blue"``, should the inferred
-type of ``x`` be ``str`` or ``Literal["blue"]``?
+これは特に型推論を行う場合に重要です。 たとえば、``x = "blue"`` という文が与えられた場合、``x`` の推論された型は ``str`` ですか、それとも ``Literal["blue"]`` ですか？
 
-One naive strategy would be to always assume expressions are intended
-to be Literal types. So, ``x`` would always have an inferred type of
-``Literal["blue"]`` in the example above. This naive strategy is almost
-certainly too disruptive -- it would cause programs like the following
-to start failing when they previously did not::
+1 つの単純な戦略は、常に式がリテラル型であると仮定することです。 したがって、上記の例では、``x`` は常に ``Literal["blue"]`` の型を持つことになります。 この単純な戦略はほぼ確実に破壊的すぎます。 以前は型チェックに合格していたプログラムが失敗する原因となります。 例::
 
-    # If a type checker infers 'var' has type Literal[3]
-    # and my_list has type List[Literal[3]]...
+    # 型チェッカーが 'var' の型を Literal[3] と推論し、
+    # my_list の型を List[Literal[3]] と推論する場合...
     var = 3
     my_list = [var]
 
-    # ...this call would be a type-error.
+    # ...この呼び出しは型エラーになります。
     my_list.append(4)
 
-Another example of when this strategy would fail is when setting fields
-in objects::
+この戦略が失敗するもう 1 つの例は、オブジェクトのフィールドを設定する場合です::
 
     class MyObject:
         def __init__(self) -> None:
-            # If a type checker infers MyObject.field has type Literal[3]...
+            # 型チェッカーが MyObject.field の型を Literal[3] と推論する場合...
             self.field = 3
 
     m = MyObject()
 
-    # ...this assignment would no longer type check
+    # ...この代入はもはや型チェックに合格しません
     m.field = 4
 
-An alternative strategy that *does* maintain compatibility in every case would
-be to always assume expressions are *not* Literal types unless they are
-explicitly annotated otherwise. A type checker using this strategy would
-always infer that ``x`` is of type ``str`` in the first example above.
+すべてのケースで互換性を維持する別の戦略は、明示的に注釈されない限り、式がリテラル型でないと常に仮定することです。 この戦略を使用する型チェッカーは、上記の最初の例では常に ``x`` が ``str`` 型であると推論します。
 
-This is not the only viable strategy: type checkers should feel free to experiment
-with more sophisticated inference techniques. No particular strategy is
-mandated, but type checkers should keep in mind the importance of backwards
-compatibility.
+これは唯一の実行可能な戦略ではありません。 型チェッカーは、より洗練された推論技術を試すことができます。 特定の戦略は義務付けられていませんが、型チェッカーは後方互換性の重要性を念頭に置く必要があります。
 
-Using non-Literals in Literal contexts
-""""""""""""""""""""""""""""""""""""""
+リテラルコンテキストでの非リテラルの使用
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Literal types follow the existing rules regarding subtyping with no additional
-special-casing. For example, programs like the following are type safe::
+リテラル型は、追加の特別なケースなしで既存のサブタイピングルールに従います。 たとえば、次のようなプログラムは型安全です::
 
    def expects_str(x: str) -> None: ...
    var: Literal["foo"] = "foo"
 
-   # Legal: Literal["foo"] is a subtype of str
+   # 合法: Literal["foo"] は str のサブタイプです
    expects_str(var)
 
-This also means non-Literal types in general are not :term:`assignable` to
-Literal types. For example::
+これにより、一般的に非リテラル型はリテラル型に :term:`assignable` ではありません。 たとえば::
 
    def expects_literal(x: Literal["foo"]) -> None: ...
 
    def runner(my_str: str) -> None:
-       # ILLEGAL: str is not assignable to Literal["foo"]
+       # 違法: str は Literal["foo"] に代入できません
        expects_literal(my_str)
 
-**Note:** If the user wants their API to support accepting both literals
-*and* the original type -- perhaps for legacy purposes -- they should
-implement a fallback overload. See :ref:`literalstring-overloads`.
+**注:** ユーザーが API がリテラルと元の型の両方を受け入れることをサポートしたい場合（おそらくレガシーの目的で）、フォールバックオーバーロードを実装する必要があります。 :ref:`literalstring-overloads` を参照してください。
 
-Interactions with other types and features
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+他の型および機能との相互作用
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This section discusses how Literal types interact with other existing types.
+このセクションでは、リテラル型が他の既存の型とどのように相互作用するかについて説明します。
 
-Intelligent indexing of structured data
-"""""""""""""""""""""""""""""""""""""""
+構造化データのインテリジェントなインデックス付け
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Literals can be used to "intelligently index" into structured types like
-tuples, NamedTuple, and classes. (Note: this is not an exhaustive list).
+リテラルは、タプル、NamedTuple、およびクラスのような構造化型に「インテリジェントにインデックス付け」するために使用できます。 （注: これは包括的なリストではありません。）
 
-For example, type checkers should infer the correct value type when
-indexing into a tuple using an int key that corresponds to a valid index::
+たとえば、型チェッカーは、整数キーを使用してタプルにインデックスを付けるときに正しい値の型を推論する必要があります。::
 
    a: Literal[0] = 0
    b: Literal[5] = 5
 
    some_tuple: tuple[int, str, List[bool]] = (3, "abc", [True, False])
-   reveal_type(some_tuple[a])   # Revealed type is 'int'
-   some_tuple[b]                # Error: 5 is not a valid index into the tuple
+   reveal_type(some_tuple[a])   # 明らかにされた型は 'int' です
+   some_tuple[b]                # エラー: 5 はタプルの有効なインデックスではありません
 
-We expect similar behavior when using functions like getattr::
+getattr のような関数を使用する場合も同様の動作が期待されます。::
 
    class Test:
        def __init__(self, param: int) -> None:
@@ -351,22 +257,18 @@ We expect similar behavior when using functions like getattr::
    c: Literal["blah"]     = "blah"
 
    t = Test()
-   reveal_type(getattr(t, a))  # Revealed type is 'int'
-   reveal_type(getattr(t, b))  # Revealed type is 'Callable[[int], str]'
-   getattr(t, c)               # Error: No attribute named 'blah' in Test
+   reveal_type(getattr(t, a))  # 明らかにされた型は 'int' です
+   reveal_type(getattr(t, b))  # 明らかにされた型は 'Callable[[int], str]' です
+   getattr(t, c)               # エラー: Test に 'blah' という名前の属性はありません
 
-**Note:** See `Interactions with Final`_ for how we can
-express the variable declarations above in a more compact manner.
+**注:** 上記の変数宣言をよりコンパクトに表現する方法については、 :ref:`literal-final-interactions` を参照してください。
 
-Interactions with overloads
-"""""""""""""""""""""""""""
+オーバーロードとの相互作用
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Literal types and overloads do not need to interact in  a special
-way: the existing rules work fine.
+リテラル型とオーバーロードは特別な方法で相互作用する必要はありません。 既存のルールで問題ありません。
 
-However, one important use case type checkers must take care to
-support is the ability to use a *fallback* when the user is not using literal
-types. For example, consider ``open``::
+ただし、型チェッカーがサポートする必要がある重要なユースケースの 1 つは、ユーザーがリテラル型を使用していない場合にフォールバックを使用する機能です。 たとえば、``open`` を考えてみましょう。::
 
    _PathType = str | bytes | int
 
@@ -379,35 +281,30 @@ types. For example, consider ``open``::
             mode: Literal["rb", "wb", "ab", "xb", "r+b", "w+b", "a+b", "x+b"],
             ) -> IO[bytes]: ...
 
-   # Fallback overload for when the user isn't using literal types
+   # ユーザーがリテラル型を使用していない場合のフォールバックオーバーロード
    @overload
    def open(path: _PathType, mode: str) -> IO[Any]: ...
 
-If we were to change the signature of ``open`` to use just the first two overloads,
-we would break any code that does not pass in a literal string expression.
-For example, code like this would be broken::
+``open`` のシグネチャを最初の 2 つのオーバーロードだけを使用するように変更すると、リテラル文字列式を渡さないコードが壊れます。 たとえば、次のようなコードが壊れます。::
 
    mode: str = pick_file_mode(...)
    with open(path, mode) as f:
-       # f should continue to be of type IO[Any] here
+       # f はここで IO[Any] 型である必要があります
 
-A little more broadly: we mandate that whenever we add literal types to
-some existing API in typeshed, we also always include a fallback overload to
-maintain backwards-compatibility.
+もう少し広く言えば、typeshed の既存の API にリテラル型を追加するたびに、後方互換性を維持するために常にフォールバックオーバーロードを含めることを義務付けます。
 
-Interactions with generics
-""""""""""""""""""""""""""
+ジェネリックとの相互作用
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Literal types are types, and can be used anywhere a type is expected.
+リテラル型は型であり、型が期待される場所ならどこでも使用できます。
 
-For example, it is legal to parameterize generic functions or
-classes using Literal types::
+たとえば、ジェネリック関数やクラスをリテラル型でパラメータ化することは合法です。::
 
    A = TypeVar('A', bound=int)
    B = TypeVar('B', bound=int)
    C = TypeVar('C', bound=int)
 
-   # A simplified definition for Matrix[row, column]
+   # Matrix[row, column] の簡略化された定義
    class Matrix(Generic[A, B]):
        def __add__(self, other: Matrix[A, B]) -> Matrix[A, B]: ...
        def __matmul__(self, other: Matrix[B, C]) -> Matrix[A, C]: ...
@@ -417,33 +314,21 @@ classes using Literal types::
    bar: Matrix[Literal[3], Literal[7]] = Matrix(...)
 
    baz = foo @ bar
-   reveal_type(baz)  # Revealed type is 'Matrix[Literal[2], Literal[7]]'
+   reveal_type(baz)  # 明らかにされた型は 'Matrix[Literal[2], Literal[7]]' です
 
-Similarly, it is legal to construct TypeVars with value restrictions
-or bounds involving Literal types::
+同様に、リテラル型を含む制限や境界を持つ型変数を構築することも合法です。::
 
    T = TypeVar('T', Literal["a"], Literal["b"], Literal["c"])
    S = TypeVar('S', bound=Literal["foo"])
 
-...although it is unclear when it would ever be useful to construct a
-TypeVar with a Literal upper bound. For example, the ``S`` TypeVar in
-the above example is essentially pointless: we can get equivalent behavior
-by using ``S = Literal["foo"]`` instead.
+...ただし、リテラルの上限を持つ型変数を構築することがいつ役立つかは不明です。 たとえば、上記の例の ``S`` 型変数は本質的に無意味です。 ``S = Literal["foo"]`` を使用することで同等の動作を得ることができます。
 
-**Note:** Literal types and generics deliberately interact in only very
-basic and limited ways. In particular, libraries that want to type check
-code containing a heavy amount of numeric or numpy-style manipulation will
-almost certainly likely find Literal types as described here to be
-insufficient for their needs.
+**注:** リテラル型とジェネリックは意図的に非常に基本的で限定的な方法でのみ相互作用します。 特に、数値操作や numpy スタイルの操作を大量に含むコードを型チェックしたいライブラリは、ここで説明するリテラル型がニーズに対して不十分であるとほぼ確実に感じるでしょう。
 
-Interactions with enums and exhaustiveness checks
-"""""""""""""""""""""""""""""""""""""""""""""""""
+列挙と網羅性チェックとの相互作用
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Type checkers should be capable of performing exhaustiveness checks when
-working with Literal types that have a closed number of variants, such as
-enums. For example, the type checker should be capable of inferring that
-the final ``else`` statement must be of type ``str``, since all three
-values of the ``Status`` enum have already been exhausted::
+型チェッカーは、列挙のような限られた数のバリアントを持つリテラル型を扱う場合に網羅性チェックを実行できる必要があります。 たとえば、型チェッカーは、``Status`` 列挙の 3 つの値がすべて使い果たされたため、最後の ``else`` 文が ``str`` 型である必要があることを推論できる必要があります。::
 
     class Status(Enum):
         SUCCESS = 0
@@ -458,35 +343,28 @@ values of the ``Status`` enum have already been exhausted::
         elif s is Status.FATAL_ERROR:
             print("Unexpected fatal error...")
         else:
-            # 's' must be of type 'str' since all other options are exhausted
+            # 's' はすべての他のオプションが使い果たされたため 'str' 型である必要があります
             print("Got custom status: " + s)
 
-Here, the ``Status`` enum could be treated as being approximately equivalent
-to ``Literal[Status.SUCCESS, Status.INVALID_DATA, Status.FATAL_ERROR]``
-and the type of ``s`` narrowed accordingly.
+ここで、``Status`` 列挙は ``Literal[Status.SUCCESS, Status.INVALID_DATA, Status.FATAL_ERROR]`` とほぼ同等と見なされ、``s`` の型がそれに応じて絞り込まれます。
 
-Interactions with narrowing
-"""""""""""""""""""""""""""
+絞り込みとの相互作用
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Type checkers may optionally perform additional analysis for both enum and
-non-enum Literal types beyond what is described in the section above.
+型チェッカーは、上記のセクションで説明されているものを超えて、列挙および非列挙リテラル型に対して追加の分析をオプションで実行する場合があります。
 
-For example, it may be useful to perform narrowing based on things like
-containment or equality checks::
+たとえば、包含や等価性チェックに基づいて絞り込みを行うことが有用な場合があります。::
 
    def parse_status(status: str) -> None:
        if status in ("MALFORMED", "ABORTED"):
-           # Type checker could narrow 'status' to type
-           # Literal["MALFORMED", "ABORTED"] here.
+           # 型チェッカーは 'status' を Literal["MALFORMED", "ABORTED"] 型に絞り込むことができます。
            return expects_bad_status(status)
 
-       # Similarly, type checker could narrow 'status' to Literal["PENDING"]
+       # 同様に、型チェッカーは 'status' を Literal["PENDING"] 型に絞り込むことができます。
        if status == "PENDING":
            expects_pending_status(status)
 
-It may also be useful to perform narrowing taking into account expressions
-involving Literal bools. For example, we can combine ``Literal[True]``,
-``Literal[False]``, and overloads to construct "custom type guards"::
+リテラルブールを含む式を考慮して絞り込みを行うことも有用です。 たとえば、``Literal[True]``、``Literal[False]``、およびオーバーロードを組み合わせて「カスタム型ガード」を構築できます。::
 
    @overload
    def is_int_like(x: int | list[int]) -> Literal[True]: ...
@@ -498,66 +376,55 @@ involving Literal bools. For example, we can combine ``Literal[True]``,
    if is_int_like(vector):
        vector.append(3)
    else:
-       vector.append("bad")   # This branch is inferred to be unreachable
+       vector.append("bad")   # このブランチは到達不可能であると推論されます
 
    scalar: int | str
    if is_int_like(scalar):
-       scalar += 3      # Type checks: type of 'scalar' is narrowed to 'int'
+       scalar += 3      # 型チェック: 'scalar' の型は 'int' に絞り込まれます
    else:
-       scalar += "foo"  # Type checks: type of 'scalar' is narrowed to 'str'
+       scalar += "foo"  # 型チェック: 'scalar' の型は 'str' に絞り込まれます
 
 .. _literal-final-interactions:
 
-Interactions with Final
-"""""""""""""""""""""""
+Final との相互作用
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-The ``Final`` qualifier can be used to declare that some variable or
-attribute cannot be reassigned::
+``Final`` 修飾子を使用して、変数や属性が再代入できないことを宣言できます。::
 
     foo: Final = 3
-    foo = 4           # Error: 'foo' is declared to be Final
+    foo = 4           # エラー: 'foo' は Final と宣言されています
 
-Note that in the example above, we know that ``foo`` will always be equal to
-exactly ``3``. A type checker can use this information to deduce that ``foo``
-is valid to use in any context that expects a ``Literal[3]``::
+上記の例では、``foo`` が常に正確に ``3`` と等しいことがわかります。 型チェッカーはこの情報を使用して、``foo`` が ``Literal[3]`` を期待するコンテキストで使用することが有効であると推論できます。::
 
     def expects_three(x: Literal[3]) -> None: ...
 
-    expects_three(foo)  # Type checks, since 'foo' is Final and equal to 3
+    expects_three(foo)  # 型チェックに合格します。'foo' は Final であり、3 と等しいためです。
 
-The ``Final`` qualifier serves as a shorthand for declaring that a variable
-is *effectively Literal*.
+``Final`` 修飾子は、変数が*実質的にリテラル*であることを宣言するための省略形として機能します。
 
-Type checkers are expected to
-support this shortcut. Specifically, given a variable or attribute assignment
-of the form ``var: Final = value`` where ``value`` is a valid parameter for
-``Literal[...]``, type checkers should understand that ``var`` may be used in
-any context that expects a ``Literal[value]``.
+型チェッカーはこのショートカットをサポートすることが期待されます。 具体的には、``var: Final = value`` の形式の変数または属性の代入があり、``value`` が ``Literal[...]`` の有効なパラメータである場合、型チェッカーは ``var`` が ``Literal[value]`` を期待するコンテキストで使用できることを理解する必要があります。
 
-Type checkers are not obligated to understand any other uses of Final. For
-example, whether or not the following program type checks is left unspecified::
+型チェッカーは、Final の他の使用法を理解する義務はありません。 たとえば、次のプログラムが型チェックに合格するかどうかは指定されていません。::
 
-    # Note: The assignment does not exactly match the form 'var: Final = value'.
+    # 注: 代入は正確に 'var: Final = value' の形式と一致しません。
     bar1: Final[int] = 3
-    expects_three(bar1)  # May or may not be accepted by type checkers
+    expects_three(bar1)  # 型チェッカーによって受け入れられる場合と受け入れられない場合があります。
 
-    # Note: "Literal[1 + 2]" is not a legal type.
+    # 注: "Literal[1 + 2]" は合法な型ではありません。
     bar2: Final = 1 + 2
-    expects_three(bar2)  # May or may not be accepted by type checkers
+    expects_three(bar2)  # 型チェッカーによって受け入れられる場合と受け入れられない場合があります。
 
 .. _`literalstring`:
 
 ``LiteralString``
------------------
+------------------------------------------------------------------------------------------
 
-(Originally specified in :pep:`675`.)
+（元々 :pep:`675` で指定されています。）
 
-Valid locations for ``LiteralString``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``LiteralString`` の有効な場所
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``LiteralString`` can be used where any other type can be used:
-
-::
+``LiteralString`` は他の型が使用できる場所で使用できます。::
 
     variable_annotation: LiteralString
 
@@ -570,83 +437,53 @@ Valid locations for ``LiteralString``
 
     T = TypeVar("T", bound=LiteralString)
 
-It cannot be nested within unions of ``Literal`` types:
+共用体の ``Literal`` 型内にネストすることはできません。::
 
-::
+    bad_union: Literal["hello", LiteralString]  # 許可されません
+    bad_nesting: Literal[LiteralString]  # 許可されません
 
-    bad_union: Literal["hello", LiteralString]  # Not OK
-    bad_nesting: Literal[LiteralString]  # Not OK
+型推論
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+``LiteralString`` の推論
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Type inference
-^^^^^^^^^^^^^^
+任意のリテラル文字列型は ``LiteralString`` に代入できます。 たとえば、``x: LiteralString = "foo"`` は有効です。なぜなら、``"foo"`` は ``Literal["foo"]`` 型と推論されるためです。
 
-Inferring ``LiteralString``
-"""""""""""""""""""""""""""
+次の場合にも ``LiteralString`` を推論します。
 
-Any literal string type is assignable to ``LiteralString``. For
-example, ``x: LiteralString = "foo"`` is valid because ``"foo"`` is
-inferred to be of type ``Literal["foo"]``.
++ 加算: ``x`` と ``y`` の両方の型が ``LiteralString`` に代入できる場合、``x + y`` の型は ``LiteralString`` です。
 
-We also infer ``LiteralString`` in the
-following cases:
++ 結合: ``sep`` の型が ``LiteralString`` に代入でき、``xs`` の型が ``Iterable[LiteralString]`` に代入できる場合、``sep.join(xs)`` の型は ``LiteralString`` です。
 
-+ Addition: ``x + y`` is of type ``LiteralString`` if the types of both ``x``
-  and ``y`` are assignable to ``LiteralString``.
++ インプレース加算: ``s`` の型が ``LiteralString`` であり、``x`` の型が ``LiteralString`` に代入できる場合、``s += x`` は ``s`` の型を ``LiteralString`` として保持します。
 
-+ Joining: ``sep.join(xs)`` is of type ``LiteralString`` if ``sep``'s
-  type is assignable to ``LiteralString`` and ``xs``'s type is
-  assignable to ``Iterable[LiteralString]``.
++ 文字列フォーマット: f 文字列の型は、その構成要素の式がリテラル文字列である場合にのみ ``LiteralString`` です。 ``s.format(...)`` は、``s`` と引数の型が ``LiteralString`` に代入できる場合にのみ ``LiteralString`` に代入できます。
 
-+ In-place addition: If ``s`` has type ``LiteralString`` and ``x`` has a type
-  assignable to ``LiteralString``, then ``s += x`` preserves ``s``'s type as
-  ``LiteralString``.
+他のすべての場合、構成される値の 1 つ以上が非リテラル型 ``str`` を持つ場合、型の構成は ``str`` 型を持ちます。 たとえば、``s`` の型が ``str`` である場合、``"hello" + s`` の型は ``str`` です。 これは型チェッカーの既存の動作と一致します。
 
-+ String formatting: An f-string has type ``LiteralString`` if and only if its
-  constituent expressions are literal strings. ``s.format(...)`` is assignable
-  to ``LiteralString`` if and only if ``s`` and the arguments have types
-  assignable to ``LiteralString``.
+``LiteralString`` は ``str`` 型に代入できます。 それは ``str`` からすべてのメソッドを継承します。 したがって、``LiteralString`` 型の変数 ``s`` がある場合、``s.startswith("hello")`` と書くことは安全です。
 
-In all other cases, if one or more of the composed values has a
-non-literal type ``str``, the composition of types will have type
-``str``. For example, if ``s`` has type ``str``, then ``"hello" + s``
-has type ``str``. This matches the pre-existing behavior of type
-checkers.
-
-``LiteralString`` is assignable to the type ``str``. It inherits all
-methods from ``str``. So, if we have a variable ``s`` of type
-``LiteralString``, it is safe to write ``s.startswith("hello")``.
-
-Some type checkers refine the type of a string when doing an equality
-check:
-
-::
+一部の型チェッカーは、等価性チェックを行うときに文字列の型を絞り込みます。::
 
     def foo(s: str) -> None:
         if s == "bar":
             reveal_type(s)  # => Literal["bar"]
 
-Such a refined type in the if-block is also assignable to
-``LiteralString`` because its type is ``Literal["bar"]``.
+if ブロック内でのこのような絞り込まれた型も ``LiteralString`` に代入できます。なぜなら、その型は ``Literal["bar"]`` だからです。
 
+例
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Examples
-""""""""
-
-See the examples below to help clarify the above rules:
-
-::
-
+以下の例を参照して、上記のルールを明確にしてください。::
 
     literal_string: LiteralString
     s: str = literal_string  # OK
 
-    literal_string: LiteralString = s  # Error: Expected LiteralString, got str.
+    literal_string: LiteralString = s  # エラー: LiteralString が期待されましたが、str が得られました。
     literal_string: LiteralString = "hello"  # OK
 
-Addition of literal strings:
-
-::
+リテラル文字列の加算::
 
     def expect_literal_string(s: LiteralString) -> None: ...
 
@@ -657,11 +494,9 @@ Addition of literal strings:
     expect_literal_string(literal_string + literal_string2)  # OK
 
     plain_string: str
-    expect_literal_string(literal_string + plain_string)  # Not OK.
+    expect_literal_string(literal_string + plain_string)  # 許可されません。
 
-Join using literal strings:
-
-::
+リテラル文字列を使用した結合::
 
     expect_literal_string(",".join(["foo", "bar"]))  # OK
     expect_literal_string(literal_string.join(["foo", "bar"]))  # OK
@@ -670,23 +505,19 @@ Join using literal strings:
     xs: List[LiteralString]
     expect_literal_string(literal_string.join(xs)) # OK
     expect_literal_string(plain_string.join([literal_string, literal_string2]))
-    # Not OK because the separator has type 'str'.
+    # 区切り文字の型が 'str' であるため許可されません。
 
-In-place addition using literal strings:
-
-::
+リテラル文字列を使用したインプレース加算::
 
     literal_string += "foo"  # OK
     literal_string += literal_string2  # OK
-    literal_string += plain_string # Not OK
+    literal_string += plain_string # 許可されません
 
-Format strings using literal strings:
-
-::
+リテラル文字列を使用したフォーマット文字列::
 
     literal_name: LiteralString
     expect_literal_string(f"hello {literal_name}")
-    # OK because it is composed from literal strings.
+    # それがリテラル文字列から構成されているため OK です。
 
     expect_literal_string("hello {}".format(literal_name))  # OK
 
@@ -694,25 +525,20 @@ Format strings using literal strings:
 
     username: str
     expect_literal_string(f"hello {username}")
-    # NOT OK. The format-string is constructed from 'username',
-    # which has type 'str'.
+    # 許可されません。フォーマット文字列は 'username' から構成されており、
+    # その型は 'str' です。
 
-    expect_literal_string("hello {}".format(username))  # Not OK
+    expect_literal_string("hello {}".format(username))  # 許可されません
 
-Other literal types, such as literal integers, are not assignable to ``LiteralString``:
-
-::
+リテラル整数などの他のリテラル型は ``LiteralString`` に代入できません。::
 
     some_int: int
-    expect_literal_string(some_int)  # Error: Expected LiteralString, got int.
+    expect_literal_string(some_int)  # エラー: LiteralString が期待されましたが、int が得られました。
 
     literal_one: Literal[1] = 1
-    expect_literal_string(literal_one)  # Error: Expected LiteralString, got Literal[1].
+    expect_literal_string(literal_one)  # エラー: LiteralString が期待されましたが、Literal[1] が得られました。
 
-
-We can call functions on literal strings:
-
-::
+リテラル文字列に関数を呼び出すことができます。::
 
     def add_limit(query: LiteralString) -> LiteralString:
         return query + " LIMIT = 1"
@@ -720,9 +546,7 @@ We can call functions on literal strings:
     def my_query(query: LiteralString, user_id: str) -> None:
         sql_connection().execute(add_limit(query), (user_id,))  # OK
 
-Conditional statements and expressions work as expected:
-
-::
+条件文と式は期待通りに動作します。::
 
     def return_literal_string() -> LiteralString:
         return "foo" if condition1() else "bar"  # OK
@@ -738,13 +562,10 @@ Conditional statements and expressions work as expected:
 
         return result  # OK
 
+型変数とジェネリックとの相互作用
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Interaction with TypeVars and Generics
-""""""""""""""""""""""""""""""""""""""
-
-TypeVars can be bound to ``LiteralString``:
-
-::
+型変数は ``LiteralString`` にバインドできます。::
 
     from typing import Literal, LiteralString, TypeVar
 
@@ -763,12 +584,9 @@ TypeVars can be bound to ``LiteralString``:
 
     s_error: str
     literal_identity(s_error)
-    # Error: Expected TLiteral (bound to LiteralString), got str.
+    # エラー: LiteralString にバインドされた TLiteral が期待されましたが、str が得られました。
 
-
-``LiteralString`` can be used as a type argument for generic classes:
-
-::
+``LiteralString`` はジェネリッククラスの型引数として使用できます。::
 
     class Container(Generic[T]):
         def __init__(self, value: T) -> None:
@@ -778,26 +596,18 @@ TypeVars can be bound to ``LiteralString``:
     x: Container[LiteralString] = Container(literal_string)  # OK
 
     s: str
-    x_error: Container[LiteralString] = Container(s)  # Not OK
+    x_error: Container[LiteralString] = Container(s)  # 許可されません
 
-Standard containers like ``List`` work as expected:
-
-::
+``List`` のような標準コンテナは期待通りに動作します。::
 
     xs: List[LiteralString] = ["foo", "bar", "baz"]
 
-
 .. _literalstring-overloads:
 
-Interactions with Overloads
-"""""""""""""""""""""""""""
+オーバーロードとの相互作用
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Literal strings and overloads do not need to interact in a special
-way: the existing rules work fine. ``LiteralString`` can be used as a
-fallback overload where a specific ``Literal["foo"]`` type does not
-match:
-
-::
+リテラル文字列とオーバーロードは特別な方法で相互作用する必要はありません。 既存のルールで問題ありません。 ``LiteralString`` は、特定の ``Literal["foo"]`` 型が一致しない場合のフォールバックオーバーロードとして使用できます。::
 
     @overload
     def foo(x: Literal["foo"]) -> int: ...
@@ -806,7 +616,7 @@ match:
     @overload
     def foo(x: str) -> str: ...
 
-    x1: int = foo("foo")  # First overload.
-    x2: bool = foo("bar")  # Second overload.
+    x1: int = foo("foo")  # 最初のオーバーロード。
+    x2: bool = foo("bar")  # 2 番目のオーバーロード。
     s: str
-    x3: str = foo(s)  # Third overload.
+    x3: str = foo(s)  # 3 番目のオーバーロード。

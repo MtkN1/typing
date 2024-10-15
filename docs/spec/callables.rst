@@ -1,123 +1,82 @@
 .. _`callables`:
 
-Callables
-=========
+呼び出し可能
+==========================================================================================
 
-Terminology
------------
+用語
+------------------------------------------------------------------------------------------
 
-In this section, and throughout this specification, the term  "parameter"
-refers to a named symbol associated with a function that receives the value of
-an argument (or multiple arguments) passed to the function. The term
-"argument" refers to a value passed to a function when it is called.
+このセクションおよびこの仕様全体で、「パラメーター」という用語は、関数に渡される引数（または複数の引数）の値を受け取る関数に関連付けられた名前付きシンボルを指します。「引数」という用語は、関数が呼び出されたときに関数に渡される値を指します。
 
-Python supports five kinds of parameters: positional-only, keyword-only,
-standard (positional or keyword), variadic positional (``*args``), and
-variadic keyword (``**kwargs``). Positional-only parameters can accept only
-positional arguments, and keyword-only parameters can accept only keyword
-arguments. Standard parameters can accept either positional or keyword
-arguments. Parameters of the form ``*args`` and ``**kwargs`` are variadic
-and accept zero or more positional or keyword arguments, respectively.
+Python は 5 種類のパラメーターをサポートしています：位置のみ、キーワードのみ、標準（位置またはキーワード）、可変位置（``*args``）、および可変キーワード（``**kwargs``）。位置のみのパラメーターは位置引数のみを受け入れることができ、キーワードのみのパラメーターはキーワード引数のみを受け入れることができます。標準パラメーターは位置引数またはキーワード引数のいずれかを受け入れることができます。``*args`` および ``**kwargs`` 形式のパラメーターは可変であり、それぞれゼロまたは複数の位置引数またはキーワード引数を受け入れます。
 
-In the example below, ``a`` is a positional-only parameter, ``b`` is
-a standard (positional or keyword) parameter, ``c`` is a keyword-only parameter,
-``args`` is a variadic parameter that accepts additional positional arguments,
-and ``kwargs`` is a variadic parameter that accepts additional keyword
-arguments::
+以下の例では、``a`` は位置のみのパラメーター、``b`` は標準（位置またはキーワード）パラメーター、``c`` はキーワードのみのパラメーター、``args`` は追加の位置引数を受け入れる可変パラメーター、``kwargs`` は追加のキーワード引数を受け入れる可変パラメーターです::
 
     def func(a: str, /, b, *args, c=0, **kwargs) -> None:
         ...
 
-A function's "signature" refers to its list of parameters (including
-the name, kind, optional declared type, and whether it has a default
-argument value) plus its return type. The signature of the function above is
-``(a: str, /, b, *args, c=..., **kwargs) -> None``. Note that the default
-argument value for parameter ``c`` is denoted as ``...`` here because the
-presence of a default value is considered part of the signature, but the
-specific value is not.
+関数の「シグネチャ」は、パラメーターのリスト（名前、種類、オプションの宣言された型、およびデフォルトの引数値があるかどうかを含む）とその戻り値の型を指します。上記の関数のシグネチャは ``(a: str, /, b, *args, c=..., **kwargs) -> None`` です。ここで、パラメーター ``c`` のデフォルト引数値は ``...`` として示されています。これは、デフォルト値の存在がシグネチャの一部と見なされますが、特定の値は含まれないためです。
 
-The term "input signature" is used to refer to only the parameters of a function.
-In the example above, the input signature is ``(a: str, /, b, *args, c=..., **kwargs)``.
+「入力シグネチャ」という用語は、関数のパラメーターのみを指すために使用されます。上記の例では、入力シグネチャは ``(a: str, /, b, *args, c=..., **kwargs)`` です。
 
-Positional-only parameters
---------------------------
+位置のみのパラメーター
+------------------------------------------------------------------------------------------
 
-Within a function signature, positional-only parameters are separated from
-non-positional-only parameters by a single forward slash ('/'). This
-forward slash does not represent a parameter, but rather a delimiter. In this
-example, ``a`` is a positional-only parameter and ``b`` is a standard
-(positional or keyword) parameter::
+関数シグネチャ内では、位置のみのパラメーターは非位置のみのパラメーターからスラッシュ（'/'）で区切られます。このスラッシュはパラメーターを表すのではなく、区切り文字として機能します。この例では、``a`` は位置のみのパラメーターであり、``b`` は標準（位置またはキーワード）パラメーターです::
 
     def func(a: int, /, b: int) -> None:
         ...
 
     func(1, 2)  # OK
     func(1, b=2)  # OK
-    func(a=1, b=2)  # Error
+    func(a=1, b=2)  # エラー
 
-Support for the ``/`` delimiter was introduced in Python 3.8 (:pep:`570`).
-For compatibility with earlier versions of Python, the type system also
-supports specifying positional-only parameters using a :ref:`double leading
-underscore <pos-only-double-underscore>`.
+``/`` 区切り文字のサポートは Python 3.8 で導入されました (:pep:`570`)。Python の以前のバージョンとの互換性のために、タイプシステムは :ref:`二重の先頭アンダースコア <pos-only-double-underscore>` を使用して位置のみのパラメーターを指定することもサポートしています。
 
-Default argument values
------------------------
+デフォルト引数値
+------------------------------------------------------------------------------------------
 
-In certain cases, it may be desirable to omit the default argument value for
-a parameter. Examples include function definitions in stub files or methods
-within a protocol or abstract base class. In such cases, the default value
-may be given as an ellipsis. For example::
+特定のケースでは、パラメーターのデフォルト引数値を省略することが望ましい場合があります。例としては、スタブファイル内の関数定義やプロトコルまたは抽象基底クラス内のメソッドなどがあります。そのような場合、デフォルト値は省略記号として与えることができます。例えば::
 
   def func(x: AnyStr, y: AnyStr = ...) -> AnyStr: ...
 
-If a non-ellipsis default value is present and its type can be statically
-evaluated, a type checker should verify that this type is :term:`assignable` to
-the declared parameter's type::
+非省略記号のデフォルト値が存在し、その型が静的に評価できる場合、型チェッカーはこの型が宣言されたパラメーターの型に :term:`割り当て可能 <assignable>` であることを確認する必要があります::
 
     def func(x: int = 0): ...  # OK
     def func(x: int | None = None): ...  # OK
-    def func(x: int = 0.0): ...  # Error
-    def func(x: int = None): ...  # Error
+    def func(x: int = 0.0): ...  # エラー
+    def func(x: int = None): ...  # エラー
 
 .. _`annotating-args-kwargs`:
 
-Annotating ``*args`` and ``**kwargs``
--------------------------------------
+``*args`` および ``**kwargs`` の注釈
+------------------------------------------------------------------------------------------
 
-At runtime, the type of a variadic positional parameter (``*args``) is a
-``tuple``, and the type of a variadic keyword parameter (``**kwargs``) is a
-``dict``. However, when annotating these parameters, the type annotation
-refers to the type of items within the ``tuple`` or ``dict`` (unless
-``Unpack`` is used).
+ランタイム時には、可変位置パラメーター（``*args``）の型は ``tuple`` であり、可変キーワードパラメーター（``**kwargs``）の型は ``dict`` です。ただし、これらのパラメーターに注釈を付ける場合、型注釈は ``tuple`` または ``dict`` 内の項目の型を指します（``Unpack`` が使用されない限り）。
 
-Therefore, the definition::
+したがって、次の定義は::
 
   def func(*args: str, **kwargs: int): ...
 
-means that the function accepts an arbitrary number of positional arguments
-of type ``str`` and an arbitrary number of keyword arguments of type ``int``.
-For example, all of the following represent function calls with valid
-arguments::
+この関数は任意の数の型 ``str`` の位置引数と任意の数の型 ``int`` のキーワード引数を受け入れることを意味します。例えば、次のすべては有効な引数を持つ関数呼び出しを表します::
 
   func('a', 'b', 'c')
   func(x=1, y=2)
   func('', z=0)
 
-In the body of function ``func``, the type of parameter ``args`` is
-``tuple[str, ...]``, and the type of parameter ``kwargs`` is ``dict[str, int]``.
+関数 ``func`` の本体では、パラメーター ``args`` の型は ``tuple[str, ...]`` であり、パラメーター ``kwargs`` の型は ``dict[str, int]`` です。
 
 .. _unpack-kwargs:
 
-``Unpack`` for keyword arguments
---------------------------------
+キーワード引数のための ``Unpack``
+------------------------------------------------------------------------------------------
 
-``typing.Unpack`` has two use cases in the type system:
+``typing.Unpack`` にはタイプシステムで 2 つの使用例があります：
 
-* As introduced by :pep:`646`, a backward-compatible form for certain operations
-  involving variadic generics. See the section on ``TypeVarTuple`` for details.
-* As introduced by :pep:`692`, a way to annotate the ``**kwargs`` of a function.
+* :pep:`646` によって導入された、可変ジェネリックを含む特定の操作の後方互換形式。詳細は ``TypeVarTuple`` のセクションを参照してください。
+* :pep:`692` によって導入された、関数の ``**kwargs`` を注釈する方法。
 
-This second usage is described in this section. The following example::
+この第 2 の使用法はこのセクションで説明されています。次の例は::
 
     from typing import TypedDict, Unpack
 
@@ -127,90 +86,64 @@ This second usage is described in this section. The following example::
 
     def foo(**kwargs: Unpack[Movie]) -> None: ...
 
-means that the ``**kwargs`` comprise two keyword arguments specified by
-``Movie`` (i.e. a ``name`` keyword of type ``str`` and a ``year`` keyword of
-type ``int``). This indicates that the function should be called as follows::
+この ``**kwargs`` が ``Movie`` によって指定された 2 つのキーワード引数（すなわち、型 ``str`` の ``name`` キーワードと型 ``int`` の ``year`` キーワード）で構成されていることを意味します。これは関数が次のように呼び出されるべきであることを示しています::
 
     kwargs: Movie = {"name": "Life of Brian", "year": 1979}
 
     foo(**kwargs)                               # OK!
     foo(name="The Meaning of Life", year=1983)  # OK!
 
-When ``Unpack`` is used, type checkers treat ``kwargs`` inside the
-function body as a ``TypedDict``::
+``Unpack`` が使用される場合、型チェッカーは関数本体内の ``kwargs`` を ``TypedDict`` として扱います::
 
     def foo(**kwargs: Unpack[Movie]) -> None:
         assert_type(kwargs, Movie)  # OK!
 
 
-Function calls with standard dictionaries
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+標準辞書を使用した関数呼び出し
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Passing a dictionary of type ``dict[str, object]`` as a ``**kwargs`` argument
-to a function that has ``**kwargs`` annotated with ``Unpack`` must generate a
-type checker error. On the other hand, the behavior for functions using
-standard, untyped dictionaries can depend on the type checker. For example::
+関数に ``**kwargs`` 引数として型 ``dict[str, object]`` の辞書を渡す場合、関数の ``**kwargs`` が ``Unpack`` で注釈されている場合、型チェッカーエラーを生成する必要があります。一方、標準の型指定されていない辞書を使用する関数の動作は型チェッカーによって異なる場合があります。例えば::
 
     def func(**kwargs: Unpack[Movie]) -> None: ...
 
     movie: dict[str, object] = {"name": "Life of Brian", "year": 1979}
-    func(**movie)  # WRONG! Movie is of type dict[str, object]
+    func(**movie)  # 間違い! Movie は型 dict[str, object] です
 
     typed_movie: Movie = {"name": "The Meaning of Life", "year": 1983}
     func(**typed_movie)  # OK!
 
     another_movie = {"name": "Life of Brian", "year": 1979}
-    func(**another_movie)  # Depends on the type checker.
+    func(**another_movie)  # 型チェッカーによります。
 
-Keyword collisions
-^^^^^^^^^^^^^^^^^^
+キーワードの衝突
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A ``TypedDict`` that is used to type ``**kwargs`` could potentially contain
-keys that are already defined in the function's signature. If the duplicate
-name is a standard parameter, an error should be reported by type checkers.
-If the duplicate name is a positional-only parameter, no errors should be
-generated. For example::
+``TypedDict`` を使用して ``**kwargs`` を型付けする場合、その ``TypedDict`` が関数のシグネチャですでに定義されているキーを含む可能性があります。重複した名前が標準パラメーターである場合、型チェッカーによってエラーが報告されるべきです。重複した名前が位置のみのパラメーターである場合、エラーは生成されるべきではありません。例えば::
 
-    def foo(name, **kwargs: Unpack[Movie]) -> None: ...     # WRONG! "name" will
-                                                            # always bind to the
-                                                            # first parameter.
+    def foo(name, **kwargs: Unpack[Movie]) -> None: ...     # 間違い! "name" は常に最初のパラメーターにバインドされます。
 
-    def foo(name, /, **kwargs: Unpack[Movie]) -> None: ...  # OK! "name" is a
-                                                            # positional-only parameter,
-                                                            # so **kwargs can contain
-                                                            # a "name" keyword.
+    def foo(name, /, **kwargs: Unpack[Movie]) -> None: ...  # OK! "name" は位置のみのパラメーターであるため、**kwargs は "name" キーワードを含むことができます。
 
-Required and non-required keys
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+必須および非必須のキー
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default all keys in a ``TypedDict`` are required. This behavior can be
-overridden by setting the dictionary's ``total`` parameter as ``False``.
-Moreover, :pep:`655` introduced new type qualifiers - ``typing.Required`` and
-``typing.NotRequired`` - that enable specifying whether a particular key is
-required or not::
+デフォルトでは、``TypedDict`` 内のすべてのキーは必須です。この動作は辞書の ``total`` パラメーターを ``False`` に設定することで上書きできます。さらに、:pep:`655` は新しい型修飾子 - ``typing.Required`` および ``typing.NotRequired`` - を導入し、特定のキーが必須かどうかを指定できるようにしました::
 
     class Movie(TypedDict):
         title: str
         year: NotRequired[int]
 
-When using a ``TypedDict`` to type ``**kwargs`` all of the required and
-non-required keys should correspond to required and non-required function
-keyword parameters. Therefore, if a required key is not supported by the
-caller, then an error must be reported by type checkers.
+``TypedDict`` を使用して ``**kwargs`` を型付けする場合、すべての必須および非必須のキーは、必須および非必須の関数キーワードパラメーターに対応する必要があります。したがって、必須のキーが呼び出し元でサポートされていない場合、型チェッカーによってエラーが報告されるべきです。
 
-Assignment
-^^^^^^^^^^
+割り当て
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Assignments of a function typed with ``**kwargs: Unpack[Movie]`` and another
-callable type should pass type checking only for the scenarios described below.
+``**kwargs: Unpack[Movie]`` で型付けされた関数の割り当てと別の呼び出し可能な型の割り当ては、以下に記載されたシナリオに対してのみ型チェックを通過するべきです。
 
-Source and destination contain ``**kwargs``
-"""""""""""""""""""""""""""""""""""""""""""
+ソースと宛先の両方が ``**kwargs`` を含む
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Both destination and source functions have a ``**kwargs: Unpack[TypedDict]``
-parameter and the destination function's ``TypedDict`` is :term:`assignable` to
-the source function's ``TypedDict`` and the rest of the parameters are
-assignable::
+宛先関数とソース関数の両方が ``**kwargs: Unpack[TypedDict]`` パラメーターを持ち、宛先関数の ``TypedDict`` がソース関数の ``TypedDict`` に :term:`割り当て可能 <assignable>` であり、残りのパラメーターが割り当て可能である場合::
 
     class Animal(TypedDict):
         name: str
@@ -221,24 +154,16 @@ assignable::
     def accept_animal(**kwargs: Unpack[Animal]): ...
     def accept_dog(**kwargs: Unpack[Dog]): ...
 
-    accept_dog = accept_animal  # OK! Expression of type Dog can be
-                                # assigned to a variable of type Animal.
+    accept_dog = accept_animal  # OK! Dog 型の式を Animal 型の変数に割り当てることができます。
 
-    accept_animal = accept_dog  # WRONG! Expression of type Animal
-                                # cannot be assigned to a variable of type Dog.
+    accept_animal = accept_dog  # 間違い! Animal 型の式を Dog 型の変数に割り当てることはできません。
 
 .. _PEP 692 assignment dest no kwargs:
 
-Source contains ``**kwargs`` and destination doesn't
-""""""""""""""""""""""""""""""""""""""""""""""""""""
+ソースが ``**kwargs`` を含み、宛先が含まない
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-The destination callable doesn't contain ``**kwargs``, the source callable
-contains ``**kwargs: Unpack[TypedDict]`` and the destination function's keyword
-arguments are :term:`assignable` to the corresponding keys in source function's
-``TypedDict``. Moreover, not required keys should correspond to optional
-function arguments, whereas required keys should correspond to required
-function arguments. Again, the rest of the parameters have to be assignable.
-Continuing the previous example::
+宛先の呼び出し可能な関数が ``**kwargs`` を含まず、ソースの呼び出し可能な関数が ``**kwargs: Unpack[TypedDict]`` を含み、宛先関数のキーワード引数がソース関数の ``TypedDict`` の対応するキーに :term:`割り当て可能 <assignable>` である場合。さらに、必須ではないキーはオプションの関数引数に対応し、必須キーは必須の関数引数に対応する必要があります。再び、残りのパラメーターは割り当て可能でなければなりません。前の例を続けます::
 
     class Example(TypedDict):
         animal: Animal
@@ -250,9 +175,7 @@ Continuing the previous example::
 
     dest = src  # OK!
 
-It is worth pointing out that the destination function's parameters that are to
-be assignable to the keys and values from the ``TypedDict`` must be keyword
-only::
+宛先関数のパラメーターが ``TypedDict`` のキーと値に割り当て可能である必要があるため、これらのパラメーターはキーワードのみでなければなりません::
 
     def dest(dog: Dog, string: str, number: int = ...): ...
 
@@ -260,17 +183,10 @@ only::
 
     dest(dog, "some string")  # OK!
 
-    dest = src                # Type checker error!
-    dest(dog, "some string")  # The same call fails at
-                              # runtime now because 'src' expects
-                              # keyword arguments.
+    dest = src                # 型チェッカーエラー!
+    dest(dog, "some string")  # 同じ呼び出しがランタイムで失敗します。src はキーワード引数を期待しているためです。
 
-The reverse situation where the destination callable contains
-``**kwargs: Unpack[TypedDict]`` and the source callable doesn't contain
-``**kwargs`` should be disallowed. This is because, we cannot be sure that
-additional keyword arguments are not being passed in when an instance of a
-subclass had been assigned to a variable with a base class type and then
-unpacked in the destination callable invocation::
+宛先の呼び出し可能な関数が ``**kwargs: Unpack[TypedDict]`` を含み、ソースの呼び出し可能な関数が ``**kwargs`` を含まない場合は許可されるべきではありません。これは、追加のキーワード引数が渡されていないことを確認できないためです。サブクラスのインスタンスが基本クラス型の変数に割り当てられ、その後、宛先の呼び出し可能な関数の呼び出しで展開される場合::
 
     def dest(**kwargs: Unpack[Animal]): ...
     def src(name: str): ...
@@ -278,30 +194,25 @@ unpacked in the destination callable invocation::
     dog: Dog = {"name": "Daisy", "breed": "Labrador"}
     animal: Animal = dog
 
-    dest = src      # WRONG!
-    dest(**animal)  # Fails at runtime.
+    dest = src      # 間違い!
+    dest(**animal)  # ランタイムで失敗します。
 
-A similar situation can happen even without inheritance as :term:`assignability
-<assignable>` between ``TypedDict``\s is :term:`structural`.
+同様の状況は、継承なしでも発生する可能性があります。``TypedDict`` 間の :term:`割り当て可能性 <assignable>` は :term:`構造的 <structural>` であるためです。
 
-Source contains untyped ``**kwargs``
-""""""""""""""""""""""""""""""""""""
+ソースが型指定されていない ``**kwargs`` を含む
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-The destination callable contains ``**kwargs: Unpack[TypedDict]`` and the
-source callable contains untyped ``**kwargs``::
+宛先の呼び出し可能な関数が ``**kwargs: Unpack[TypedDict]`` を含み、ソースの呼び出し可能な関数が型指定されていない ``**kwargs`` を含む場合::
 
     def src(**kwargs): ...
     def dest(**kwargs: Unpack[Movie]): ...
 
     dest = src  # OK!
 
-Source contains traditionally typed ``**kwargs: T``
-"""""""""""""""""""""""""""""""""""""""""""""""""""
+ソースが従来の方法で型指定された ``**kwargs: T`` を含む
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-The destination callable contains ``**kwargs: Unpack[TypedDict]``, the source
-callable contains traditionally typed ``**kwargs: T`` and each of the
-destination function ``TypedDict``'s fields is :term:`assignable` to a variable
-of type ``T``::
+宛先の呼び出し可能な関数が ``**kwargs: Unpack[TypedDict]`` を含み、ソースの呼び出し可能な関数が従来の方法で型指定された ``**kwargs: T`` を含み、宛先関数の ``TypedDict`` の各フィールドが型 ``T`` の変数に :term:`割り当て可能 <assignable>` である場合::
 
     class Vehicle:
         ...
@@ -321,21 +232,14 @@ of type ``T``::
 
     dest = src  # OK!
 
-On the other hand, if the destination callable contains either untyped or
-traditionally typed ``**kwargs: T`` and the source callable is typed using
-``**kwargs: Unpack[TypedDict]`` then an error should be generated, because
-traditionally typed ``**kwargs`` aren't checked for keyword names.
+一方、宛先の呼び出し可能な関数が型指定されていないまたは従来の方法で型指定された ``**kwargs: T`` を含み、ソースの呼び出し可能な関数が ``**kwargs: Unpack[TypedDict]`` で型指定されている場合、エラーが生成されるべきです。これは、従来の方法で型指定された ``**kwargs`` がキーワード名のチェックを行わないためです。
 
-To summarize, function parameters should behave contravariantly and function
-return types should behave covariantly.
+要約すると、関数パラメーターは逆変の動作をし、関数の戻り値の型は共変の動作をするべきです。
 
-Passing kwargs inside a function to another function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+関数内で他の関数に kwargs を渡す
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:ref:`A previous point <PEP 692 assignment dest no kwargs>`
-mentions the problem of possibly passing additional keyword arguments by
-assigning a subclass instance to a variable that has a base class type. Let's
-consider the following example::
+:ref:`前のポイント <PEP 692 assignment dest no kwargs>` は、サブクラスのインスタンスを基本クラス型の変数に割り当て、その後、宛先の呼び出し可能な関数の呼び出しで展開される場合、追加のキーワード引数を渡す可能性の問題に言及しています。次の例を考えてみましょう::
 
     class Animal(TypedDict):
         name: str
@@ -360,52 +264,35 @@ consider the following example::
     def spam(**kwargs: Unpack[Animal]):
         baz(kwargs)
 
-    foo(**animal)   # OK! foo only expects and uses keywords of 'Animal'.
+    foo(**animal)   # OK! foo は 'Animal' のキーワードのみを期待し、使用します。
 
-    bar(**animal)   # WRONG! This will fail at runtime because 'breed' keyword
-                    # will be passed to 'takes_name' as well.
+    bar(**animal)   # 間違い! これはランタイムで失敗します。'breed' キーワードが 'takes_name' にも渡されるためです。
 
-    spam(**animal)  # WRONG! Again, 'breed' keyword will be eventually passed
-                    # to 'takes_name'.
+    spam(**animal)  # 間違い! 再び、'breed' キーワードが最終的に 'takes_name' に渡されます。
 
-In the example above, the call to ``foo`` will not cause any issues at
-runtime. Even though ``foo`` expects ``kwargs`` of type ``Animal`` it doesn't
-matter if it receives additional arguments because it only reads and uses what
-it needs completely ignoring any additional values.
+上記の例では、``foo`` への呼び出しはランタイムで問題を引き起こしません。たとえ ``foo`` が ``Animal`` 型の ``kwargs`` を期待していても、追加の引数を受け取っても問題ありません。必要なものだけを読み取り、使用し、追加の値を完全に無視します。
 
-The calls to ``bar`` and ``spam`` will fail because an unexpected keyword
-argument will be passed to the ``takes_name`` function.
+``bar`` および ``spam`` への呼び出しは失敗します。予期しないキーワード引数が ``takes_name`` 関数に渡されるためです。
 
-Therefore, ``kwargs`` hinted with an unpacked ``TypedDict`` can only be passed
-to another function if the function to which unpacked kwargs are being passed
-to has ``**kwargs`` in its signature as well, because then additional keywords
-would not cause errors at runtime during function invocation. Otherwise, the
-type checker should generate an error.
+したがって、アンパックされた ``TypedDict`` でヒントされた ``kwargs`` は、アンパックされたキーワード引数が関数のシグネチャにも含まれている場合にのみ他の関数に渡すことができます。そうでない場合、型チェッカーはエラーを生成するべきです。
 
-In cases similar to the ``bar`` function above the problem could be worked
-around by explicitly dereferencing desired fields and using them as arguments
-to perform the function call::
+上記の ``bar`` 関数に似たケースでは、必要なフィールドを明示的に参照解除し、それらを引数として使用して関数呼び出しを行うことで問題を回避できます::
 
     def bar(**kwargs: Unpack[Animal]):
         name = kwargs["name"]
         takes_name(name)
 
-Using ``Unpack`` with types other than ``TypedDict``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``TypedDict`` 以外の型で ``Unpack`` を使用する
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``TypedDict`` is the only permitted heterogeneous type for typing ``**kwargs``.
-Therefore, in the context of typing ``**kwargs``, using ``Unpack`` with types
-other than ``TypedDict`` should not be allowed and type checkers should
-generate errors in such cases.
+``TypedDict`` は ``**kwargs`` を型付けするための唯一の許可された異種型です。したがって、``**kwargs`` を型付けする文脈では、``TypedDict`` 以外の型で ``Unpack`` を使用することは許可されず、そのような場合には型チェッカーがエラーを生成するべきです。
 
 .. _`callable`:
 
-Callable
---------
+呼び出し可能
+------------------------------------------------------------------------------------------
 
-The ``Callable`` special form can be used to specify the signature of
-a function within a type expression. The syntax is
-``Callable[[Param1Type, Param2Type], ReturnType]``. For example::
+``Callable`` 特殊形式は、型式内で関数のシグネチャを指定するために使用できます。構文は ``Callable[[Param1Type, Param2Type], ReturnType]`` です。例えば::
 
     from collections.abc import Callable
 
@@ -414,17 +301,12 @@ a function within a type expression. The syntax is
 
     x: Callable[[], str]
 
-Parameters specified using ``Callable`` are assumed to be positional-only.
-The ``Callable`` form provides no way to specify keyword-only parameters,
-variadic parameters, or default argument values. For these use cases, see
-the section on `Callback protocols`_.
+``Callable`` を使用して指定されたパラメーターは位置のみと見なされます。``Callable`` 形式はキーワードのみのパラメーター、可変パラメーター、またはデフォルト引数値を指定する方法を提供しません。これらの使用例については、`コールバックプロトコル`_ のセクションを参照してください。
 
-Meaning of ``...`` in ``Callable``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``Callable`` における ``...`` の意味
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``Callable`` special form supports the use of ``...`` in place of the list
-of parameter types. This is a :term:`gradual form` indicating that the type is
-:term:`consistent` with any input signature::
+``Callable`` 特殊形式は、パラメーター型のリストの代わりに ``...`` を使用することをサポートしています。これは、型が任意の入力シグネチャと一致することを示す :term:`漸進的形式 <consistent>` です::
 
     cb1: Callable[..., str]
     cb1 = lambda x: str(x)  # OK
@@ -432,22 +314,16 @@ of parameter types. This is a :term:`gradual form` indicating that the type is
 
     cb2: Callable[[], str] = cb1  # OK
 
-A ``...`` can also be used with ``Concatenate``. In this case, the parameters
-prior to the ``...`` are required to be present in the input signature and
-be assignable, but any additional parameters are permitted::
+``...`` は ``Concatenate`` と共に使用することもできます。この場合、``...`` の前のパラメーターは入力シグネチャに存在し、割り当て可能である必要がありますが、追加のパラメーターは許可されます::
 
     cb3: Callable[Concatenate[int, ...], str]
     cb3 = lambda x: str(x)  # OK
     cb3 = lambda a, b, c: str(a)  # OK
-    cb3 = lambda : ""  # Error
-    cb3 = lambda *, a: str(a)  # Error
+    cb3 = lambda : ""  # エラー
+    cb3 = lambda *, a: str(a)  # エラー
 
 
-If the input signature in a function definition includes both a ``*args`` and
-``**kwargs`` parameter and both are typed as ``Any`` (explicitly or implicitly
-because it has no annotation), a type checker should treat this as the
-equivalent of ``...``. Any other parameters in the signature are unaffected
-and are retained as part of the signature::
+関数定義の入力シグネチャに ``*args`` および ``**kwargs`` パラメーターが含まれ、両方が ``Any`` として型付けされている場合（明示的にまたは注釈がないために暗黙的に）、型チェッカーはこれを ``...`` と同等と見なすべきです。シグネチャ内の他のパラメーターは影響を受けず、シグネチャの一部として保持されます::
 
     class Proto1(Protocol):
         def __call__(self, *args: Any, **kwargs: Any) -> None: ...
@@ -464,7 +340,7 @@ and are retained as part of the signature::
     def func(p1: Proto1, p2: Proto2, p3: Proto3):
         assert_type(p1, Callable[..., None])  # OK
         assert_type(p2, Callable[Concatenate[int, ...], None])  # OK
-        assert_type(p3, Callable[..., None])  # Error
+        assert_type(p3, Callable[..., None])  # エラー
         assert_type(p3, Proto4[...])  # OK
 
     class A:
@@ -472,41 +348,35 @@ and are retained as part of the signature::
             pass
 
     class B(A):
-        # This override is OK because it is assignable to the parent's method.
+        # このオーバーライドは、親のメソッドに割り当て可能であるため OK です。
         def method(self, a: float, /, b: int, *, k: str, m: str) -> None:
             pass
 
 
-The ``...`` syntax can also be used to provide a :ref:`specialized value for a
-ParamSpec <paramspec_valid_use_locations>` in a generic class or type alias.
-For example::
+``...`` 構文は、ジェネリッククラスまたは型エイリアスで :ref:`ParamSpec の特殊化値 <paramspec_valid_use_locations>` を提供するためにも使用できます。例えば::
 
     type Callback[**P] = Callable[P, str]
 
     def func(cb: Callable[[], str]) -> None:
         f: Callback[...] = cb  # OK
 
-If ``...`` is used with signature concatenation, the ``...`` portion continues
-to be :term:`consistent` with any input parameters::
+``...`` がシグネチャ連結と共に使用される場合、``...`` 部分は引き続き任意の入力パラメーターと一致します::
 
     type CallbackWithInt[**P] = Callable[Concatenate[int, P], str]
     type CallbackWithStr[**P] = Callable[Concatenate[str, P], str]
 
     def func(cb: Callable[[int, str], str]) -> None:
         f1: Callable[Concatenate[int, ...], str] = cb # OK
-        f2: Callable[Concatenate[str, ...], str] = cb # Error
+        f2: Callable[Concatenate[str, ...], str] = cb # エラー
         f3: CallbackWithInt[...] = cb  # OK
-        f4: CallbackWithStr[...] = cb  # Error
+        f4: CallbackWithStr[...] = cb  # エラー
 
 .. _`callback-protocols`:
 
-Callback protocols
-------------------
+コールバックプロトコル
+------------------------------------------------------------------------------------------
 
-Protocols can be used to define flexible callback types that are impossible to
-express using the ``Callable`` special form as specified :ref:`above <callable>`.
-This includes keyword parameters, variadic parameters, default argument values,
-and overloads. They can be defined as protocols with a ``__call__`` member::
+プロトコルを使用して、``Callable`` 特殊形式として表現することが不可能な柔軟なコールバック型を定義できます。これには、キーワードパラメーター、可変パラメーター、デフォルト引数値、およびオーバーロードが含まれます。プロトコルとして ``__call__`` メンバーを持つプロトコルとして定義できます::
 
   from typing import Protocol
 
@@ -519,44 +389,30 @@ and overloads. They can be defined as protocols with a ``__call__`` member::
       ...
 
   comb: Combiner = good_cb  # OK
-  comb = bad_cb  # Error! Argument 2 is not assignable because of
-                 # different parameter name and kind in the callback
+  comb = bad_cb  # エラー! 引数 2 はコールバック内の異なるパラメーター名と種類のため割り当て可能ではありません
 
-Callback protocols and ``Callable[...]`` types can generally be used
-interchangeably.
+コールバックプロトコルと ``Callable[...]`` 型は一般的に相互に交換可能です。
 
 
-Assignability rules for callables
----------------------------------
+呼び出し可能な型の割り当てルール
+------------------------------------------------------------------------------------------
 
-A callable type ``B`` is :term:`assignable` to a callable type ``A`` if the
-return type of ``B`` is assignable to the return type of ``A`` and the input
-signature of ``B`` accepts all possible combinations of arguments that the
-input signature of ``A`` accepts. All of the specific assignability rules
-described below derive from this general rule.
+呼び出し可能な型 ``B`` は、``B`` の戻り値の型が ``A`` の戻り値の型に割り当て可能であり、``B`` の入力シグネチャが ``A`` の入力シグネチャが受け入れるすべての組み合わせの引数を受け入れる場合、呼び出し可能な型 ``A`` に :term:`割り当て可能 <assignable>` です。以下に説明するすべての特定の割り当てルールは、この一般的なルールから派生しています。
 
 
-Parameter types
-^^^^^^^^^^^^^^^
+パラメーターの型
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Callable types are covariant with respect to their return types but
-contravariant with respect to their parameter types. This means a callable
-``B`` is :term:`assignable` to callable ``A`` if the types of the parameters of
-``A`` are assignable to the parameters of ``B``. For example, ``(x: float) ->
-int`` is assignable to ``(x: int) -> float``::
+呼び出し可能な型は、その戻り値の型に関して共変であり、パラメーターの型に関して逆変です。これは、呼び出し可能な ``B`` が ``A`` に :term:`割り当て可能 <assignable>` であるためには、``A`` のパラメーターの型が ``B`` のパラメーターに割り当て可能である必要があることを意味します。例えば、``(x: float) -> int`` は ``(x: int) -> float`` に割り当て可能です::
 
     def func(cb: Callable[[float], int]):
         f1: Callable[[int], float] = cb  # OK
 
 
-Parameter kinds
-^^^^^^^^^^^^^^^
+パラメーターの種類
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Callable ``B`` is :term:`assignable` to callable ``A`` only if all keyword-only
-parameters in ``A`` are present in ``B`` as either keyword-only parameters or
-standard (positional or keyword) parameters. For example, ``(a: int) -> None``
-is assignable to ``(*, a: int) -> None``, but the converse is not true. The
-order of keyword-only parameters is ignored for purposes of assignability::
+呼び出し可能な ``B`` は、``A`` のすべてのキーワードのみのパラメーターが ``B`` にキーワードのみのパラメーターまたは標準（位置またはキーワード）パラメーターとして存在する場合にのみ ``A`` に :term:`割り当て可能 <assignable>` です。例えば、``(a: int) -> None`` は ``(*, a: int) -> None`` に割り当て可能ですが、逆は真ではありません。キーワードのみのパラメーターの順序は割り当て可能性の目的で無視されます::
 
     class KwOnly(Protocol):
         def __call__(self, *, b: int, a: int) -> None: ...
@@ -566,12 +422,9 @@ order of keyword-only parameters is ignored for purposes of assignability::
 
     def func(standard: Standard, kw_only: KwOnly):
         f1: KwOnly = standard  # OK
-        f2: Standard = kw_only  # Error
+        f2: Standard = kw_only  # エラー
 
-Likewise, callable ``B`` is assignable to callable ``A`` only if all
-positional-only parameters in ``A`` are present in ``B`` as either
-positional-only parameters or standard (positional or keyword) parameters. The
-names of positional-only parameters are ignored for purposes of assignability::
+同様に、呼び出し可能な ``B`` は、``A`` のすべての位置のみのパラメーターが ``B`` に位置のみのパラメーターまたは標準（位置またはキーワード）パラメーターとして存在する場合にのみ ``A`` に割り当て可能です。位置のみのパラメーターの名前は割り当て可能性の目的で無視されます::
 
     class PosOnly(Protocol):
         def __call__(self, not_a: int, /) -> None: ...
@@ -581,16 +434,13 @@ names of positional-only parameters are ignored for purposes of assignability::
 
     def func(standard: Standard, pos_only: PosOnly):
         f1: PosOnly = standard  # OK
-        f2: Standard = pos_only  # Error
+        f2: Standard = pos_only  # エラー
 
 
-``*args`` parameters
-^^^^^^^^^^^^^^^^^^^^
+``*args`` パラメーター
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If a callable ``A`` has a signature with a ``*args`` parameter, callable ``B``
-must also have a ``*args`` parameter to be :term:`assignable` to ``A``, and the
-type of ``A``'s ``*args`` parameter must be assignable to ``B``'s ``*args``
-parameter::
+呼び出し可能な ``A`` が ``*args`` パラメーターを持つシグネチャを持つ場合、呼び出し可能な ``B`` も ``*args`` パラメーターを持つ必要があり、``A`` の ``*args`` パラメーターの型が ``B`` の ``*args`` パラメーターに割り当て可能である必要があります::
 
     class NoArgs(Protocol):
         def __call__(self) -> None: ...
@@ -605,16 +455,13 @@ parameter::
         f1: NoArgs = int_args  # OK
         f2: NoArgs = float_args  # OK
 
-        f3: IntArgs = no_args  # Error: missing *args parameter
+        f3: IntArgs = no_args  # エラー: *args パラメーターがありません
         f4: IntArgs = float_args  # OK
 
-        f5: FloatArgs = no_args  # Error: missing *args parameter
-        f6: FloatArgs = int_args  # Error: float is not assignable to int
+        f5: FloatArgs = no_args  # エラー: *args パラメーターがありません
+        f6: FloatArgs = int_args  # エラー: float は int に割り当て可能ではありません
 
-If a callable ``A`` has a signature with one or more positional-only
-parameters, a callable ``B`` is assignable to ``A`` only if ``B`` has an
-``*args`` parameter whose type is assignable from the types of any
-otherwise-unmatched positional-only parameters in ``A``::
+呼び出し可能な ``A`` が 1 つ以上の位置のみのパラメーターを持つシグネチャを持つ場合、呼び出し可能な ``B`` は ``A`` に割り当て可能です。``B`` が ``*args`` パラメーターを持ち、``A`` の他の一致しない位置のみのパラメーターの型が ``B`` の ``*args`` パラメーターに割り当て可能である場合::
 
     class PosOnly(Protocol):
         def __call__(self, a: int, b: str, /) -> None: ...
@@ -632,27 +479,23 @@ otherwise-unmatched positional-only parameters in ``A``::
         def __call__(self, a: int, b: str) -> None: ...
 
     def func(int_args: IntArgs, int_str_args: IntStrArgs, str_args: StrArgs):
-        f1: PosOnly = int_args  # Error: str is not assignable to int
+        f1: PosOnly = int_args  # エラー: str は int に割り当て可能ではありません
         f2: PosOnly = int_str_args  # OK
         f3: PosOnly = str_args  # OK
-        f4: IntStrArgs = str_args  # Error: int | str is not assignable to str
-        f5: IntStrArgs = int_args  # Error: int | str is not assignable to int
+        f4: IntStrArgs = str_args  # エラー: int | str は str に割り当て可能ではありません
+        f5: IntStrArgs = int_args  # エラー: int | str は int に割り当て可能ではありません
         f6: StrArgs = int_str_args  # OK
-        f7: StrArgs = int_args  # Error: str is not assignable to int
+        f7: StrArgs = int_args  # エラー: str は int に割り当て可能ではありません
         f8: IntArgs = int_str_args  # OK
-        f9: IntArgs = str_args  # Error: int is not assignable to str
-        f10: Standard = int_str_args  # Error: keyword parameters a and b missing
-        f11: Standard = str_args  # Error: keyword parameter b missing
+        f9: IntArgs = str_args  # エラー: int は str に割り当て可能ではありません
+        f10: Standard = int_str_args  # エラー: キーワードパラメーター a および b が不足しています
+        f11: Standard = str_args  # エラー: キーワードパラメーター b が不足しています
 
 
-``**kwargs`` parameters
-^^^^^^^^^^^^^^^^^^^^^^^
+``**kwargs`` パラメーター
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If a callable ``A`` has a signature with a ``**kwargs`` parameter (without an
-unpacked ``TypedDict`` type annotation), callable ``B`` must also have a
-``**kwargs`` parameter to be :term:`assignable` to ``A``, and the type of
-``A``'s ``**kwargs`` parameter must be assignable to ``B``'s ``**kwargs``
-parameter::
+呼び出し可能な ``A`` が ``**kwargs`` パラメーターを持つシグネチャを持つ場合（アンパックされた ``TypedDict`` 型注釈がない場合）、呼び出し可能な ``B`` も ``**kwargs`` パラメーターを持つ必要があり、``A`` の ``**kwargs`` パラメーターの型が ``B`` の ``**kwargs`` パラメーターに割り当て可能である必要があります::
 
     class NoKwargs(Protocol):
         def __call__(self) -> None: ...
@@ -667,16 +510,13 @@ parameter::
         f1: NoKwargs = int_kwargs  # OK
         f2: NoKwargs = float_kwargs  # OK
 
-        f3: IntKwargs = no_kwargs  # Error: missing **kwargs parameter
+        f3: IntKwargs = no_kwargs  # エラー: **kwargs パラメーターがありません
         f4: IntKwargs = float_kwargs  # OK
 
-        f5: FloatKwargs = no_kwargs  # Error: missing **kwargs parameter
-        f6: FloatKwargs = int_kwargs  # Error: float is not assignable to int
+        f5: FloatKwargs = no_kwargs  # エラー: **kwargs パラメーターがありません
+        f6: FloatKwargs = int_kwargs  # エラー: float は int に割り当て可能ではありません
 
-If a callable ``A`` has a signature with one or more keyword-only parameters,
-a callable ``B`` is assignable to ``A`` if ``B`` has a ``**kwargs`` parameter
-whose type is assignable from the types of any otherwise-unmatched keyword-only
-parameters in ``A``::
+呼び出し可能な ``A`` が 1 つ以上のキーワードのみのパラメーターを持つシグネチャを持つ場合、呼び出し可能な ``B`` は ``A`` に割り当て可能です。``B`` が ``**kwargs`` パラメーターを持ち、``A`` の他の一致しないキーワードのみのパラメーターの型が ``B`` の ``**kwargs`` パラメーターに割り当て可能である場合::
 
     class KwOnly(Protocol):
         def __call__(self, *, a: int, b: str) -> None: ...
@@ -694,28 +534,25 @@ parameters in ``A``::
         def __call__(self, a: int, b: str) -> None: ...
 
     def func(int_kwargs: IntKwargs, int_str_kwargs: IntStrKwargs, str_kwargs: StrKwargs):
-        f1: KwOnly = int_kwargs  # Error: str is not assignable to int
+        f1: KwOnly = int_kwargs  # エラー: str は int に割り当て可能ではありません
         f2: KwOnly = int_str_kwargs  # OK
         f3: KwOnly = str_kwargs  # OK
-        f4: IntStrKwargs = str_kwargs  # Error: int | str is not assignable to str
-        f5: IntStrKwargs = int_kwargs  # Error: int | str is not assignable to int
+        f4: IntStrKwargs = str_kwargs  # エラー: int | str は str に割り当て可能ではありません
+        f5: IntStrKwargs = int_kwargs  # エラー: int | str は int に割り当て可能ではありません
         f6: StrKwargs = int_str_kwargs  # OK
-        f7: StrKwargs = int_kwargs  # Error: str is not assignable to int
+        f7: StrKwargs = int_kwargs  # エラー: str は int に割り当て可能ではありません
         f8: IntKwargs = int_str_kwargs  # OK
-        f9: IntKwargs = str_kwargs  # Error: int is not assignable to str
-        f10: Standard = int_str_kwargs  # Error: Does not accept positional arguments
-        f11: Standard = str_kwargs  # Error: Does not accept positional arguments
+        f9: IntKwargs = str_kwargs  # エラー: int は str に割り当て可能ではありません
+        f10: Standard = int_str_kwargs  # エラー: 位置引数を受け入れません
+        f11: Standard = str_kwargs  # エラー: 位置引数を受け入れません
 
-Assignability rules for callable signatures that contain a ``**kwargs`` with an
-unpacked ``TypedDict`` are described in the section :ref:`above
-<unpack-kwargs>`.
+アンパックされた ``TypedDict`` を持つ ``**kwargs`` を含む呼び出し可能なシグネチャの割り当てルールは、上記のセクション :ref:`unpack-kwargs` に記載されています。
 
 
-Signatures with ParamSpecs
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+ParamSpecs を含むシグネチャ
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A signature that includes ``*args: P.args, **kwargs: P.kwargs`` is equivalent
-to a ``Callable`` parameterized by ``P``::
+``*args: P.args, **kwargs: P.kwargs`` を含むシグネチャは、``P`` でパラメーター化された ``Callable`` と同等です::
 
     class ProtocolWithP[**P](Protocol):
         def __call__(self, *args: P.args, **kwargs: P.kwargs) -> None: ...
@@ -723,18 +560,15 @@ to a ``Callable`` parameterized by ``P``::
     type TypeAliasWithP[**P] = Callable[P, None]
 
     def func[**P](proto: ProtocolWithP[P], ta: TypeAliasWithP[P]):
-        # These two types are equivalent
+        # これらの 2 つの型は同等です
         f1: TypeAliasWithP[P] = proto  # OK
         f2: ProtocolWithP[P] = ta  # OK
 
 
-Default argument values
-^^^^^^^^^^^^^^^^^^^^^^^
+デフォルト引数値
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If a callable ``C`` has a parameter ``x`` with a default argument value and
-``A`` is the same as ``C`` except that ``x`` has no default argument, then
-``C`` is :term:`assignable` to ``A``. ``C`` is also assignable to ``A`` if
-``A`` is the same as ``C`` with parameter ``x`` removed::
+呼び出し可能な ``C`` がデフォルト引数値を持つパラメーター ``x`` を持ち、``A`` が ``C`` と同じであり、``x`` にデフォルト引数がない場合、``C`` は ``A`` に :term:`割り当て可能 <assignable>` です。また、``C`` が ``A`` と同じであり、パラメーター ``x`` が削除された場合も ``C`` は ``A`` に割り当て可能です::
 
     class DefaultArg(Protocol):
         def __call__(self, x: int = 0) -> None: ...
@@ -750,12 +584,10 @@ If a callable ``C`` has a parameter ``x`` with a default argument value and
         f2: NoX = default_arg  # OK
 
 
-Overloads
-^^^^^^^^^
+オーバーロード
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If a callable ``B`` is overloaded with two or more signatures, it is
-:term:`assignable` to callable ``A`` if *at least one* of the overloaded
-signatures in ``B`` is assignable to ``A``::
+呼び出し可能な ``B`` が 2 つ以上のシグネチャでオーバーロードされている場合、``B`` のオーバーロードされたシグネチャの少なくとも 1 つが ``A`` に割り当て可能である場合、``B`` は呼び出し可能な ``A`` に :term:`割り当て可能 <assignable>` です::
 
     class Overloaded(Protocol):
         @overload
@@ -775,11 +607,9 @@ signatures in ``B`` is assignable to ``A``::
     def func(overloaded: Overloaded):
         f1: IntArg = overloaded  # OK
         f2: StrArg = overloaded  # OK
-        f3: FloatArg = overloaded  # Error
+        f3: FloatArg = overloaded  # エラー
 
-If a callable ``A`` is overloaded with two or more signatures, callable ``B``
-is assignable to ``A`` if ``B`` is assignable to *all* of the signatures in
-``A``::
+呼び出し可能な ``A`` が 2 つ以上のシグネチャでオーバーロードされている場合、呼び出し可能な ``B`` は ``A`` に割り当て可能です。``B`` が ``A`` のすべてのシグネチャに割り当て可能である場合::
 
     class Overloaded(Protocol):
         @overload
@@ -795,4 +625,4 @@ is assignable to ``A`` if ``B`` is assignable to *all* of the signatures in
 
     def func(int_str_arg: IntStrArg, str_arg: StrArg):
         f1: Overloaded = int_str_arg  # OK
-        f2: Overloaded = str_arg  # Error
+        f2: Overloaded = str_arg  # エラー

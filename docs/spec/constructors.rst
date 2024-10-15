@@ -1,38 +1,25 @@
-Constructors
-============
+コンストラクタ
+==========================================================================================
 
-Calls to constructors require special handling within type checkers.
+コンストラクタの呼び出しは、型チェッカー内で特別な処理が必要です。
 
-Constructor Calls
------------------
+コンストラクタの呼び出し
+------------------------------------------------------------------------------------------
 
-At runtime, a call to a class' constructor typically results in the invocation of
-three methods in the following order:
+実行時にクラスのコンストラクタを呼び出すと、通常、次の順序で 3 つのメソッドが呼び出されます。
 
-#. The ``__call__`` method of the metaclass (which is typically supplied by the
-   ``type`` class but can be overridden by a custom metaclass and which is
-   responsible for calling the next two methods)
-#. The ``__new__`` static method of the class
-#. The ``__init__`` instance method of the class
+#. メタクラスの ``__call__`` メソッド（通常は ``type`` クラスによって提供されますが、カスタムメタクラスによってオーバーライドされることがあり、次の 2 つのメソッドを呼び出す責任があります）
+#. クラスの ``__new__`` 静的メソッド
+#. クラスの ``__init__`` インスタンスメソッド
 
-Type checkers should mirror this runtime behavior when analyzing a constructor
-call.
+型チェッカーは、コンストラクタ呼び出しを分析する際に、この実行時の動作を反映する必要があります。
 
-Metaclass ``__call__`` Method
------------------------------
+メタクラス ``__call__`` メソッド
+------------------------------------------------------------------------------------------
 
-When evaluating a constructor call, a type checker should first check if the
-class has a custom metaclass (a subclass of ``type``) that defines a ``__call__``
-method. If so, it should evaluate the call of this method using the supplied
-arguments. If the metaclass is ``type``, this step can be skipped.
+コンストラクタ呼び出しを評価する際に、型チェッカーは最初にクラスに ``__call__`` メソッドを定義するカスタムメタクラス（``type`` のサブクラス）があるかどうかを確認する必要があります。 もしそうであれば、提供された引数を使用してこのメソッドの呼び出しを評価する必要があります。 メタクラスが ``type`` である場合、このステップはスキップできます。
 
-If the evaluated return type of the ``__call__`` method indicates something
-other than an instance of the class being constructed, a type checker should
-assume that the metaclass ``__call__`` method is overriding ``type.__call__``
-in some special manner, and it should not attempt to evaluate the ``__new__``
-or ``__init__`` methods on the class. For example, some metaclass ``__call__``
-methods are annotated to return ``NoReturn`` to indicate that constructor
-calls are not supported for that class.
+``__call__`` メソッドの評価された戻り値の型が、構築されているクラスのインスタンス以外のものであることを示している場合、型チェッカーはメタクラス ``__call__`` メソッドが特別な方法で ``type.__call__`` をオーバーライドしていると仮定し、クラスの ``__new__`` または ``__init__`` メソッドを評価しないようにする必要があります。 たとえば、いくつかのメタクラス ``__call__`` メソッドは、コンストラクタ呼び出しがそのクラスではサポートされていないことを示すために ``NoReturn`` を返すように注釈されています。
 
   ::
 
@@ -46,25 +33,15 @@ calls are not supported for that class.
 
     assert_type(MyClass(), Never)
 
-If no return type annotation is provided for ``__call__``, a type checker may
-assume that it does not override ``type.__call__`` in a special manner and
-proceed as though the return type is an instance of the type specified by
-the ``cls`` parameter.
+``__call__`` に戻り値の型注釈が提供されていない場合、型チェッカーはそれが特別な方法で ``type.__call__`` をオーバーライドしていないと仮定し、戻り値の型が ``cls`` パラメータで指定された型のインスタンスであるかのように進めることができます。
 
 
-``__new__`` Method
-------------------
+``__new__`` メソッド
+------------------------------------------------------------------------------------------
 
-After the metaclass ``__call__`` method has been evaluated, a type checker
-should evaluate the ``__new__`` method of the class (if applicable) using
-the supplied arguments. This step should be skipped if the class does not
-define a ``__new__`` method and does not inherit a ``__new__`` method from
-a base class other than ``object``.
+メタクラス ``__call__`` メソッドが評価された後、型チェッカーはクラスの ``__new__`` メソッド（該当する場合）を提供された引数を使用して評価する必要があります。 クラスが ``__new__`` メソッドを定義しておらず、``object`` 以外の基底クラスから ``__new__`` メソッドを継承していない場合、このステップはスキップする必要があります。
 
-If the class is generic and explicitly specialized, the type checker should
-partially specialize the ``__new__`` method using the supplied type arguments.
-If the class is not explicitly specialized, class-scoped type variables should
-be solved using the supplied arguments passed to the constructor call.
+クラスがジェネリックで明示的に特殊化されている場合、型チェッカーは提供された型引数を使用して ``__new__`` メソッドを部分的に特殊化する必要があります。 クラスが明示的に特殊化されていない場合、クラススコープの型変数はコンストラクタ呼び出しに渡された提供された引数を使用して解決する必要があります。
 
   ::
 
@@ -72,19 +49,16 @@ be solved using the supplied arguments passed to the constructor call.
         def __new__(cls, x: T) -> Self:
             return super().__new__(cls)
 
-    # Constructor calls for specialized classes
+    # 特殊化されたクラスのコンストラクタ呼び出し
     assert_type(MyClass[int](1), MyClass[int])
     assert_type(MyClass[float](1), MyClass[float])
-    MyClass[int](1.0)  # Type error
+    MyClass[int](1.0)  # 型エラー
 
-    # Constructor calls for non-specialized classes
+    # 非特殊化クラスのコンストラクタ呼び出し
     assert_type(MyClass(1), MyClass[int])
     assert_type(MyClass(1.0), MyClass[float])
 
-If any class-scoped type variables are not solved when evaluating the ``__new__``
-method call using the supplied arguments, these type variables should be left
-unsolved, allowing the ``__init__`` method (if applicable) to be used to solve
-them.
+提供された引数を使用して ``__new__`` メソッド呼び出しを評価する際に、クラススコープの型変数が解決されない場合、これらの型変数は解決されないままにしておき、``__init__`` メソッド（該当する場合）を使用してそれらを解決できるようにする必要があります。
 
   ::
 
@@ -98,18 +72,9 @@ them.
       assert_type(MyClass(1), MyClass[int])
       assert_type(MyClass(""), MyClass[str])
 
-For most classes, the return type for the ``__new__`` method is typically
-``Self``, but other types are also allowed. For example, the ``__new__``
-method may return an instance of a subclass or an instance of some completely
-unrelated class.
+ほとんどのクラスでは、``__new__`` メソッドの戻り値の型は通常 ``Self`` ですが、他の型も許可されます。 たとえば、``__new__`` メソッドはサブクラスのインスタンスや完全に無関係なクラスのインスタンスを返すことができます。
 
-If the evaluated return type of ``__new__`` is not the class being constructed
-(or a subclass thereof), a type checker should assume that the ``__init__``
-method will not be called. This is consistent with the runtime behavior of the
-``type.__call__`` method. If the ``__new__`` method return type is a union with
-one or more members that are not the class being constructed (or a subclass
-thereof), a type checker should likewise assume that the ``__init__`` method
-will not be called.
+``__new__`` の評価された戻り値の型が構築されているクラス（またはそのサブクラス）でない場合、型チェッカーは ``__init__`` メソッドが呼び出されないと仮定する必要があります。 これは ``type.__call__`` メソッドの実行時の動作と一致しています。 ``__new__`` メソッドの戻り値の型が構築されているクラス（またはそのサブクラス）でないメンバーを含む共用体である場合、型チェッカーは同様に ``__init__`` メソッドが呼び出されないと仮定する必要があります。
 
   ::
 
@@ -117,16 +82,13 @@ will not be called.
         def __new__(cls) -> int:
             return 0
 
-        # In this case, the __init__ method should not be considered
-        # by the type checker when evaluating a constructor call.
+        # この場合、型チェッカーはコンストラクタ呼び出しを評価する際に __init__ メソッドを考慮しない必要があります。
         def __init__(self, x: int):
             pass
 
     assert_type(MyClass(), int)
 
-For purposes of this test, an explicit return type of ``Any`` (or a
-union containing ``Any``) should be treated as a type that is not an instance
-of the class being constructed.
+このテストの目的のために、``Any``（または ``Any`` を含む共用体）の明示的な戻り値の型は、構築されているクラスのインスタンスでない型として扱う必要があります。
 
   ::
 
@@ -134,20 +96,15 @@ of the class being constructed.
         def __new__(cls) -> Any:
             return 0
 
-        # The __init__ method will not be called in this case, so
-        # it should not be evaluated.
+        # この場合、__init__ メソッドは呼び出されないため、評価されるべきではありません。
         def __init__(self, x: int):
             pass
 
     assert_type(MyClass(), Any)
 
-If the return type of ``__new__`` is not annotated, a type checker may assume
-that the return type is ``Self`` and proceed with the assumption that the
-``__init__`` method will be called.
+``__new__`` の戻り値の型が注釈されていない場合、型チェッカーは戻り値の型が ``Self`` であると仮定し、``__init__`` メソッドが呼び出されると仮定して進めることができます。
 
-If the class is generic, it is possible for a ``__new__`` method to override
-the specialized class type and return a class instance that is specialized
-with different type arguments.
+クラスがジェネリックである場合、``__new__`` メソッドは特殊化されたクラス型をオーバーライドし、異なる型引数で特殊化されたクラスインスタンスを返すことができます。
 
   ::
 
@@ -157,11 +114,7 @@ with different type arguments.
 
     assert_type(MyClass[int](), MyClass[list[int]])
 
-If the ``cls`` parameter within the ``__new__`` method is not annotated, type
-checkers should infer a type of ``type[Self]``. Regardless of whether the
-type of the ``cls`` parameter is explicit or inferred, the type checker should
-bind the class being constructed to the ``cls`` parameter and report any type
-errors that arise during binding.
+``__new__`` メソッド内の ``cls`` パラメータが注釈されていない場合、型チェッカーは ``type[Self]`` の型を推論する必要があります。 ``cls`` パラメータの型が明示的であるか推論されるかに関係なく、型チェッカーは構築されているクラスを ``cls`` パラメータにバインドし、バインド中に発生する型エラーを報告する必要があります。
 
   ::
 
@@ -170,23 +123,15 @@ errors that arise during binding.
 
     MyClass()  # OK
     MyClass[int]()  # OK
-    MyClass[str]()  # Type Error
+    MyClass[str]()  # 型エラー
 
 
-``__init__`` Method
--------------------
+``__init__`` メソッド
+------------------------------------------------------------------------------------------
 
-After evaluating the ``__new__`` method, a type checker should evaluate the
-``__init__`` method (if applicable) using the supplied arguments. If the class
-is generic and explicitly specialized (or specialized via the ``__new__`` method
-return type), the type checker should partially specialize the ``__init__``
-method using the supplied type arguments. If the class is not explicitly
-specialized, class-scoped type variables should be solved using the supplied
-arguments passed to the constructor call.
+``__new__`` メソッドを評価した後、型チェッカーは ``__init__`` メソッド（該当する場合）を提供された引数を使用して評価する必要があります。 クラスがジェネリックで明示的に特殊化されている場合（または ``__new__`` メソッドの戻り値の型を介して特殊化されている場合）、型チェッカーは提供された型引数を使用して ``__init__`` メソッドを部分的に特殊化する必要があります。 クラスが明示的に特殊化されていない場合、クラススコープの型変数はコンストラクタ呼び出しに渡された提供された引数を使用して解決する必要があります。
 
-This step should be skipped if the class does not define an ``__init__`` method
-and does not inherit an ``__init__`` method from a base class other than
-``object``.
+クラスが ``__init__`` メソッドを定義しておらず、``object`` 以外の基底クラスから ``__init__`` メソッドを継承していない場合、このステップはスキップする必要があります。
 
   ::
 
@@ -194,20 +139,16 @@ and does not inherit an ``__init__`` method from a base class other than
         def __init__(self, x: T) -> None:
             ...
 
-    # Constructor calls for specialized classes
+    # 特殊化されたクラスのコンストラクタ呼び出し
     assert_type(MyClass[int](1), MyClass[int])
     assert_type(MyClass[float](1), MyClass[float])
-    MyClass[int](1.0)  # Type error
+    MyClass[int](1.0)  # 型エラー
 
-    # Constructor calls for non-specialized classes
+    # 非特殊化クラスのコンストラクタ呼び出し
     assert_type(MyClass(1), MyClass[int])
     assert_type(MyClass(1.0), MyClass[float])
 
-If the ``self`` parameter within the ``__init__`` method is not annotated, type
-checkers should infer a type of ``Self``. Regardless of whether the ``self``
-parameter type is explicit or inferred, a type checker should bind the class
-being constructed to this parameter and report any type errors that arise
-during binding.
+``__init__`` メソッド内の ``self`` パラメータが注釈されていない場合、型チェッカーは ``Self`` の型を推論する必要があります。 ``self`` パラメータの型が明示的であるか推論されるかに関係なく、型チェッカーは構築されているクラスをこのパラメータにバインドし、バインド中に発生する型エラーを報告する必要があります。
 
   ::
 
@@ -216,15 +157,9 @@ during binding.
 
     MyClass()  # OK
     MyClass[int]()  # OK
-    MyClass[str]()  # Type Error
+    MyClass[str]()  # 型エラー
 
-The return type for ``__init__`` is always ``None``, which means the
-method cannot influence the return type of the constructor call by specifying
-a return type. There are cases where it is desirable for the ``__init__`` method
-to influence the return type, especially when the ``__init__`` method is
-overloaded. To enable this, type checkers should allow the ``self`` parameter
-to be annotated with a type that influences the resulting type of the
-constructor call.
+``__init__`` の戻り値の型は常に ``None`` であり、これはメソッドが戻り値の型を指定することによってコンストラクタ呼び出しの戻り値の型に影響を与えることができないことを意味します。 ``__init__`` メソッドが戻り値の型に影響を与えることが望ましい場合があります。特に、``__init__`` メソッドがオーバーロードされている場合です。 これを可能にするために、型チェッカーは ``self`` パラメータを注釈して、コンストラクタ呼び出しの結果の型に影響を与える型を指定できるようにする必要があります。
 
   ::
 
@@ -243,9 +178,7 @@ constructor call.
     assert_type(MyClass1(3.0), MyClass1[float])
 
 
-Function-scoped type variables can also be used in the ``self``
-annotation of an ``__init__`` method to influence the return type of the
-constructor call.
+関数スコープの型変数も ``__init__`` メソッドの ``self`` 注釈に使用して、コンストラクタ呼び出しの戻り値の型に影響を与えることができます。
 
   ::
 
@@ -262,25 +195,19 @@ constructor call.
     assert_type(MyClass3[str, int](0, ""), MyClass3[str, int])
 
 
-Class-scoped type variables should not be used in the ``self`` annotation
-because such use can lead to ambiguous or nonsensical type evaluation results.
-Type checkers should report an error if a class-scoped type variable is used
-within a type annotation for the ``self`` parameter in an ``__init__`` method.
+クラススコープの型変数は ``self`` 注釈に使用すべきではありません。なぜなら、そのような使用は曖昧または意味のない型評価結果をもたらす可能性があるからです。 型チェッカーは、``__init__`` メソッドの ``self`` パラメータの型注釈内でクラススコープの型変数が使用されている場合、エラーを報告する必要があります。
 
   ::
 
     class MyClass4[T1, T2]:
-        # The ``self`` annotation should result in a type error
+        # ``self`` 注釈は型エラーを引き起こすべきです
         def __init__(self: "MyClass4[T2, T1]") -> None: ...
 
 
-Classes Without ``__new__`` and ``__init__`` Methods
-----------------------------------------------------
+``__new__`` および ``__init__`` メソッドのないクラス
+------------------------------------------------------------------------------------------
 
-If a class does not define a ``__new__`` method or ``__init__`` method and
-does not inherit either of these methods from a base class other than
-``object``, a type checker should evaluate the argument list using the
-``__new__`` and ``__init__`` methods from the ``object`` class.
+クラスが ``__new__`` メソッドまたは ``__init__`` メソッドを定義しておらず、``object`` 以外の基底クラスからこれらのメソッドを継承していない場合、型チェッカーは ``object`` クラスの ``__new__`` および ``__init__`` メソッドを使用して引数リストを評価する必要があります。
 
   ::
 
@@ -288,33 +215,21 @@ does not inherit either of these methods from a base class other than
         pass
 
     MyClass5()  # OK
-    MyClass5(1)  # Type error
+    MyClass5(1)  # 型エラー
 
 
-Constructor Calls for type[T]
------------------------------
+type[T] のコンストラクタ呼び出し
+------------------------------------------------------------------------------------------
 
-When a value of type ``type[T]`` (where ``T`` is a concrete class or a type
-variable) is called, a type checker should evaluate the constructor call as if
-it is being made on the class ``T`` (or the class that represents the upper bound
-of type variable ``T``). This means the type checker should use the ``__call__``
-method of ``T``'s metaclass and the ``__new__`` and ``__init__`` methods of ``T``
-to evaluate the constructor call.
+``type[T]`` 型の値（``T`` が具体的なクラスまたは型変数である場合）を呼び出すと、型チェッカーはクラス ``T``（または型変数 ``T`` の上限を表すクラス）で呼び出しが行われているかのようにコンストラクタ呼び出しを評価する必要があります。 これは、型チェッカーが ``T`` のメタクラスの ``__call__`` メソッドおよび ``T`` の ``__new__`` および ``__init__`` メソッドを使用してコンストラクタ呼び出しを評価する必要があることを意味します。
 
-It should be noted that such code could be unsafe because the type ``type[T]``
-may represent subclasses of ``T``, and those subclasses could redefine the
-``__new__`` and ``__init__`` methods in a way that is incompatible with the
-base class. Likewise, the metaclass of ``T`` could redefine the ``__call__``
-method in a way that is incompatible with the base metaclass.
+このようなコードは安全でない可能性があることに注意する必要があります。なぜなら、``type[T]`` の型は ``T`` のサブクラスを表す可能性があり、それらのサブクラスは基底クラスと互換性のない方法で ``__new__`` および ``__init__`` メソッドを再定義する可能性があるからです。 同様に、``T`` のメタクラスは、基底メタクラスと互換性のない方法で ``__call__`` メソッドを再定義する可能性があります。
 
 
-Specialization During Construction
-----------------------------------
+構築中の特殊化
+------------------------------------------------------------------------------------------
 
-As discussed above, if a class is generic and not explicitly specialized, its
-type variables should be solved using the arguments passed to the ``__new__``
-and ``__init__`` methods. If one or more type variables are not solved during
-these method evaluations, they should take on their default values.
+前述のように、クラスがジェネリックで明示的に特殊化されていない場合、その型変数は ``__new__`` および ``__init__`` メソッドに渡された引数を使用して解決する必要があります。 1 つ以上の型変数がこれらのメソッド評価中に解決されない場合、それらはデフォルト値を取る必要があります。
 
   ::
 
@@ -333,11 +248,10 @@ these method evaluations, they should take on their default values.
     assert_type(MyClass2(1), MyClass2[int, str])
 
 
-Consistency of ``__new__`` and ``__init__``
--------------------------------------------
+``__new__`` および ``__init__`` の一貫性
+------------------------------------------------------------------------------------------
 
-Type checkers may optionally validate that the ``__new__`` and ``__init__``
-methods for a class have :term:`consistent` signatures.
+型チェッカーはオプションで、クラスの ``__new__`` および ``__init__`` メソッドが :term:`consistent` なシグネチャを持っていることを検証できます。
 
   ::
 
@@ -345,16 +259,15 @@ methods for a class have :term:`consistent` signatures.
         def __new__(cls) -> Self:
             return super().__new__(cls)
 
-        # Type error: __new__ and __init__ have inconsistent signatures
+        # 型エラー: __new__ と __init__ のシグネチャが一貫していません
         def __init__(self, x: str) -> None:
             pass
 
 
-Converting a Constructor to Callable
-------------------------------------
+コンストラクタを Callable に変換する
+------------------------------------------------------------------------------------------
 
-Class objects are callable, which means the type of a class object can be
-:term:`assignable` to a callable type.
+クラスオブジェクトは呼び出し可能であり、これはクラスオブジェクトの型が呼び出し可能な型に :term:`assignable` であることを意味します。
 
   ::
 
@@ -367,52 +280,19 @@ Class objects are callable, which means the type of a class object can be
 
     reveal_type(accepts_callable(MyClass))  # ``def (x: int) -> MyClass``
 
-When converting a class to a callable type, a type checker should use the
-following rules, which reflect the same rules specified above for evaluating
-constructor calls:
+クラスを呼び出し可能な型に変換する際に、型チェッカーは次のルールを使用する必要があります。これらのルールは、コンストラクタ呼び出しを評価するために上記で指定されたルールと同じです。
 
-1. If the class has a custom metaclass that defines a ``__call__`` method
-   that is annotated with a return type other than a subclass of the
-   class being constructed (or a union that contains such a type), a type
-   checker should assume that the metaclass ``__call__`` method is overriding
-   ``type.__call__`` in some special manner. In this case, the callable should
-   be synthesized from the parameters and return type of the metaclass
-   ``__call__`` method after it is bound to the class, and the ``__new__`` or
-   ``__init__`` methods (if present) should be ignored. This is an uncommon
-   case. In the more typical case where there is no custom metaclass that
-   overrides ``type.__call__`` in a special manner, the metaclass ``__call__``
-   signature should be ignored for purposes of converting to a callable type.
-   If a custom metaclass ``__call__`` method is present but does not have an
-   annotated return type, type checkers may assume that the method acts like
-   ``type.__call__`` and proceed to the next step.
+1. クラスがカスタムメタクラスを持ち、そのメタクラスが構築されているクラスのサブクラス以外の型（またはそのような型を含む共用体）を戻り値として注釈された ``__call__`` メソッドを定義している場合、型チェッカーはメタクラス ``__call__`` メソッドが特別な方法で ``type.__call__`` をオーバーライドしていると仮定する必要があります。 この場合、呼び出し可能な型は、クラスにバインドされた後のメタクラス ``__call__`` メソッドのパラメータと戻り値から合成される必要があり、``__new__`` または ``__init__`` メソッド（存在する場合）は無視される必要があります。 これはまれなケースです。 より一般的なケースでは、特別な方法で ``type.__call__`` をオーバーライドするカスタムメタクラスが存在しない場合、呼び出し可能な型に変換する目的でメタクラス ``__call__`` シグネチャは無視されるべきです。 カスタムメタクラス ``__call__`` メソッドが存在するが、注釈された戻り値の型がない場合、型チェッカーはメソッドが ``type.__call__`` のように動作すると仮定し、次のステップに進むことができます。
 
-2. If the class defines a ``__new__`` method or inherits a ``__new__`` method
-   from a base class other than ``object``, a type checker should synthesize a
-   callable from the parameters and return type of that method after it is bound
-   to the class.
+2. クラスが ``__new__`` メソッドを定義しているか、``object`` 以外の基底クラスから ``__new__`` メソッドを継承している場合、型チェッカーはクラスにバインドされた後のそのメソッドのパラメータと戻り値から呼び出し可能な型を合成する必要があります。
 
-3. If the return type of the method in step 2 evaluates to a type that is not a
-   subclass of the class being constructed (or a union that includes such a
-   class), the final callable type is based on the result of step 2, and the
-   conversion process is complete. The ``__init__`` method is ignored in this
-   case. This is consistent with the runtime behavior of the ``type.__call__``
-   method.
+3. ステップ 2 のメソッドの戻り値の型が構築されているクラスのサブクラス（またはそのようなクラスを含む共用体）でない型に評価される場合、最終的な呼び出し可能な型はステップ 2 の結果に基づき、変換プロセスは完了します。 この場合、``__init__`` メソッドは無視されます。 これは ``type.__call__`` メソッドの実行時の動作と一致しています。
 
-4. If the class defines an ``__init__`` method or inherits an ``__init__`` method
-   from a base class other than ``object``, a callable type should be synthesized
-   from the parameters of the ``__init__`` method after it is bound to the class
-   instance resulting from step 2. The return type of this synthesized callable
-   should be the concrete value of ``Self``.
+4. クラスが ``__init__`` メソッドを定義しているか、``object`` 以外の基底クラスから ``__init__`` メソッドを継承している場合、呼び出し可能な型は、ステップ 2 の結果として得られたクラスインスタンスにバインドされた後の ``__init__`` メソッドのパラメータから合成される必要があります。 この合成された呼び出し可能な型の戻り値は、``Self`` の具体的な値である必要があります。
 
-5. If step 2 and 4 both produce no result because the class does not define or
-   inherit a ``__new__`` or ``__init__`` method from a class other than ``object``,
-   the type checker should synthesize callable types from the ``__new__`` and
-   ``__init__`` methods for the ``object`` class.
+5. ステップ 2 および 4 の両方が結果を生成しない場合、クラスが ``object`` 以外のクラスから ``__new__`` または ``__init__`` メソッドを定義または継承していないため、型チェッカーは ``object`` クラスの ``__new__`` および ``__init__`` メソッドから呼び出し可能な型を合成する必要があります。
 
-6. Steps 2, 4 and 5 will produce either one or two callable types. The final
-   result of the conversion process is the union of these types. This will
-   reflect the callable signatures of the applicable ``__new__`` and
-   ``__init__`` methods.
+6. ステップ 2、4、および 5 は、1 つまたは 2 つの呼び出し可能な型を生成します。 変換プロセスの最終結果は、これらの型の共用体です。 これは、適用可能な ``__new__`` および ``__init__`` メソッドの呼び出し可能なシグネチャを反映します。
 
   ::
 
@@ -462,9 +342,7 @@ constructor calls:
     reveal_type(accepts_callable(E))  # ``def () -> A``
 
 
-If the ``__init__`` or ``__new__`` method is overloaded, the callable
-type should be synthesized from the overloads. The resulting callable type
-itself will be overloaded.
+``__init__`` または ``__new__`` メソッドがオーバーロードされている場合、呼び出し可能な型はオーバーロードから合成される必要があります。 結果の呼び出し可能な型自体もオーバーロードされます。
 
   ::
 
@@ -477,12 +355,7 @@ itself will be overloaded.
     reveal_type(accepts_callable(MyClass))  # overload of ``def (x: int) -> MyClass`` and ``def (x: str) -> MyClass``
 
 
-If the class is generic, the synthesized callable should include any class-scoped
-type parameters that appear within the signature, but these type parameters should
-be converted to function-scoped type parameters for the callable.
-Any function-scoped type parameters in the ``__init__`` or ``__new__``
-method should also be included as function-scoped type parameters in the synthesized
-callable.
+クラスがジェネリックである場合、合成された呼び出し可能な型にはシグネチャ内に現れるクラススコープの型パラメータが含まれる必要がありますが、これらの型パラメータは呼び出し可能な型の関数スコープの型パラメータに変換される必要があります。 ``__init__`` または ``__new__`` メソッド内の関数スコープの型パラメータも、合成された呼び出し可能な型の関数スコープの型パラメータとして含まれる必要があります。
 
   ::
 

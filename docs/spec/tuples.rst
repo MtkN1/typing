@@ -1,144 +1,98 @@
 .. _`tuples`:
 
-Tuples
-======
+タプル
+==========================================================================================
 
-The ``tuple`` class has some special behaviors and properties that make it
-different from other classes from a typing perspective. The most obvious
-difference is that ``tuple`` is variadic -- it supports an arbitrary number
-of type arguments. At runtime, the sequence of objects contained within the
-tuple is fixed at the time of construction. Elements cannot be added, removed,
-reordered, or replaced after construction. These properties affect subtyping
-rules and other behaviors as described below.
+``tuple`` クラスには、他のクラスとは異なる特別な動作と特性があります。 最も明らかな違いは、``tuple`` が可変長であることです。 つまり、任意の数の型引数をサポートします。 実行時には、タプル内に含まれるオブジェクトのシーケンスは構築時に固定されます。 構築後に要素を追加、削除、並べ替え、または置換することはできません。 これらの特性は、以下に説明するように、サブタイプルールやその他の動作に影響を与えます。
 
 
-Tuple Type Form
----------------
+タプル型の形式
+------------------------------------------------------------------------------------------
 
-The type of a tuple can be expressed by listing the element types. For
-example, ``tuple[int, int, str]`` is a tuple containing an ``int``, another
-``int``, and a ``str``.
+タプルの型は、要素の型を列挙することで表現できます。 例えば、``tuple[int, int, str]`` は、``int``、もう一つの ``int``、および ``str`` を含むタプルです。
 
-The empty tuple can be annotated as ``tuple[()]``.
+空のタプルは ``tuple[()]`` として注釈を付けることができます。
 
-Arbitrary-length homogeneous tuples can be expressed using one type and an
-ellipsis, for example ``tuple[int, ...]``. This type is equivalent to a union
-of tuples containing zero or more ``int`` elements (``tuple[()] |
-tuple[int] | tuple[int, int] | tuple[int, int, int] | ...``).
-Arbitrary-length homogeneous tuples are sometimes referred to as "unbounded
-tuples". Both of these terms appear within the typing spec, and they refer to
-the same concept.
+任意の長さの同種のタプルは、1 つの型と省略記号を使用して表現できます。 例えば、``tuple[int, ...]``。 この型は、0 個以上の ``int`` 要素を含むタプルの共用体と同等です（``tuple[()] | tuple[int] | tuple[int, int] | tuple[int, int, int] | ...``）。 任意の長さの同種のタプルは、時々「無制限タプル」と呼ばれます。 これらの用語はどちらも型指定の仕様内で使用され、同じ概念を指します。
 
-The type ``tuple[Any, ...]`` is special in that it is :term:`consistent` with
-all tuple types, and :term:`assignable` to a tuple of any length. This is
-useful for gradual typing. The type ``tuple`` (with no type arguments provided)
-is equivalent to ``tuple[Any, ...]``.
+型 ``tuple[Any, ...]`` は特別で、すべてのタプル型と :term:`consistent` であり、任意の長さのタプルに :term:`assignable` です。 これは、段階的な型付けに役立ちます。 型 ``tuple``（型引数が提供されていない場合）は、``tuple[Any, ...]`` と同等です。
 
-Arbitrary-length tuples have exactly two type arguments -- the type and
-an ellipsis. Any other tuple form that uses an ellipsis is invalid::
+任意の長さのタプルには、正確に 2 つの型引数（型と省略記号）があります。 省略記号を使用する他のタプル形式は無効です::
 
     t1: tuple[int, ...]  # OK
-    t2: tuple[int, int, ...]  # Invalid
-    t3: tuple[...]  # Invalid
-    t4: tuple[..., int]  # Invalid
-    t5: tuple[int, ..., int]  # Invalid
-    t6: tuple[*tuple[str], ...]  # Invalid
-    t7: tuple[*tuple[str, ...], ...]  # Invalid
+    t2: tuple[int, int, ...]  # 無効
+    t3: tuple[...]  # 無効
+    t4: tuple[..., int]  # 無効
+    t5: tuple[int, ..., int]  # 無効
+    t6: tuple[*tuple[str], ...]  # 無効
+    t7: tuple[*tuple[str, ...], ...]  # 無効
 
 
-Unpacked Tuple Form
--------------------
+アンパックされたタプル形式
+------------------------------------------------------------------------------------------
 
-An unpacked form of ``tuple`` (using an unpack operator ``*``) can be used
-within a tuple type argument list. For example, ``tuple[int, *tuple[str]]``
-is equivalent to ``tuple[int, str]``. Unpacking an unbounded tuple preserves
-the unbounded tuple as it is. That is, ``*tuple[int, ...]`` remains
-``*tuple[int, ...]``; there's no simpler form. This enables us to specify
-types such as ``tuple[int, *tuple[str, ...], str]`` -- a tuple type where the
-first element is guaranteed to be of type ``int``, the last element is
-guaranteed to be of type ``str``, and the elements in the middle are zero or
-more elements of type ``str``. The type ``tuple[*tuple[int, ...]]`` is
-equivalent to ``tuple[int, ...]``.
+タプルのアンパック形式（アンパック演算子 ``*`` を使用）をタプル型引数リスト内で使用できます。 例えば、``tuple[int, *tuple[str]]`` は ``tuple[int, str]`` と同等です。 無制限タプルのアンパックは、そのまま無制限タプルとして保持されます。 つまり、``*tuple[int, ...]`` は ``*tuple[int, ...]`` のままです。 より簡単な形式はありません。 これにより、``tuple[int, *tuple[str, ...], str]`` のような型を指定できます。最初の要素が ``int`` 型であることが保証され、最後の要素が ``str`` 型であることが保証され、中間の要素が 0 個以上の ``str`` 型の要素であるタプル型です。 型 ``tuple[*tuple[int, ...]]`` は ``tuple[int, ...]`` と同等です。
 
-If an unpacked ``*tuple[Any, ...]`` is embedded within another tuple, that
-portion of the tuple is :term:`consistent` with any tuple of any length.
+アンパックされた ``*tuple[Any, ...]`` が別のタプル内に埋め込まれている場合、そのタプルの部分は任意の長さのタプルと :term:`consistent` です。
 
-Only one unbounded tuple can be used within another tuple::
+別のタプル内で使用できる無制限タプルは 1 つだけです::
 
     t1: tuple[*tuple[str], *tuple[str]]  # OK
     t2: tuple[*tuple[str, *tuple[str, ...]]]  # OK
-    t3: tuple[*tuple[str, ...], *tuple[int, ...]]  # Type error
-    t4: tuple[*tuple[str, *tuple[str, ...]], *tuple[int, ...]]  # Type error
+    t3: tuple[*tuple[str, ...], *tuple[int, ...]]  # 型エラー
+    t4: tuple[*tuple[str, *tuple[str, ...]], *tuple[int, ...]]  # 型エラー
 
-An unpacked TypeVarTuple counts as an unbounded tuple in the context of this rule::
+アンパックされた TypeVarTuple は、このルールの文脈では無制限タプルとしてカウントされます::
 
     def func[*Ts](t: tuple[*Ts]):
         t5: tuple[*tuple[str], *Ts]  # OK
-        t6: tuple[*tuple[str, ...], *Ts]  # Type error
+        t6: tuple[*tuple[str, ...], *Ts]  # 型エラー
 
-The ``*`` syntax requires Python 3.11 or newer. For older versions of Python,
-the ``typing.Unpack`` :term:`special form` can be used:
-``tuple[int, Unpack[tuple[str, ...]], int]``.
+``*`` 構文は Python 3.11 以降が必要です。 古いバージョンの Python では、``typing.Unpack`` :term:`special form` を使用できます：``tuple[int, Unpack[tuple[str, ...]], int]``。
 
-Unpacked tuples can also be used for ``*args`` parameters in a function
-signature: ``def f(*args: *tuple[int, str]): ...``. Unpacked tuples
-can also be used for specializing generic classes or type variables that are
-parameterized using a ``TypeVarTuple``. For more details, see
-:ref:`args_as_typevartuple`.
+アンパックされたタプルは、関数シグネチャの ``*args`` パラメータにも使用できます：``def f(*args: *tuple[int, str]): ...``。 アンパックされたタプルは、``TypeVarTuple`` を使用してパラメータ化されたジェネリッククラスや型変数を特殊化するためにも使用できます。 詳細については、:ref:`args_as_typevartuple` を参照してください。
 
 
-Type Compatibility Rules
-------------------------
+型の互換性ルール
+------------------------------------------------------------------------------------------
 
-Because tuple contents are immutable, the element types of a tuple are covariant.
-For example, ``tuple[int, int]`` is a subtype of ``tuple[float, complex]``.
+タプルの内容は不変であるため、タプルの要素型は共変です。 例えば、``tuple[int, int]`` は ``tuple[float, complex]`` のサブタイプです。
 
-As discussed above, a homogeneous tuple of arbitrary length is equivalent
-to a union of tuples of different lengths. That means ``tuple[()]``,
-``tuple[int]`` and ``tuple[int, *tuple[int, ...]]`` are all subtypes of
-``tuple[int, ...]``. The converse is not true; ``tuple[int, ...]`` is not a
-subtype of ``tuple[int]``.
+前述のように、任意の長さの同種のタプルは、異なる長さのタプルの共用体と同等です。 つまり、``tuple[()]``、``tuple[int]``、および ``tuple[int, *tuple[int, ...]]`` はすべて ``tuple[int, ...]`` のサブタイプです。 逆は真ではありません。 ``tuple[int, ...]`` は ``tuple[int]`` のサブタイプではありません。
 
-The type ``tuple[Any, ...]`` is :term:`consistent` with any tuple::
+型 ``tuple[Any, ...]`` は任意のタプルと :term:`consistent` です::
 
     def func(t1: tuple[int], t2: tuple[int, ...], t3: tuple[Any, ...]):
         v1: tuple[int, ...] = t1  # OK
         v2: tuple[Any, ...] = t1  # OK
 
-        v3: tuple[int] = t2  # Type error
+        v3: tuple[int] = t2  # 型エラー
         v4: tuple[Any, ...] = t2  # OK
 
         v5: tuple[float, float] = t3  # OK
         v6: tuple[int, *tuple[str, ...]] = t3  # OK
 
 
-The length of a tuple at runtime is immutable, so it is safe for type checkers
-to use length checks to narrow the type of a tuple::
+タプルの長さは実行時に不変であるため、型チェッカーは長さチェックを使用してタプルの型を絞り込むことが安全です::
 
     def func(val: tuple[int] | tuple[str, str] | tuple[int, *tuple[str, ...], int]):
         if len(val) == 1:
-            # Type can be narrowed to tuple[int].
+            # 型を tuple[int] に絞り込むことができます。
             reveal_type(val)  # tuple[int]
 
         if len(val) == 2:
-            # Type can be narrowed to tuple[str, str] | tuple[int, int].
+            # 型を tuple[str, str] | tuple[int, int] に絞り込むことができます。
             reveal_type(val)  # tuple[str, str] | tuple[int, int]
 
         if len(val) == 3:
-            # Type can be narrowed to tuple[int, str, int].
+            # 型を tuple[int, str, int] に絞り込むことができます。
             reveal_type(val)  # tuple[int, str, int]
 
-This property may also be used to safely narrow tuple types within a ``match``
-statement that uses sequence patterns.
+この特性は、シーケンスパターンを使用する ``match`` ステートメント内でタプル型を安全に絞り込むためにも使用できます。
 
-If a tuple element is a union type, the tuple can be safely expanded into a
-union of tuples. For example, ``tuple[int | str]`` is equivalent to
-``tuple[int] | tuple[str]``. If multiple elements are union types, full expansion
-must consider all combinations. For example, ``tuple[int | str, int | str]`` is
-equivalent to ``tuple[int, int] | tuple[int, str] | tuple[str, int] | tuple[str, str]``.
-Unbounded tuples cannot be expanded in this manner.
+タプル要素が共用体型である場合、タプルを共用体に安全に展開できます。 例えば、``tuple[int | str]`` は ``tuple[int]`` | ``tuple[str]`` と同等です。 複数の要素が共用体型である場合、完全な展開はすべての組み合わせを考慮する必要があります。 例えば、``tuple[int | str, int | str]`` は ``tuple[int, int] | tuple[int, str] | tuple[str, int] | tuple[str, str]`` と同等です。 無制限タプルはこの方法で展開することはできません。
 
-Type checkers may safely use this equivalency rule when narrowing tuple types::
+型チェッカーは、タプル型を絞り込む際にこの等価性ルールを安全に使用できます::
 
     def func(subj: tuple[int | str, int | str]):
         match subj:
@@ -147,10 +101,6 @@ Type checkers may safely use this equivalency rule when narrowing tuple types::
             case y:
                 reveal_type(subj)  # tuple[int | str, int]
 
-The ``tuple`` class derives from ``Sequence[T_co]`` where ``T_co`` is a covariant
-(non-variadic) type variable. The specialized type of ``T_co`` should be computed
-by a type checker as a supertype of all element types.
-For example, ``tuple[int, *tuple[str, ...]]`` is a subtype of
-``Sequence[int | str]`` or ``Sequence[object]``.
+``tuple`` クラスは ``Sequence[T_co]`` から派生しており、``T_co`` は共変（非可変長）型変数です。 ``T_co`` の特殊化された型は、すべての要素型のスーパータイプとして型チェッカーによって計算されるべきです。 例えば、``tuple[int, *tuple[str, ...]]`` は ``Sequence[int | str]`` または ``Sequence[object]`` のサブタイプです。
 
-A zero-length tuple (``tuple[()]``) is a subtype of ``Sequence[Never]``.
+長さ 0 のタプル（``tuple[()]``）は ``Sequence[Never]`` のサブタイプです。

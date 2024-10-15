@@ -1,81 +1,55 @@
 .. _`dataclasses`:
 
-Dataclasses
-===========
+データクラス
+==========================================================================================
 
-Type checkers should support dataclasses created through
-the :py:mod:`dataclasses` module. In addition, the type system
-contains a mechanism to make third-party classes behave like
-standard dataclasses.
+型チェッカーは、:py:mod:`dataclasses` モジュールを通じて作成されたデータクラスをサポートする必要があります。 さらに、型システムには、サードパーティのクラスを標準のデータクラスのように動作させるメカニズムが含まれています。
 
 .. _`dataclass-transform`:
 
-The ``dataclass_transform`` decorator
--------------------------------------
+``dataclass_transform`` デコレーター
+------------------------------------------------------------------------------------------
 
-(Originally specified in :pep:`681`.)
+（元々 :pep:`681` で指定されています。）
 
-Specification
-^^^^^^^^^^^^^
+仕様
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This specification describes a decorator function in
-the :py:mod:`typing` module named :py:func:`~typing.dataclass_transform`. This decorator
-can be applied to either a function that is itself a decorator,
-a class, or a metaclass. The presence of
-``dataclass_transform`` tells a static type checker that the decorated
-function, class, or metaclass performs runtime "magic" that transforms
-a class, endowing it with dataclass-like behaviors.
+この仕様では、:py:mod:`typing` モジュールに :py:func:`~typing.dataclass_transform` という名前のデコレーター関数について説明します。 このデコレーターは、デコレーター自体である関数、クラス、またはメタクラスに適用できます。 ``dataclass_transform`` の存在は、デコレーター関数、クラス、またはメタクラスがクラスを変換し、データクラスのような動作を付与するランタイムの「マジック」を実行することを静的型チェッカーに伝えます。
 
-If ``dataclass_transform`` is applied to a function, using the decorated
-function as a decorator is assumed to apply dataclass-like semantics.
-If the function has overloads, the ``dataclass_transform`` decorator can
-be applied to the implementation of the function or any one, but not more
-than one, of the overloads. When applied to an overload, the
-``dataclass_transform`` decorator still impacts all usage of the
-function.
+``dataclass_transform`` が関数に適用される場合、デコレーターとして装飾された関数を使用することは、データクラスのようなセマンティクスを適用するものと見なされます。 関数にオーバーロードがある場合、``dataclass_transform`` デコレーターは関数の実装またはオーバーロードのいずれか 1 つに適用できますが、複数のオーバーロードには適用できません。 オーバーロードに適用される場合でも、``dataclass_transform`` デコレーターは関数のすべての使用に影響を与えます。
 
-If ``dataclass_transform`` is applied to a class, dataclass-like
-semantics will be assumed for any class that directly or indirectly
-derives from the decorated class or uses the decorated class as a
-metaclass. Attributes on the decorated class and its base classes
-are not considered to be fields.
+``dataclass_transform`` がクラスに適用される場合、データクラスのようなセマンティクスは、装飾されたクラスから直接または間接的に派生するクラスや、装飾されたクラスをメタクラスとして使用するクラスに対して適用されるものと見なされます。 装飾されたクラスおよびその基本クラスの属性はフィールドとは見なされません。
 
-Examples of each approach are shown in the following sections. Each
-example creates a ``CustomerModel`` class with dataclass-like semantics.
-The implementation of the decorated objects is omitted for brevity,
-but we assume that they modify classes in the following ways:
+各アプローチの例は、以下のセクションに示されています。 各例では、``CustomerModel`` クラスをデータクラスのようなセマンティクスで作成します。 装飾されたオブジェクトの実装は簡潔さのために省略されていますが、クラスを次のように変更するものと仮定します。
 
-* They synthesize an ``__init__`` method using data fields declared
-  within the class and its parent classes.
-* They synthesize ``__eq__`` and ``__ne__`` methods.
+* クラス内およびその親クラス内で宣言されたデータフィールドを使用して ``__init__`` メソッドを合成します。
+* ``__eq__`` および ``__ne__`` メソッドを合成します。
 
-Type checkers will recognize that the
-``CustomerModel`` class can be instantiated using the synthesized
-``__init__`` method:
+型チェッカーは、``CustomerModel`` クラスが合成された ``__init__`` メソッドを使用してインスタンス化できることを認識します。
 
 .. code-block:: python
 
-  # Using positional arguments
+  # 位置引数を使用
   c1 = CustomerModel(327, "John Smith")
 
-  # Using keyword arguments
+  # キーワード引数を使用
   c2 = CustomerModel(id=327, name="John Smith")
 
-  # These calls will generate runtime errors and should be flagged as
-  # errors by a static type checker.
+  # これらの呼び出しはランタイムエラーを生成し、静的型チェッカーによってエラーとしてフラグ付けされるべきです。
   c3 = CustomerModel()
   c4 = CustomerModel(327, first_name="John")
   c5 = CustomerModel(327, "John Smith", 0)
 
-Decorator function example
-""""""""""""""""""""""""""
+デコレーター関数の例
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. code-block:: python
 
   _T = TypeVar("_T")
 
-  # The ``create_model`` decorator is defined by a library.
-  # This could be in a type stub or inline.
+  # ``create_model`` デコレーターはライブラリによって定義されます。
+  # これはタイプスタブまたはインラインで行うことができます。
   @typing.dataclass_transform()
   def create_model(cls: Type[_T]) -> Type[_T]:
       cls.__init__ = ...
@@ -83,68 +57,54 @@ Decorator function example
       cls.__ne__ = ...
       return cls
 
-  # The ``create_model`` decorator can now be used to create new model
-  # classes, like this:
+  # ``create_model`` デコレーターは次のように新しいモデルクラスを作成するために使用できます。
   @create_model
   class CustomerModel:
       id: int
       name: str
 
-Class example
-"""""""""""""
+クラスの例
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. code-block:: python
 
-  # The ``ModelBase`` class is defined by a library. This could be in
-  # a type stub or inline.
+  # ``ModelBase`` クラスはライブラリによって定義されます。 これはタイプスタブまたはインラインで行うことができます。
   @typing.dataclass_transform()
   class ModelBase: ...
 
-  # The ``ModelBase`` class can now be used to create new model
-  # subclasses, like this:
+  # ``ModelBase`` クラスは次のように新しいモデルサブクラスを作成するために使用できます。
   class CustomerModel(ModelBase):
       id: int
       name: str
 
-Metaclass example
-"""""""""""""""""
+メタクラスの例
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. code-block:: python
 
-  # The ``ModelMeta`` metaclass and ``ModelBase`` class are defined by
-  # a library. This could be in a type stub or inline.
+  # ``ModelMeta`` メタクラスおよび ``ModelBase`` クラスはライブラリによって定義されます。 これはタイプスタブまたはインラインで行うことができます。
   @typing.dataclass_transform()
   class ModelMeta(type): ...
 
   class ModelBase(metaclass=ModelMeta): ...
 
-  # The ``ModelBase`` class can now be used to create new model
-  # subclasses, like this:
+  # ``ModelBase`` クラスは次のように新しいモデルサブクラスを作成するために使用できます。
   class CustomerModel(ModelBase):
       id: int
       name: str
 
-Decorator function and class/metaclass parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+デコレーター関数およびクラス/メタクラスのパラメータ
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A decorator function, class, or metaclass that provides dataclass-like
-functionality may accept parameters that modify certain behaviors.
-This specification defines the following parameters that static type
-checkers must honor if they are used by a dataclass transform. Each of
-these parameters accepts a bool argument, and it must be possible for
-the bool value (``True`` or ``False``) to be statically evaluated.
+データクラスのような機能を提供するデコレーター関数、クラス、またはメタクラスは、特定の動作を変更するパラメータを受け入れる場合があります。 この仕様では、データクラス変換によって使用される場合に静的型チェッカーが尊重しなければならない次のパラメータを定義します。 これらのパラメータは bool 引数を受け入れ、bool 値（``True`` または ``False``）を静的に評価できる必要があります。
 
-* ``eq``,  ``order``, ``frozen``, ``init`` and ``unsafe_hash`` are parameters
-  supported in the stdlib dataclass, with meanings defined in
-  :pep:`PEP 557 <557#id7>`.
-* ``kw_only``, ``match_args`` and ``slots`` are parameters supported
-  in the stdlib dataclass, first introduced in Python 3.10.
+* ``eq``、``order``、``frozen``、``init`` および ``unsafe_hash`` は、標準ライブラリのデータクラスでサポートされているパラメータであり、その意味は :pep:`PEP 557 <557#id7>` で定義されています。
+* ``kw_only``、``match_args`` および ``slots`` は、標準ライブラリのデータクラスでサポートされているパラメータであり、Python 3.10 で初めて導入されました。
 
-``dataclass_transform`` parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``dataclass_transform`` パラメータ
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Parameters to ``dataclass_transform`` allow for some basic
-customization of default behaviors:
+``dataclass_transform`` のパラメータは、デフォルトの動作を基本的にカスタマイズするためのものです。
 
 .. code-block:: python
 
@@ -160,55 +120,23 @@ customization of default behaviors:
       **kwargs: Any,
   ) -> Callable[[_T], _T]: ...
 
-* ``eq_default`` indicates whether the ``eq`` parameter is assumed to
-  be True or False if it is omitted by the caller. If not specified,
-  ``eq_default`` will default to True (the default assumption for
-  dataclass).
-* ``order_default`` indicates whether the ``order`` parameter is
-  assumed to be True or False if it is omitted by the caller. If not
-  specified, ``order_default`` will default to False (the default
-  assumption for dataclass).
-* ``kw_only_default`` indicates whether the ``kw_only`` parameter is
-  assumed to be True or False if it is omitted by the caller. If not
-  specified, ``kw_only_default`` will default to False (the default
-  assumption for dataclass).
-* ``frozen_default`` indicates whether the ``frozen`` parameter is
-  assumed to be True or False if it is omitted by the caller. If not
-  specified, ``frozen_default`` will default to False (the default
-  assumption for dataclass).
-* ``field_specifiers`` specifies a static list of supported classes
-  that describe fields. Some libraries also supply functions to
-  allocate instances of field specifiers, and those functions may
-  also be specified in this tuple. If not specified,
-  ``field_specifiers`` will default to an empty tuple (no field
-  specifiers supported). The standard dataclass behavior supports
-  only one type of field specifier called ``Field`` plus a helper
-  function (``field``) that instantiates this class, so if we were
-  describing the stdlib dataclass behavior, we would provide the
-  tuple argument ``(dataclasses.Field, dataclasses.field)``.
-* ``kwargs`` allows arbitrary additional keyword args to be passed to
-  ``dataclass_transform``. This gives type checkers the freedom to
-  support experimental parameters without needing to wait for changes
-  in ``typing.py``. Type checkers should report errors for any
-  unrecognized parameters.
+* ``eq_default`` は、呼び出し元が ``eq`` パラメータを省略した場合に ``True`` または ``False`` と見なすかどうかを示します。 指定されていない場合、``eq_default`` は True にデフォルト設定されます（データクラスのデフォルトの仮定）。
+* ``order_default`` は、呼び出し元が ``order`` パラメータを省略した場合に ``True`` または ``False`` と見なすかどうかを示します。 指定されていない場合、``order_default`` は False にデフォルト設定されます（データクラスのデフォルトの仮定）。
+* ``kw_only_default`` は、呼び出し元が ``kw_only`` パラメータを省略した場合に ``True`` または ``False`` と見なすかどうかを示します。 指定されていない場合、``kw_only_default`` は False にデフォルト設定されます（データクラスのデフォルトの仮定）。
+* ``frozen_default`` は、呼び出し元が ``frozen`` パラメータを省略した場合に ``True`` または ``False`` と見なすかどうかを示します。 指定されていない場合、``frozen_default`` は False にデフォルト設定されます（データクラスのデフォルトの仮定）。
+* ``field_specifiers`` は、フィールドを記述するサポートされるクラスの静的リストを指定します。 一部のライブラリは、フィールド指定子のインスタンスを割り当てる関数も提供しており、これらの関数もこのタプルに指定できます。 指定されていない場合、``field_specifiers`` は空のタプル（フィールド指定子はサポートされていない）にデフォルト設定されます。 標準のデータクラスの動作は、``Field`` と呼ばれる 1 種類のフィールド指定子と、このクラスのインスタンスを作成するヘルパー関数（``field``）のみをサポートするため、標準ライブラリのデータクラスの動作を説明する場合、タプル引数 ``(dataclasses.Field, dataclasses.field)`` を提供します。
+* ``kwargs`` は、``dataclass_transform`` に任意の追加のキーワード引数を渡すことを可能にします。 これにより、型チェッカーは ``typing.py`` の変更を待たずに実験的なパラメータをサポートする自由を得ることができます。 型チェッカーは、認識されないパラメータに対してエラーを報告する必要があります。
 
-In the future, we may add additional parameters to
-``dataclass_transform`` as needed to support common behaviors in user
-code. These additions will be made after reaching consensus on
-typing-sig rather than via additional PEPs.
+将来的には、ユーザーコードで一般的な動作をサポートするために必要に応じて、``dataclass_transform`` に追加のパラメータを追加する場合があります。 これらの追加は、追加の PEP を介さずに typing-sig での合意に達した後に行われます。
 
-The following sections provide additional examples showing how these
-parameters are used.
+次のセクションでは、これらのパラメータの使用方法を示す追加の例を提供します。
 
-Decorator function example
-""""""""""""""""""""""""""
+デコレーター関数の例
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. code-block:: python
 
-  # Indicate that the ``create_model`` function assumes keyword-only
-  # parameters for the synthesized ``__init__`` method unless it is
-  # invoked with ``kw_only=False``. It always synthesizes order-related
-  # methods and provides no way to override this behavior.
+  # ``create_model`` 関数がキーワード専用パラメータを合成された ``__init__`` メソッドに仮定することを示します。 ``kw_only=False`` で呼び出されない限り。 常に順序関連のメソッドを合成し、この動作を上書きする方法を提供しません。
   @typing.dataclass_transform(kw_only_default=True, order_default=True)
   def create_model(
       *,
@@ -216,20 +144,18 @@ Decorator function example
       kw_only: bool = True,
   ) -> Callable[[Type[_T]], Type[_T]]: ...
 
-  # Example of how this decorator would be used by code that imports
-  # from this library:
+  # このデコレーターがこのライブラリからインポートされたコードによってどのように使用されるかの例：
   @create_model(frozen=True, kw_only=False)
   class CustomerModel:
       id: int
       name: str
 
-Class example
-"""""""""""""
+クラスの例
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. code-block:: python
 
-  # Indicate that classes that derive from this class default to
-  # synthesizing comparison methods.
+  # このクラスから派生するクラスが比較メソッドを合成することをデフォルトとすることを示します。
   @typing.dataclass_transform(eq_default=True, order_default=True)
   class ModelBase:
       def __init_subclass__(
@@ -242,8 +168,7 @@ Class example
       ):
           ...
 
-  # Example of how this class would be used by code that imports
-  # from this library:
+  # このクラスがこのライブラリからインポートされたコードによってどのように使用されるかの例：
   class CustomerModel(
       ModelBase,
       init=False,
@@ -254,13 +179,12 @@ Class example
       id: int
       name: str
 
-Metaclass example
-"""""""""""""""""
+メタクラスの例
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. code-block:: python
 
-  # Indicate that classes that use this metaclass default to
-  # synthesizing comparison methods.
+  # このメタクラスを使用するクラスが比較メソッドを合成することをデフォルトとすることを示します。
   @typing.dataclass_transform(eq_default=True, order_default=True)
   class ModelMeta(type):
       def __new__(
@@ -279,8 +203,7 @@ Metaclass example
   class ModelBase(metaclass=ModelMeta):
       ...
 
-  # Example of how this class would be used by code that imports
-  # from this library:
+  # このクラスがこのライブラリからインポートされたコードによってどのように使用されるかの例：
   class CustomerModel(
       ModelBase,
       init=False,
@@ -291,93 +214,54 @@ Metaclass example
       id: int
       name: str
 
+フィールド指定子
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Field specifiers
-^^^^^^^^^^^^^^^^^
+データクラスのようなセマンティクスをサポートするほとんどのライブラリは、クラス定義がクラス内の各フィールドに関する追加のメタデータを提供できるようにする 1 つ以上の「フィールド指定子」タイプを提供します。 このメタデータは、たとえばデフォルト値を記述したり、フィールドが合成された ``__init__`` メソッドに含まれるかどうかを示したりすることができます。
 
-Most libraries that support dataclass-like semantics provide one or
-more "field specifier" types that allow a class definition to provide
-additional metadata about each field in the class. This metadata can
-describe, for example, default values, or indicate whether the field
-should be included in the synthesized ``__init__`` method.
-
-Field specifiers can be omitted in cases where additional metadata is
-not required:
+追加のメタデータが必要ない場合、フィールド指定子を省略できます。
 
 .. code-block:: python
 
   @dataclass
   class Employee:
-      # Field with no specifier
+      # フィールド指定子なしのフィールド
       name: str
 
-      # Field that uses field specifier class instance
+      # フィールド指定子クラスインスタンスを使用するフィールド
       age: Optional[int] = field(default=None, init=False)
 
-      # Field with type annotation and simple initializer to
-      # describe default value
+      # デフォルト値を記述するための型注釈と単純な初期化子を持つフィールド
       is_paid_hourly: bool = True
 
-      # Not a field (but rather a class variable) because type
-      # annotation is not provided.
+      # 型注釈が提供されていないため、フィールドではなく（クラス変数）
       office_number = "unassigned"
 
+フィールド指定子のパラメータ
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Field specifier parameters
-""""""""""""""""""""""""""
+データクラスのようなセマンティクスをサポートし、フィールド指定子クラスをサポートするライブラリは、通常、これらのフィールド指定子を構築するために共通のパラメータ名を使用します。 この仕様では、静的型チェッカーが理解しなければならないパラメータの名前と意味を正式化します。 これらの標準化されたパラメータはキーワード専用でなければなりません。
 
-Libraries that support dataclass-like semantics and support field
-specifier classes typically use common parameter names to construct
-these field specifiers. This specification formalizes the names and
-meanings of the parameters that must be understood for static type
-checkers. These standardized parameters must be keyword-only.
+これらのパラメータは、``compare`` や ``hash`` など、型チェックに影響を与えないものを除く、:py:func:`dataclasses.field` でサポートされているもののスーパーセットです。
 
-These parameters are a superset of those supported by
-:py:func:`dataclasses.field`, excluding those that do not have an impact on
-type checking such as ``compare`` and ``hash``.
+フィールド指定子クラスは、コンストラクタ内で他のパラメータを使用することができ、これらのパラメータは位置指定であり、他の名前を使用することができます。
 
-Field specifier classes are allowed to use other
-parameters in their constructors, and those parameters can be
-positional and may use other names.
+* ``init`` は、フィールドが合成された ``__init__`` メソッドに含まれるかどうかを示すオプションの bool パラメータです。 指定されていない場合、``init`` は True にデフォルト設定されます。 フィールド指定子関数は、リテラル bool 値型（``Literal[False]`` または ``Literal[True]``）を使用して ``init`` の値を暗黙的に指定するオーバーロードを使用できます。
+* ``default`` は、フィールドのデフォルト値を提供するオプションのパラメータです。
+* ``default_factory`` は、フィールドのデフォルト値を返すランタイムコールバックを提供するオプションのパラメータです。 ``default`` または ``default_factory`` のいずれも指定されていない場合、フィールドにはデフォルト値がないと見なされ、クラスのインスタンス化時に値を提供する必要があります。
+* ``factory`` は ``default_factory`` のエイリアスです。 標準ライブラリのデータクラスは ``default_factory`` という名前を使用しますが、attrs は多くのシナリオで ``factory`` という名前を使用するため、このエイリアスは attrs をサポートするために必要です。
+* ``kw_only`` は、フィールドがキーワード専用としてマークされるかどうかを示すオプションの bool パラメータです。 True の場合、フィールドはキーワード専用になります。 False の場合、キーワード専用にはなりません。 指定されていない場合、``dataclass_transform`` で装飾されたオブジェクトの ``kw_only`` パラメータの値が使用されます。 それも指定されていない場合、``dataclass_transform`` の ``kw_only_default`` の値が使用されます。
+* ``alias`` は、フィールドの代替名を提供するオプションの str パラメータです。 この代替名は、合成された ``__init__`` メソッドで使用されます。
+* ``converter`` は、フィールドに値を割り当てる際に使用される呼び出し可能なオプションのパラメータです。
 
-* ``init`` is an optional bool parameter that indicates whether the
-  field should be included in the synthesized ``__init__`` method. If
-  unspecified, ``init`` defaults to True. Field specifier functions
-  can use overloads that implicitly specify the value of ``init``
-  using a literal bool value type
-  (``Literal[False]`` or ``Literal[True]``).
-* ``default`` is an optional parameter that provides the default value
-  for the field.
-* ``default_factory`` is an optional parameter that provides a runtime
-  callback that returns the default value for the field. If neither
-  ``default`` nor ``default_factory`` are specified, the field is
-  assumed to have no default value and must be provided a value when
-  the class is instantiated.
-* ``factory`` is an alias for ``default_factory``. Stdlib dataclasses
-  use the name ``default_factory``, but attrs uses the name ``factory``
-  in many scenarios, so this alias is necessary for supporting attrs.
-* ``kw_only`` is an optional bool parameter that indicates whether the
-  field should be marked as keyword-only. If true, the field will be
-  keyword-only. If false, it will not be keyword-only. If unspecified,
-  the value of the ``kw_only`` parameter on the object decorated with
-  ``dataclass_transform`` will be used, or if that is unspecified, the
-  value of ``kw_only_default`` on ``dataclass_transform`` will be used.
-* ``alias`` is an optional str parameter that provides an alternative
-  name for the field. This alternative name is used in the synthesized
-  ``__init__`` method.
-* ``converter`` is an optional parameter that specifies a
-  callable used to convert values when assigning to the field.
+``default``、``default_factory`` および ``factory`` のいずれかを複数指定することはエラーです。
 
-It is an error to specify more than one of ``default``,
-``default_factory`` and ``factory``.
-
-This example demonstrates the above:
+次の例は上記を示しています。
 
 .. code-block:: python
 
-  # Library code (within type stub or inline)
-  # In this library, passing a resolver means that init must be False,
-  # and the overload with Literal[False] enforces that.
+  # ライブラリコード（タイプスタブまたはインライン内）
+  # このライブラリでは、リゾルバを渡すと init は False でなければならず、Literal[False] を持つオーバーロードがそれを強制します。
   @overload
   def model_field(
           *,
@@ -402,23 +286,18 @@ This example demonstrates the above:
       init: bool = True,
   ) -> Callable[[Type[_T]], Type[_T]]: ...
 
-  # Code that imports this library:
+  # このライブラリからインポートされたコード：
   @create_model(init=False)
   class CustomerModel:
       id: int = model_field(resolver=lambda : 0)
       name: str
 
+ランタイムの動作
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Runtime behavior
-^^^^^^^^^^^^^^^^
+ランタイムでは、``dataclass_transform`` デコレーターの唯一の効果は、装飾された関数またはクラスに ``__dataclass_transform__`` という名前の属性を設定してインスペクションをサポートすることです。 属性の値は、``dataclass_transform`` パラメータの名前をその値にマッピングする辞書である必要があります。
 
-At runtime, the ``dataclass_transform`` decorator's only effect is to
-set an attribute named ``__dataclass_transform__`` on the decorated
-function or class to support introspection. The value of the attribute
-should be a dict mapping the names of the ``dataclass_transform``
-parameters to their values.
-
-For example:
+たとえば：
 
 .. code-block:: python
 
@@ -430,129 +309,81 @@ For example:
     "kwargs": {}
   }
 
+データクラスのセマンティクス
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Dataclass semantics
-^^^^^^^^^^^^^^^^^^^
+明示的に述べられていない限り、``dataclass_transform`` で影響を受けるクラスは、``dataclass_transform`` で装飾されたクラスを継承するか、``dataclass_transform`` で装飾された関数で装飾されることによって、標準ライブラリの :func:`~dataclasses.dataclass` のように動作するものと見なされます。
 
-Except where stated otherwise, classes impacted by
-``dataclass_transform``, either by inheriting from a class that is
-decorated with ``dataclass_transform`` or by being decorated with
-a function decorated with ``dataclass_transform``, are assumed to
-behave like stdlib :func:`~dataclasses.dataclass`.
+これには、次のセマンティクスが含まれますが、これに限定されません。
 
-This includes, but is not limited to, the following semantics:
+* 凍結されたデータクラスは、非凍結データクラスを継承できません。 ``dataclass_transform`` で装飾されたクラスは、凍結されているとも非凍結されているとも見なされないため、凍結されたクラスがそれを継承することができます。 同様に、``dataclass_transform`` で装飾されたメタクラスを直接指定するクラスは、凍結されているとも非凍結されているとも見なされません。
 
-* Frozen dataclasses cannot inherit from non-frozen dataclasses. A
-  class that has been decorated with ``dataclass_transform`` is
-  considered neither frozen nor non-frozen, thus allowing frozen
-  classes to inherit from it. Similarly, a class that directly
-  specifies a metaclass that is decorated with ``dataclass_transform``
-  is considered neither frozen nor non-frozen.
-
-  Consider these class examples:
+  次のクラスの例を考えてみましょう。
 
   .. code-block:: python
 
-    # ModelBase is not considered either "frozen" or "non-frozen"
-    # because it is decorated with ``dataclass_transform``
+    # ModelBase は ``dataclass_transform`` で装飾されているため、「凍結」または「非凍結」と見なされません。
     @typing.dataclass_transform()
     class ModelBase(): ...
 
-    # Vehicle is considered non-frozen because it does not specify
-    # "frozen=True".
+    # Vehicle は「frozen=True」を指定していないため、非凍結と見なされます。
     class Vehicle(ModelBase):
         name: str
 
-    # Car is a frozen class that derives from Vehicle, which is a
-    # non-frozen class. This is an error.
+    # Car は凍結されたクラスであり、非凍結クラスである Vehicle から派生しています。 これはエラーです。
     class Car(Vehicle, frozen=True):
         wheel_count: int
 
-  And these similar metaclass examples:
+  そして、これらの類似したメタクラスの例：
 
   .. code-block:: python
 
     @typing.dataclass_transform()
     class ModelMeta(type): ...
 
-    # ModelBase is not considered either "frozen" or "non-frozen"
-    # because it directly specifies ModelMeta as its metaclass.
+    # ModelBase は、ModelMeta をメタクラスとして直接指定しているため、「凍結」または「非凍結」と見なされません。
     class ModelBase(metaclass=ModelMeta): ...
 
-    # Vehicle is considered non-frozen because it does not specify
-    # "frozen=True".
+    # Vehicle は「frozen=True」を指定していないため、非凍結と見なされます。
     class Vehicle(ModelBase):
         name: str
 
-    # Car is a frozen class that derives from Vehicle, which is a
-    # non-frozen class. This is an error.
+    # Car は凍結されたクラスであり、非凍結クラスである Vehicle から派生しています。 これはエラーです。
     class Car(Vehicle, frozen=True):
         wheel_count: int
 
-* Field ordering and inheritance is assumed to follow the rules
-  specified in `the Python docs <https://docs.python.org/3/library/dataclasses.html#inheritance>`__. This includes the effects of
-  overrides (redefining a field in a child class that has already been
-  defined in a parent class).
+* フィールドの順序と継承は、`Python ドキュメント <https://docs.python.org/3/library/dataclasses.html#inheritance>`__ で指定されたルールに従うものと見なされます。 これには、オーバーライドの影響（親クラスですでに定義されているフィールドを子クラスで再定義すること）が含まれます。
 
-* :pep:`PEP 557 indicates <557#post-init-parameters>` that
-  all fields without default values must appear before
-  fields with default values. Although not explicitly
-  stated in PEP 557, this rule is ignored when ``init=False``, and
-  this specification likewise ignores this requirement in that
-  situation. Likewise, there is no need to enforce this ordering when
-  keyword-only parameters are used for ``__init__``, so the rule is
-  not enforced if ``kw_only`` semantics are in effect.
+* :pep:`PEP 557 <557#post-init-parameters>` は、デフォルト値のないすべてのフィールドがデフォルト値のあるフィールドの前に表示される必要があることを示しています。 PEP 557 では明示的に述べられていませんが、このルールは ``init=False`` の場合には無視され、この仕様でもその状況ではこの要件を無視します。 同様に、``__init__`` のキーワード専用パラメータが使用される場合、この順序を強制する必要はないため、``kw_only`` セマンティクスが有効な場合、このルールは強制されません。
 
-* As with ``dataclass``, method synthesis is skipped if it would
-  overwrite a method that is explicitly declared within the class.
-  Method declarations on base classes do not cause method synthesis to
-  be skipped.
+* ``dataclass`` と同様に、クラス内で明示的に宣言されたメソッドがある場合、メソッドの合成はスキップされます。 基本クラスのメソッド宣言は、メソッドの合成をスキップする原因にはなりません。
 
-  For example, if a class declares an ``__init__`` method explicitly,
-  an ``__init__`` method will not be synthesized for that class.
+  たとえば、クラスが ``__init__`` メソッドを明示的に宣言している場合、そのクラスには ``__init__`` メソッドは合成されません。
 
-* KW_ONLY sentinel values are supported as described in `the Python
-  docs <https://docs.python.org/3/library/dataclasses.html#dataclasses.KW_ONLY>`_
-  and `bpo-43532 <https://bugs.python.org/issue43532>`_.
+* KW_ONLY センチネル値は、`Python ドキュメント <https://docs.python.org/3/library/dataclasses.html#dataclasses.KW_ONLY>`_ および `bpo-43532 <https://bugs.python.org/issue43532>`_ で説明されているようにサポートされています。
 
-* ClassVar attributes are not considered dataclass fields and are
-  `ignored by dataclass mechanisms <https://docs.python.org/3/library/dataclasses.html#class-variables>`_.
+* ClassVar 属性はデータクラスフィールドとは見なされず、`データクラスメカニズムによって無視されます <https://docs.python.org/3/library/dataclasses.html#class-variables>`_。
 
-* A dataclass field may be annotated with ``Final[...]``. For example, ``x:
-  Final[int]`` in a dataclass body specifies a dataclass field ``x``, which
-  will be initialized in the generated ``__init__`` and cannot be assigned to
-  thereafter. A ``Final`` dataclass field initialized in the class body is not
-  a class attribute unless explicitly annotated with ``ClassVar``. For example,
-  ``x: Final[int] = 3`` is a dataclass field named ``x`` with a default value
-  of ``3`` in the generated ``__init__`` method. A final class variable on a
-  dataclass must be explicitly annotated as e.g. ``x: ClassVar[Final[int]] =
-  3``.
+* データクラスフィールドは ``Final[...]`` で注釈を付けることができます。 たとえば、データクラス本体内の ``x: Final[int]`` は、合成された ``__init__`` メソッドで初期化され、その後は代入できないデータクラスフィールド ``x`` を指定します。 クラス本体内で初期化された ``Final`` データクラスフィールドは、明示的に ``ClassVar`` で注釈されない限り、クラス属性ではありません。 たとえば、``x: Final[int] = 3`` は、合成された ``__init__`` メソッドでデフォルト値 ``3`` を持つデータクラスフィールド ``x`` です。 データクラスの最終クラス変数は、たとえば ``x: ClassVar[Final[int]] = 3`` のように明示的に注釈を付ける必要があります。
 
-Converters
-^^^^^^^^^^
+コンバーター
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``converter`` parameter can be specified in a field definition to provide a callable
-used to convert values when assigning to the associated attribute. This feature allows for automatic type
-conversion and validation during attribute assignment.
+``converter`` パラメータは、関連する属性に値を割り当てる際に使用される呼び出し可能なものを提供するためにフィールド定義で指定できます。 この機能により、属性の割り当て中に自動的な型変換と検証が可能になります。
 
-Converter behavior:
+コンバーターの動作：
 
-* The converter is used for all attribute assignment, including assignment
-  of default values, assignment in synthesized ``__init__`` methods
-  and direct attribute setting (e.g., ``obj.attr = value``).
-* The converter is not used when reading attributes, as the attributes should already have been converted.
+* コンバーターは、デフォルト値の割り当て、合成された ``__init__`` メソッドでの割り当て、および直接の属性設定（例：``obj.attr = value``）を含むすべての属性割り当てに使用されます。
+* コンバーターは属性の読み取り時には使用されません。属性はすでに変換されているはずです。
 
-Typing rules for converters:
+コンバーターの型付けルール：
 
-* The ``converter`` must be a callable that must accept a single positional argument
-  (but may accept other optional arguments, which are ignored for typing purposes).
-* The type of the first positional parameter provides the type of the synthesized ``__init__`` parameter
-  for the field.
-* The return type of the callable must be assignable to the field's declared type.
-* If ``default`` or ``default_factory`` are provided, the type of the default value should be
-  assignable to the first positional parameter of the ``converter``.
+* ``converter`` は、単一の位置引数を受け入れる呼び出し可能なものでなければなりません（ただし、他のオプションの引数を受け入れることができますが、型付け目的では無視されます）。
+* 最初の位置引数の型は、フィールドの合成された ``__init__`` パラメータの型を提供します。
+* 呼び出し可能なものの戻り値の型は、フィールドの宣言された型に代入可能でなければなりません。
+* ``default`` または ``default_factory`` が提供されている場合、デフォルト値の型は ``converter`` の最初の位置引数に代入可能でなければなりません。
 
-Example usage:
+使用例：
 
 .. code-block:: python
 
@@ -568,17 +399,13 @@ Example usage:
             default="default/path.txt"
         )
 
-    # Usage
+    # 使用例
     example = Example("123", None, "some/path")
     # example.int_field == 123
     # example.str_field == None
     # example.path_field == pathlib.Path("some/path")
 
+未定義の動作
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Undefined behavior
-^^^^^^^^^^^^^^^^^^
-
-If multiple ``dataclass_transform`` decorators are found, either on a
-single function (including its overloads), a single class, or within a
-class hierarchy, the resulting behavior is undefined. Library authors
-should avoid these scenarios.
+複数の ``dataclass_transform`` デコレーターが見つかった場合、単一の関数（そのオーバーロードを含む）、単一のクラス、またはクラス階層内で、結果の動作は未定義です。 ライブラリの作成者はこれらのシナリオを避けるべきです。

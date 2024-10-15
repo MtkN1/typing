@@ -1,11 +1,7 @@
-Exceptions
-==========
+例外
+==========================================================================================
 
-Some type checking behaviors, such as type narrowing and reachability analysis,
-require a type checker to understand code flow. Code flow normally proceeds
-from one statement to the next, but some statements such as ``for``, ``while``
-and ``return`` can change the code flow. Similarly, ``try``/``except``/``finally``
-statements affect code flow and therefore can affect type evaluation. For example::
+一部の型チェック動作（型の絞り込みや到達可能性の分析など）では、型チェッカーがコードフローを理解する必要があります。 コードフローは通常、ある文から次の文へと進行しますが、``for``、``while``、``return`` などの一部の文はコードフローを変更することがあります。 同様に、``try``/``except``/``finally`` 文はコードフローに影響を与えるため、型評価にも影響を与える可能性があります。 例::
 
     x = None
     try:
@@ -14,40 +10,22 @@ statements affect code flow and therefore can affect type evaluation. For exampl
     except NotImplementedError:
         pass
 
-    # The type of `x` at this point could be None if `some_function` raises
-    # an exception or `Literal[1]` if it doesn't, so a type checker may
-    # choose to narrow its type based on this analysis.
+    # この時点での `x` の型は、`some_function` が例外を発生させた場合は None であり、発生させなかった場合は `Literal[1]` である可能性があるため、型チェッカーはこの分析に基づいてその型を絞り込むことを選択する場合があります。
     reveal_type(x)  # Literal[1] | None
 
 
-Context Managers
-----------------
+コンテキストマネージャー
+------------------------------------------------------------------------------------------
 
-A context manager may optionally "suppress" exceptions by returning ``True``
-(or some other truthy value) from its ``__exit__`` method. When such a context
-manager is used, any exceptions that are raised and otherwise uncaught within
-the ``with`` block are caught by the context manager, and control continues
-immediately after the ``with`` block. If a context manager does not suppress
-exceptions (as is typically the case), any exceptions that are raised and
-otherwise uncaught within the ``with`` block propagate beyond the ``with``
-block.
+コンテキストマネージャーは、``__exit__`` メソッドから ``True``（または他の真値）を返すことで、例外を「抑制」することができます。 このようなコンテキストマネージャーが使用される場合、``with`` ブロック内で発生し、他にキャッチされない例外はコンテキストマネージャーによってキャッチされ、制御は ``with`` ブロックの直後に続きます。 コンテキストマネージャーが例外を抑制しない場合（通常はそうです）、``with`` ブロック内で発生し、他にキャッチされない例外は ``with`` ブロックを超えて伝播します。
 
-Type checkers that employ code flow analysis must be able to distinguish
-between these two cases. This is done by examining the return type
-annotation of the ``__exit__`` method of the context manager.
+コードフロー分析を行う型チェッカーは、これらの 2 つのケースを区別できる必要があります。 これは、コンテキストマネージャーの ``__exit__`` メソッドの戻り型注釈を調べることで行われます。
 
-If the return type of the ``__exit__`` method is specifically ``bool`` or
-``Literal[True]``, a type checker should assume that exceptions *can be*
-suppressed. For any other return type, a type checker should assume that
-exceptions *are not* suppressed. Examples include: ``Any``, ``Literal[False]``,
-``None``, and ``bool | None``.
+``__exit__`` メソッドの戻り型が特に ``bool`` または ``Literal[True]`` である場合、型チェッカーは例外が抑制される*可能性がある*と仮定する必要があります。 他の戻り型の場合、型チェッカーは例外が抑制され*ない*と仮定する必要があります。 例としては、``Any``、``Literal[False]``、``None``、および ``bool | None`` があります。
 
-This convention was chosen because most context managers do not suppress
-exceptions, and it is common for their ``__exit__`` method to be annotated as
-returning ``bool | None``. Context managers that suppress exceptions are
-relatively rare, so they are considered a special case.
+この慣習は、ほとんどのコンテキストマネージャーが例外を抑制しないため選ばれました。 そして、彼らの ``__exit__`` メソッドは ``bool | None`` を返すように注釈されることが一般的です。 例外を抑制するコンテキストマネージャーは比較的まれであり、特別なケースと見なされます。
 
-For example, the following context manager suppresses exceptions::
+たとえば、次のコンテキストマネージャーは例外を抑制します::
 
     class Suppress:
         def __enter__(self) -> None:
@@ -57,7 +35,7 @@ For example, the following context manager suppresses exceptions::
             return True
 
     with Suppress():
-        raise ValueError("This exception is suppressed")
+        raise ValueError("この例外は抑制されます")
 
-    # The exception is suppressed, so this line is reachable.
-    print("Code is reachable")
+    # 例外が抑制されるため、この行は到達可能です。
+    print("コードは到達可能です")

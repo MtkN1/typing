@@ -1,51 +1,37 @@
 .. _`spec-meta`:
 
-Meta-topics
-===========
+メタトピック
+==========================================================================================
 
-About this specification
-------------------------
+この仕様について
+------------------------------------------------------------------------------------------
 
-This document was created following the acceptance of :pep:`729`
-to serve as a specification for the Python type system. The
-initial text consists of the "Specification" sections of :pep:`484`
-and subsequent typing-related PEPs, pasted together and reorganized.
-This creates a document that encompasses all aspects of the type
-system that have been specified in PEPs, but not necessarily a
-coherent whole. The hope is that incremental improvements will
-be made to this document to make it more coherent and complete.
+このドキュメントは、Python 型システムの仕様として機能するために :pep:`729` の受け入れに従って作成されました。
+最初のテキストは、:pep:`484` およびその後の型関連の PEP の「仕様」セクションをコピーして再編成したものです。
+これにより、PEP で指定された型システムのすべての側面を網羅するドキュメントが作成されますが、必ずしも一貫した全体ではありません。
+このドキュメントがより一貫性があり、完全なものになるように、段階的な改善が行われることが期待されています。
 
-Changing the specification
---------------------------
+仕様の変更
+------------------------------------------------------------------------------------------
 
-Changes to the specification come in three kinds:
+仕様の変更には 3 種類あります。
 
-- Minor, non-substantive changes can simply be proposed as PRs to
-  the `python/typing <https://github.com/python/typing>`__ repository,
-  and may be merged by anyone with commit access. Such changes may
-  include formatting fixes, linking improvements, etc.
-- Substantive changes that do not rise to the level of a PEP must
-  be approved by the Typing Council. The procedure is described below.
-- Major changes should go through the PEP process, as described in
-  :pep:`1`. What counts as a major change is not precisely defined,
-  but it would generally include any change of a similar magnitude
-  to `previous typing PEPs <https://peps.python.org/topic/typing/>`__.
+- 軽微な非実質的な変更は、`python/typing <https://github.com/python/typing>`__ リポジトリへの PR として提案するだけでよく、
+  コミットアクセス権を持つ人なら誰でもマージできます。このような変更には、フォーマットの修正、リンクの改善などが含まれます。
+- PEP のレベルに達しない実質的な変更は、Typing Council の承認が必要です。手順は以下に記載されています。
+- 重大な変更は、:pep:`1` で説明されているように PEP プロセスを経る必要があります。重大な変更とは正確には定義されていませんが、
+  一般的には `以前の型 PEP <https://peps.python.org/topic/typing/>`__ と同程度の規模の変更が含まれます。
 
-Changes that need Typing Council approval go through three steps:
+Typing Council の承認が必要な変更は、3 つのステップを経ます。
 
-- Open a discussion on `discuss.python.org <https://discuss.python.org/c/typing/32>`__
-  describing the issue.
-- Open a PR on `python/typing <https://github.com/python/typing>`__
-  that changes the spec and, if applicable, the
-  `conformance test suite <https://github.com/python/typing/tree/main/conformance>`__.
-- `Open an issue <https://github.com/python/typing-council/issues/new>`__ on
-  the Typing Council's issue tracker asking for a decision.
+- `discuss.python.org <https://discuss.python.org/c/typing/32>`__ で問題を説明するディスカッションを開始します。
+- 仕様および該当する場合は `適合性テストスイート <https://github.com/python/typing/tree/main/conformance>`__ を変更する PR を
+  `python/typing <https://github.com/python/typing>`__ にオープンします。
+- Typing Council の問題追跡システムで `決定を求める問題 <https://github.com/python/typing-council/issues/new>`__ をオープンします。
 
-The Typing Council has `published <https://github.com/python/typing-council/blob/main/README.md>`__
-some guidance on useful information to gather when proposing a change
-to the spec, including:
+Typing Council は、仕様変更を提案する際に収集する有用な情報について `ガイダンス <https://github.com/python/typing-council/blob/main/README.md>`__ を公開しています。
+これには以下が含まれます。
 
-- A survey of the current behavior of major type checkers.
-- A rationale for why the proposed behavior is better than alternatives.
-- An implementation or proposed implementation of the proposed behavior
-  in at least one major type checker.
+- 主要な型チェッカーの現在の動作の調査。
+- 提案された動作が代替案よりも優れている理由の説明。
+- 少なくとも 1 つの主要な型チェッカーで提案された動作の実装または提案された実装。

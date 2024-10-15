@@ -1,18 +1,17 @@
 .. _`type-aliases`:
 
-Type aliases
-============
+型エイリアス
+==========================================================================================
 
-(See :pep:`613` for the introduction of ``TypeAlias``, and
-:pep:`695` for the ``type`` statement.)
+（「TypeAlias」の導入については :pep:`613` を参照し、「type」ステートメントについては :pep:`695` を参照してください。）
 
-Type aliases may be defined by simple variable assignments::
+型エイリアスは、単純な変数の代入によって定義できます::
 
   Url = str
 
   def retry(url: Url, retry_count: int) -> None: ...
 
-Or by using ``typing.TypeAlias``::
+または ``typing.TypeAlias`` を使用して::
 
   from typing import TypeAlias
 
@@ -20,19 +19,15 @@ Or by using ``typing.TypeAlias``::
 
   def retry(url: Url, retry_count: int) -> None: ...
 
-Or by using the ``type`` statement (Python 3.12 and higher)::
+または ``type`` ステートメントを使用して（Python 3.12 以降）::
 
   type Url = str
 
   def retry(url: Url, retry_count: int) -> None: ...
 
-Note that we recommend capitalizing alias names, since they represent
-user-defined types, which (like user-defined classes) are typically
-spelled that way.
+型エイリアス名はユーザー定義の型を表すため、通常は大文字で始めることをお勧めします。
 
-Type aliases may be as complex as type hints in annotations --
-anything that is acceptable as a type hint is acceptable in a type
-alias::
+型エイリアスは、注釈内の型ヒントと同じくらい複雑にすることができます。つまり、型エイリアスとして許容されるものは、注釈としても許容されます::
 
     from typing import TypeVar
     from collections.abc import Iterable
@@ -46,8 +41,7 @@ alias::
         return ((x * scale, y * scale) for x, y in v)
     vec: Vector[float] = []
 
-
-This is equivalent to::
+これは次のように等価です::
 
     from typing import TypeVar
     from collections.abc import Iterable
@@ -63,82 +57,59 @@ This is equivalent to::
 .. _`typealias`:
 
 ``TypeAlias``
--------------
+------------------------------------------------------------------------------------------
 
-The explicit alias declaration syntax with ``TypeAlias`` clearly differentiates between the three
-possible kinds of assignments: typed global expressions, untyped global
-expressions, and type aliases. This avoids the existence of assignments that
-break type checking when an annotation is added, and avoids classifying the
-nature of the assignment based on the type of the value.
+明示的なエイリアス宣言の構文を使用すると、3 つの可能な代入の種類（型付きグローバル式、型なしグローバル式、および型エイリアス）を明確に区別できます。これにより、注釈が追加されたときに型チェックが壊れる代入の存在を回避し、代入の性質を値の型に基づいて分類することを回避できます。
 
-Implicit syntax (pre-existing):
+暗黙の構文（既存の構文）::
 
-::
+  x = 1  # 型なしグローバル式
+  x: int = 1  # 型付きグローバル式
 
-  x = 1  # untyped global expression
-  x: int = 1  # typed global expression
+  x = int  # 型エイリアス
+  x: type[int] = int  # 型付きグローバル式
 
-  x = int  # type alias
-  x: type[int] = int  # typed global expression
+明示的な構文::
 
+  x = 1  # 型なしグローバル式
+  x: int = 1  # 型付きグローバル式
 
-Explicit syntax:
+  x = int  # 型なしグローバル式（以下の注に注意）
+  x: type[int] = int  # 型付きグローバル式
 
-::
+  x: TypeAlias = int  # 型エイリアス
+  x: TypeAlias = "MyClass"  # 型エイリアス
 
-  x = 1  # untyped global expression
-  x: int = 1  # typed global expression
-
-  x = int  # untyped global expression (see note below)
-  x: type[int] = int  # typed global expression
-
-  x: TypeAlias = int  # type alias
-  x: TypeAlias = "MyClass"  # type alias
-
-
-Note: The examples above illustrate implicit and explicit alias declarations in
-isolation. For the sake of backwards compatibility, type checkers should support
-both simultaneously, meaning an untyped global expression ``x = int`` will
-still be considered a valid type alias.
+注: 上記の例は、暗黙的および明示的なエイリアス宣言を個別に示しています。後方互換性のために、型チェッカーは両方を同時にサポートする必要があり、型なしグローバル式 ``x = int`` も有効な型エイリアスと見なされます。
 
 .. _`type-statement`:
 
-``type`` statement
-------------------
+``type`` ステートメント
+------------------------------------------------------------------------------------------
 
-Type aliases may also be defined using the ``type`` statement (Python 3.12 and
-higher).
+型エイリアスは ``type`` ステートメントを使用して定義することもできます（Python 3.12 以降）。
 
-The ``type`` statement allows the creation of explicitly generic
-type aliases::
+``type`` ステートメントを使用すると、明示的にジェネリックな型エイリアスを作成できます::
 
   type ListOrSet[T] = list[T] | set[T]
 
-Type parameters declared as part of a generic type alias are valid only
-when evaluating the right-hand side of the type alias.
+ジェネリック型エイリアスの一部として宣言された型パラメータは、型エイリアスの右辺を評価する場合にのみ有効です。
 
-As with ``typing.TypeAlias``, type checkers should restrict the right-hand
-expression to expression forms that are allowed within type annotations.
-The use of more complex expression forms (call expressions, ternary operators,
-arithmetic operators, comparison operators, etc.) should be flagged as an
-error.
+``typing.TypeAlias`` と同様に、型チェッカーは右辺の式を型注釈内で許可される式形式に制限する必要があります。より複雑な式形式（呼び出し式、三項演算子、算術演算子、比較演算子など）の使用はエラーとしてフラグを立てる必要があります。
 
-Type alias expressions are not allowed to use traditional type variables (i.e.
-those allocated with an explicit ``TypeVar`` constructor call). Type checkers
-should generate an error in this case.
+型エイリアス式は、従来の型変数（つまり、明示的な ``TypeVar`` コンストラクタ呼び出しで割り当てられたもの）を使用することはできません。この場合、型チェッカーはエラーを生成する必要があります。
 
 ::
 
     T = TypeVar("T")
-    type MyList = list[T]  # Type checker error: traditional type variable usage
+    type MyList = list[T]  # 型チェッカーエラー: 従来の型変数の使用
 
 .. _`newtype`:
 
 ``NewType``
------------
+------------------------------------------------------------------------------------------
 
-There are also situations where a programmer might want to avoid logical
-errors by creating simple classes. For example::
+プログラマーが単純なクラスを作成して論理エラーを回避したい場合もあります。例えば::
 
   class UserId(int):
       pass
@@ -146,39 +117,27 @@ errors by creating simple classes. For example::
   def get_by_user_id(user_id: UserId):
       ...
 
-However, this approach introduces a runtime overhead. To avoid this,
-``typing.py`` provides a helper function ``NewType`` that creates
-simple unique types with almost zero runtime overhead. For a static type
-checker ``Derived = NewType('Derived', Base)`` is roughly equivalent
-to a definition::
+ただし、このアプローチはランタイムオーバーヘッドを導入します。これを回避するために、``typing.py`` は ``NewType`` というヘルパー関数を提供し、ほぼゼロのランタイムオーバーヘッドで単純なユニークな型を作成します。静的型チェッカーにとって、``Derived = NewType('Derived', Base)`` は次の定義とほぼ同等です::
 
   class Derived(Base):
       def __init__(self, _x: Base) -> None:
           ...
 
-While at runtime, ``NewType('Derived', Base)`` returns a dummy function
-that simply returns its argument. Type checkers require explicit casts
-from ``int`` where ``UserId`` is expected, while implicitly casting
-from ``UserId`` where ``int`` is expected. Examples::
+一方、ランタイムでは、``NewType('Derived', Base)`` は単に引数を返すダミー関数を返します。型チェッカーは、``UserId`` が期待される場所で ``int`` からの明示的なキャストを要求し、``int`` が期待される場所で ``UserId`` からの暗黙的なキャストを許可します。例::
 
         UserId = NewType('UserId', int)
 
         def name_by_id(user_id: UserId) -> str:
             ...
 
-        UserId('user')          # Fails type check
+        UserId('user')          # 型チェックエラー
 
-        name_by_id(42)          # Fails type check
+        name_by_id(42)          # 型チェックエラー
         name_by_id(UserId(42))  # OK
 
-        num = UserId(5) + 1     # type: int
+        num = UserId(5) + 1     # 型: int
 
-``NewType`` accepts exactly two arguments: a name for the new unique type,
-and a base class. The latter should be a proper class (i.e.,
-not a type construct like ``Union``, etc.), or another unique type created
-by calling ``NewType``. The function returned by ``NewType``
-accepts only one argument; this is equivalent to supporting only one
-constructor accepting an instance of the base class (see above). Example::
+``NewType`` は正確に 2 つの引数を受け入れます: 新しいユニークな型の名前と基本クラス。後者は適切なクラス（つまり、``Union`` などの型構築子ではなく）である必要があり、または ``NewType`` を呼び出して作成された別のユニークな型である必要があります。``NewType`` によって返される関数は 1 つの引数のみを受け入れます。これは、基本クラスのインスタンスを受け入れる 1 つのコンストラクタのみをサポートすることと同等です（上記参照）。例::
 
   class PacketId:
       def __init__(self, major: int, minor: int) -> None:
@@ -190,8 +149,6 @@ constructor accepting an instance of the base class (see above). Example::
   packet = PacketId(100, 100)
   tcp_packet = TcpPacketId(packet)  # OK
 
-  tcp_packet = TcpPacketId(127, 0)  # Fails in type checker and at runtime
+  tcp_packet = TcpPacketId(127, 0)  # 型チェッカーエラーおよびランタイムエラー
 
-Both ``isinstance`` and ``issubclass``, as well as subclassing will fail
-for ``NewType('Derived', Base)`` since function objects don't support
-these operations.
+``NewType('Derived', Base)`` に対して ``isinstance`` および ``issubclass``、およびサブクラス化は失敗します。関数オブジェクトはこれらの操作をサポートしていないためです。

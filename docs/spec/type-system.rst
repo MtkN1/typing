@@ -1,51 +1,29 @@
 .. _`type-system`:
 
-The Python Type System
-======================
+Python 型システム
+==========================================================================================
 
-This document describes a specification for the Python type system.
+このドキュメントは、Python 型システムの仕様を説明します。
 
-The type system aims to provide a standard syntax for type annotations,
-opening up Python code to easier static analysis and refactoring,
-potential runtime type checking, and (perhaps, in some contexts)
-code generation utilizing type information.
+型システムは、型注釈の標準構文を提供し、Python コードをより簡単に静的解析およびリファクタリングし、潜在的な実行時型チェック、および（場合によっては）型情報を利用したコード生成を可能にすることを目的としています。
 
-Of these goals, static analysis is the most important.  This includes
-support for off-line type checkers such as mypy, as well as providing
-a standard notation that can be used by IDEs for code completion and
-refactoring.
+これらの目標の中で、静的解析が最も重要です。 これには、mypy などのオフライン型チェッカーのサポートや、IDE がコード補完やリファクタリングに使用できる標準表記の提供が含まれます。
 
-Purpose
--------
+目的
+------------------------------------------------------------------------------------------
 
-This specification aims to provide a full description of the Python
-type system. For type checker authors, it provides a complete
-description of expected semantics. For library authors, it provides
-guarantees to rely on when working with multiple type checkers.
+この仕様は、Python 型システムの完全な説明を提供することを目的としています。 型チェッカーの作成者にとっては、期待されるセマンティクスの完全な説明を提供します。 ライブラリの作成者にとっては、複数の型チェッカーを使用する際に頼りにできる保証を提供します。
 
-The type system was originally specified in a series of PEPs, starting
-with :pep:`484`. This document is intended to replace those PEPs, and
-was initially created by merging the specification sections of the
-various PEPs. However, the PEPs are uneven in depth and do not fully
-cover all aspects of the type system. Addressing these issues is an
-ongoing project.
+型システムは、最初に :pep:`484` から始まる一連の PEP で指定されました。 このドキュメントはこれらの PEP を置き換えることを意図しており、最初はさまざまな PEP の仕様セクションを統合することによって作成されました。 ただし、PEP は深さが不均一であり、型システムのすべての側面を完全にカバーしているわけではありません。 これらの問題に対処することは進行中のプロジェクトです。
 
-Non-goals
----------
+非目標
+------------------------------------------------------------------------------------------
 
-While the typing module contains some building blocks for
-runtime type checking -- in particular the ``get_type_hints()``
-function -- third party packages would have to be developed to
-implement specific runtime type checking functionality, for example
-using decorators or metaclasses.  Using type hints for performance
-optimizations is left as an exercise for the reader.
+typing モジュールには、特に ``get_type_hints()`` 関数など、実行時型チェックのためのいくつかのビルディングブロックが含まれていますが、特定の実行時型チェック機能を実装するためには、デコレータやメタクラスを使用するなどのサードパーティパッケージが開発される必要があります。 型ヒントを使用したパフォーマンス最適化は、読者の課題として残されています。
 
-It should also be emphasized that **Python will remain a dynamically
-typed language, and there is no desire to ever make type hints
-mandatory, even by convention.**
+また、**Python は動的型付け言語のままであり、型ヒントを強制する意図はなく、慣習としても強制することはありません。** ということを強調する必要があります。
 
-Interpretation
---------------
+解釈
+------------------------------------------------------------------------------------------
 
-The definition of "MAY", "MUST", and "SHOULD", and "SHOULD NOT" are
-to be interpreted as described in :rfc:`2119`.
+「MAY」、「MUST」、「SHOULD」、および「SHOULD NOT」の定義は、:rfc:`2119` に記載されているように解釈されるものとします。

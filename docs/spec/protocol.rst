@@ -1,49 +1,27 @@
 .. _protocols:
 
-Protocols
----------
+プロトコル
+------------------------------------------------------------------------------------------
 
-(Originally specified in :pep:`544`.)
+(元々 :pep:`544` で指定されています。)
 
-Terminology
-^^^^^^^^^^^
+用語
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The term *protocols* is used for some types supporting :term:`structural`
-subtyping. The reason is that the term *iterator protocol*,
-for example, is widely understood in the community, and coming up with
-a new term for this concept in a statically typed context would just create
-confusion.
+*プロトコル* という用語は、:term:`structural` サブタイピングをサポートするいくつかの型に使用されます。 その理由は、例えば *イテレータープロトコル* という用語がコミュニティで広く理解されており、この概念に対して静的に型付けされたコンテキストで新しい用語を作成すると混乱を招くだけだからです。
 
-This has the drawback that the term *protocol* becomes overloaded with
-two subtly different meanings: the first is the traditional, well-known but
-slightly fuzzy concept of protocols such as iterator; the second is the more
-explicitly defined concept of protocols in statically typed code.
-The distinction is not important most of the time, and in other
-cases we can just add a qualifier such as *protocol classes*
-when referring to the static type concept.
+この欠点は、*プロトコル* という用語が 2 つの微妙に異なる意味で過負荷になることです。 1 つ目は、イテレーターなどのプロトコルの伝統的でよく知られたがやや曖昧な概念です。 2 つ目は、静的に型付けされたコードのプロトコルのより明確に定義された概念です。 この区別はほとんどの場合重要ではなく、他の場合には静的型の概念を指すときに *プロトコルクラス* などの修飾子を追加するだけです。
 
-If a class includes a protocol in its MRO, the class is called an *explicit*
-subclass of the protocol. If a class defines all attributes and methods of a
-protocol with types that are :term:`assignable` to the types of the protocol's
-attributes and methods, it is said to implement the protocol and to be
-assignable to the protocol. If a class is assignable to a protocol but the
-protocol is not included in the MRO, the class is *implicitly* assignable to
-the protocol. (Note that one can explicitly subclass a protocol and still not
-implement it if a protocol attribute is set to ``None`` in the subclass. See
-Python :py:ref:`data model <specialnames>` for details.)
+クラスがプロトコルをその MRO に含む場合、そのクラスはプロトコルの *明示的* サブクラスと呼ばれます。 クラスがプロトコルのすべての属性とメソッドを、そのプロトコルの属性とメソッドの型に :term:`assignable` な型で定義している場合、そのクラスはプロトコルを実装しており、プロトコルに代入可能であると言われます。 クラスがプロトコルに代入可能であるが、プロトコルが MRO に含まれていない場合、そのクラスはプロトコルに *暗黙的に* 代入可能です。 (プロトコル属性がサブクラスで ``None`` に設定されている場合、プロトコルを明示的にサブクラス化してもそれを実装しないことに注意してください。 詳細については、Python :py:ref:`データモデル <specialnames>` を参照してください。)
 
-The attributes (variables and methods) of a protocol that are mandatory for
-another class for it to be assignable to the protocol are called "protocol
-members".
+プロトコルに代入可能であるために他のクラスに必須のプロトコルの属性 (変数とメソッド) は「プロトコルメンバー」と呼ばれます。
 
 .. _protocol-definition:
 
-Defining a protocol
-^^^^^^^^^^^^^^^^^^^
+プロトコルの定義
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Protocols are defined by including a :term:`special form` ``typing.Protocol``
-(an instance of ``abc.ABCMeta``) in the base classes list, typically
-at the end of the list. Here is a simple example::
+プロトコルは、通常はリストの最後にある基本クラスリストに :term:`special form` ``typing.Protocol`` (``abc.ABCMeta`` のインスタンス) を含めることによって定義されます。 ここに簡単な例があります::
 
   from typing import Protocol
 
@@ -51,10 +29,7 @@ at the end of the list. Here is a simple example::
       def close(self) -> None:
           ...
 
-Now if one defines a class ``Resource`` with a ``close()`` method whose type
-signature is :term:`assignable` to ``SupportsClose.close``, it would implicitly
-be assignable to ``SupportsClose``, since :term:`structural` assignability is
-used for protocol types::
+今、``SupportsClose.close`` に :term:`assignable` な型シグネチャを持つ ``close()`` メソッドを持つクラス ``Resource`` を定義すると、プロトコル型に対して :term:`structural` 代入可能性が使用されるため、暗黙的に ``SupportsClose`` に代入可能になります::
 
   class Resource:
       ...
@@ -62,8 +37,7 @@ used for protocol types::
           self.file.close()
           self.lock.release()
 
-Apart from a few restrictions explicitly mentioned below, protocol types can
-be used in every context where normal types can::
+以下に明示的に記載されているいくつかの制限を除いて、プロトコル型は通常の型が使用できるすべてのコンテキストで使用できます::
 
   def close_all(things: Iterable[SupportsClose]) -> None:
       for t in things:
@@ -72,52 +46,39 @@ be used in every context where normal types can::
   f = open('foo.txt')
   r = Resource()
   close_all([f, r])  # OK!
-  close_all([1])     # Error: 'int' has no 'close' method
+  close_all([1])     # エラー: 'int' には 'close' メソッドがありません
 
-Note that both the user-defined class ``Resource`` and the built-in ``IO`` type
-(the return type of ``open()``) are assignable to ``SupportsClose``, because
-each provides a ``close()`` method with an assignable type signature.
+ユーザー定義のクラス ``Resource`` と組み込みの ``IO`` 型 (``open()`` の戻り値の型) の両方が ``SupportsClose`` に代入可能であることに注意してください。 これは、それぞれが代入可能な型シグネチャを持つ ``close()`` メソッドを提供するためです。
 
 
-Protocol members
-^^^^^^^^^^^^^^^^
+プロトコルメンバー
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-All methods defined in the protocol class body are protocol members, both
-normal and decorated with ``@abstractmethod``. If any parameters of a
-protocol method are not annotated, then their types are assumed to be ``Any``
-(see :ref:`"The meaning of annotations" <missing-annotations>`). Bodies of protocol methods are type checked.
-An abstract method that should not be called via ``super()`` ought to raise
-``NotImplementedError``. Example::
+プロトコルクラス本体で定義されたすべてのメソッドは、通常のメソッドと ``@abstractmethod`` で装飾されたメソッドの両方がプロトコルメンバーです。 プロトコルメソッドのパラメータに注釈がない場合、それらの型は ``Any`` と見なされます (see :ref:`"The meaning of annotations" <missing-annotations>`)。 プロトコルメソッドの本体は型チェックされます。 ``super()`` 経由で呼び出されるべきではない抽象メソッドは ``NotImplementedError`` を発生させる必要があります。 例::
 
   from typing import Protocol
   from abc import abstractmethod
 
   class Example(Protocol):
-      def first(self) -> int:     # This is a protocol member
+      def first(self) -> int:     # これはプロトコルメンバーです
           return 42
 
       @abstractmethod
-      def second(self) -> int:    # Method without a default implementation
+      def second(self) -> int:    # デフォルト実装のないメソッド
           raise NotImplementedError
 
-Static methods, class methods, and properties are equally allowed
-in protocols.
+静的メソッド、クラスメソッド、およびプロパティもプロトコルで許可されています。
 
-To define a protocol variable, one can use variable
-annotations in the class body. Additional attributes *only* defined in
-the body of a method by assignment via ``self`` are not allowed. The rationale
-for this is that the protocol class implementation is often not shared by
-subtypes, so the interface should not depend on the default implementation.
-Examples::
+プロトコル変数を定義するには、クラス本体で変数注釈を使用できます。 メソッドの本体で ``self`` を介して代入によってのみ定義された追加の属性は許可されません。 その理由は、プロトコルクラスの実装がサブタイプによって共有されることはほとんどないため、インターフェースはデフォルトの実装に依存すべきではないからです。 例::
 
   from typing import Protocol
 
   class Template(Protocol):
-      name: str        # This is a protocol member
-      value: int = 0   # This one too (with default)
+      name: str        # これはプロトコルメンバーです
+      value: int = 0   # これも (デフォルト付き)
 
       def method(self) -> None:
-          self.temp: list[int] = [] # Error in type checker
+          self.temp: list[int] = [] # 型チェッカーのエラー
 
   class Concrete:
       def __init__(self, name: str, value: int) -> None:
@@ -129,33 +90,22 @@ Examples::
 
   var: Template = Concrete('value', 42)  # OK
 
-To distinguish between protocol class variables and protocol instance
-variables, the special :ref:`ClassVar <classvar>` annotation should be used.
-By default, protocol variables as defined above are considered
-readable and writable. To define a read-only protocol variable, one can use
-an (abstract) property.
+プロトコルクラス変数とプロトコルインスタンス変数を区別するために、特別な :ref:`ClassVar <classvar>` 注釈を使用する必要があります。 上記で定義されたプロトコル変数はデフォルトで読み取りおよび書き込み可能と見なされます。 読み取り専用のプロトコル変数を定義するには、(抽象) プロパティを使用できます。
 
 
-Explicitly declaring implementation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+実装の明示的な宣言
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To explicitly declare that a certain class implements a given protocol,
-it can be used as a regular base class. In this case a class could use
-default implementations of protocol members. Static analysis tools are
-expected to automatically detect that a class implements a given protocol.
-So while it's possible to subclass a protocol explicitly, it's *not necessary*
-to do so for the sake of type-checking.
+特定のクラスが特定のプロトコルを実装していることを明示的に宣言するには、通常の基本クラスとして使用できます。 この場合、クラスはプロトコルメンバーのデフォルト実装を使用できます。 静的解析ツールは、クラスが特定のプロトコルを実装していることを自動的に検出することが期待されます。 したがって、プロトコルを明示的にサブクラス化することは可能ですが、型チェックのためにそれを行う必要は *ありません*。
 
-The default implementations cannot be used if the assignable-to relationship is
-implicit and only :term:`structural` -- the semantics of inheritance is not
-changed. Examples::
+代入可能な関係が暗黙的であり、:term:`structural` である場合、デフォルトの実装は使用できません。 継承のセマンティクスは変更されません。 例::
 
     class PColor(Protocol):
         @abstractmethod
         def draw(self) -> str:
             ...
         def complex_method(self) -> int:
-            # some complex code here
+            # ここに複雑なコード
 
     class NiceColor(PColor):
         def draw(self) -> str:
@@ -163,13 +113,13 @@ changed. Examples::
 
     class BadColor(PColor):
         def draw(self) -> str:
-            return super().draw()  # Error, no default implementation
+            return super().draw()  # エラー、デフォルト実装がありません
 
-    class ImplicitColor:   # Note no 'PColor' base here
+    class ImplicitColor:   # ここに 'PColor' ベースがないことに注意してください
         def draw(self) -> str:
             return "probably gray"
         def complex_method(self) -> int:
-            # class needs to implement this
+            # クラスはこれを実装する必要があります
 
     nice: NiceColor
     another: ImplicitColor
@@ -178,12 +128,9 @@ changed. Examples::
         print(c.draw(), c.complex_method())
 
     represent(nice) # OK
-    represent(another) # Also OK
+    represent(another) # これも OK
 
-Note that there is little difference between explicitly subclassing and
-implicitly implementing the protocol; the main benefit of explicit subclassing
-is to get some protocol methods "for free". In addition, type checkers can
-statically verify that the class actually implements the protocol correctly::
+明示的なサブクラス化とプロトコルの暗黙的な実装の違いはほとんどないことに注意してください。 明示的なサブクラス化の主な利点は、いくつかのプロトコルメソッドを「無料で」取得できることです。 さらに、型チェッカーはクラスが実際にプロトコルを正しく実装していることを静的に検証できます::
 
     class RGB(Protocol):
         rgb: tuple[int, int, int]
@@ -194,33 +141,19 @@ statically verify that the class actually implements the protocol correctly::
 
     class Point(RGB):
         def __init__(self, red: int, green: int, blue: str) -> None:
-            self.rgb = red, green, blue  # Error, 'blue' must be 'int'
+            self.rgb = red, green, blue  # エラー、'blue' は 'int' でなければなりません
 
-        # Type checker might warn that 'intensity' is not defined
+        # 型チェッカーは 'intensity' が定義されていないことを警告するかもしれません
 
-A class can explicitly inherit from multiple protocols and also from normal
-classes. In this case methods are resolved using normal MRO and a type checker
-verifies that all member assignability is correct. The semantics of
-``@abstractmethod`` is not changed; all of them must be implemented by an
-explicit subclass before it can be instantiated.
+クラスは複数のプロトコルと通常のクラスを明示的に継承できます。 この場合、メソッドは通常の MRO を使用して解決され、型チェッカーはすべてのメンバーの代入可能性が正しいことを検証します。 ``@abstractmethod`` のセマンティクスは変更されません。 明示的なサブクラスによってすべて実装される必要があります。
 
 
-Merging and extending protocols
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+プロトコルのマージと拡張
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The general philosophy is that protocols are mostly like regular ABCs, but a
-static type checker will handle them specially. Subclassing a protocol class
-would not turn the subclass into a protocol unless it also has
-``typing.Protocol`` as an explicit base class. Without this base, the class is
-"downgraded" to a regular ABC that cannot be used with :term:`structural`
-subtyping. The rationale for this rule is that we don't want to accidentally
-have some class act as a protocol just because one of its base classes happens
-to be one. We still slightly prefer :term:`nominal` subtyping over structural
-subtyping in the static typing world.
+一般的な哲学は、プロトコルは通常の ABC とほぼ同じですが、静的型チェッカーはそれらを特別に処理します。 プロトコルクラスをサブクラス化しても、``typing.Protocol`` が明示的な基本クラスとしても含まれていない限り、サブクラスはプロトコルにはなりません。 この基本がない場合、クラスは :term:`structural` サブタイピングで使用できない通常の ABC に「ダウングレード」されます。 このルールの根拠は、基本クラスの 1 つがプロトコルであるために、あるクラスがプロトコルとして機能することを偶然に持たせたくないからです。 静的型付けの世界では、依然として :term:`nominal` サブタイピングを構造的サブタイピングよりもわずかに好みます。
 
-A subprotocol can be defined by having *both* one or more protocols as
-immediate base classes and also having ``typing.Protocol`` as an immediate
-base class::
+*プロトコル* を即時基本クラスとして持ち、即時基本クラスとして ``typing.Protocol`` も持つことによってサブプロトコルを定義できます::
 
   from typing import Protocol
   from collections.abc import Sized
@@ -229,12 +162,7 @@ base class::
       def close(self) -> None:
           ...
 
-Now the protocol ``SizedAndClosable`` is a protocol with two methods,
-``__len__`` and ``close``. If one omits ``Protocol`` in the base class list,
-this would be a regular (non-protocol) class that must implement ``Sized``.
-Alternatively, one can implement ``SizedAndClosable`` protocol by merging
-the ``SupportsClose`` protocol from the example in the `protocol-definition`_ section
-with ``typing.Sized``::
+今、プロトコル ``SizedAndClosable`` は 2 つのメソッド ``__len__`` と ``close`` を持つプロトコルです。 基本クラスリストに ``Protocol`` を省略すると、これは ``Sized`` を実装する必要がある通常の (非プロトコル) クラスになります。 あるいは、`protocol-definition`_ セクションの例から ``SupportsClose`` プロトコルを ``typing.Sized`` とマージすることによって ``SizedAndClosable`` プロトコルを実装できます::
 
   from collections.abc import Sized
 
@@ -245,37 +173,24 @@ with ``typing.Sized``::
   class SizedAndClosable(Sized, SupportsClose, Protocol):
       pass
 
-The two definitions of ``SizedAndClosable`` are equivalent. Subclass
-relationships between protocols are not meaningful when considering
-assignability, since :term:`structural` :term:`assignability <assignable>` is
-the criterion, not the MRO.
+``SizedAndClosable`` の 2 つの定義は同等です。 プロトコル間のサブクラス関係は、MRO ではなく :term:`structural` :term:`代入可能性 <assignable>` が基準であるため、代入可能性を考慮する場合には意味がありません。
 
-If ``Protocol`` is included in the base class list, all the other base classes
-must be protocols. A protocol can't extend a regular class.
-Note that rules around explicit subclassing are different
-from regular ABCs, where abstractness is simply defined by having at least one
-abstract method being unimplemented. Protocol classes must be marked
-*explicitly*.
+基本クラスリストに ``Protocol`` が含まれている場合、他のすべての基本クラスはプロトコルでなければなりません。 プロトコルは通常のクラスを拡張できません。 明示的なサブクラス化に関するルールは、少なくとも 1 つの抽象メソッドが未実装であることによって抽象性が単に定義される通常の ABC とは異なることに注意してください。 プロトコルクラスは *明示的に* マークされなければなりません。
 
 
-Generic protocols
-^^^^^^^^^^^^^^^^^
+ジェネリックプロトコル
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Generic protocols are important. For example, ``SupportsAbs``, ``Iterable``
-and ``Iterator`` are generic protocols. They are defined similar to normal
-non-protocol generic types::
+ジェネリックプロトコルは重要です。 例えば、``SupportsAbs``、``Iterable``、および ``Iterator`` はジェネリックプロトコルです。 それらは通常の非プロトコルジェネリック型と同様に定義されます::
 
   class Iterable(Protocol[T]):
       @abstractmethod
       def __iter__(self) -> Iterator[T]:
           ...
 
-``Protocol[T, S, ...]`` is allowed as a shorthand for
-``Protocol, Generic[T, S, ...]``.
+``Protocol[T, S, ...]`` は ``Protocol, Generic[T, S, ...]`` の省略形として許可されます。
 
-User-defined generic protocols support explicitly declared variance.
-Type checkers will warn if the inferred variance is different from
-the declared variance. Examples::
+ユーザー定義のジェネリックプロトコルは明示的に宣言された分散をサポートします。 型チェッカーは、推論された分散が宣言された分散と異なる場合に警告します。 例::
 
   T = TypeVar('T')
   T_co = TypeVar('T_co', covariant=True)
@@ -287,7 +202,7 @@ the declared variance. Examples::
 
   box: Box[float]
   second_box: Box[int]
-  box = second_box  # This is OK due to the covariance of 'Box'.
+  box = second_box  # これは 'Box' の共変性のために OK です。
 
   class Sender(Protocol[T_contra]):
       def send(self, data: T_contra) -> int:
@@ -295,41 +210,34 @@ the declared variance. Examples::
 
   sender: Sender[float]
   new_sender: Sender[int]
-  new_sender = sender  # OK, 'Sender' is contravariant.
+  new_sender = sender  # OK、'Sender' は反変です。
 
   class Proto(Protocol[T]):
-      attr: T  # this class is invariant, since it has a mutable attribute
+      attr: T  # このクラスは可変属性を持つため不変です
 
   var: Proto[float]
   another_var: Proto[int]
-  var = another_var  # Error! 'Proto[float]' is not assignable to 'Proto[int]'.
+  var = another_var  # エラー! 'Proto[float]' は 'Proto[int]' に代入できません。
 
-Note that unlike nominal classes, de facto covariant protocols cannot be
-declared as invariant, since this can break transitivity of subtyping.
-For example::
+名義クラスとは異なり、事実上の共変プロトコルは不変として宣言できません。 これは、これがサブタイピングの推移性を破る可能性があるためです。 例えば::
 
   T = TypeVar('T')
 
-  class AnotherBox(Protocol[T]):  # Error, this protocol is covariant in T,
-      def content(self) -> T:     # not invariant.
+  class AnotherBox(Protocol[T]):  # エラー、このプロトコルは T において共変であり、不変ではありません。
+      def content(self) -> T:
           ...
 
 
-Recursive protocols
-^^^^^^^^^^^^^^^^^^^
+再帰プロトコル
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Recursive protocols are also supported. Forward references to the protocol
-class names can be :ref:`given as strings <forward-references>`. Recursive
-protocols are useful for representing self-referential data structures
-like trees in an abstract fashion::
+再帰プロトコルもサポートされています。 プロトコルクラス名への前方参照は :ref:`文字列として与えることができます <forward-references>`。 再帰プロトコルは、ツリーのような自己参照データ構造を抽象的に表現するのに役立ちます::
 
   class Traversable(Protocol):
       def leaves(self) -> Iterable['Traversable']:
           ...
 
-Note that for recursive protocols, a class is considered assignable to
-the protocol in situations where the decision depends on itself.
-Continuing the previous example::
+再帰プロトコルの場合、決定が自分自身に依存する状況では、クラスはプロトコルに代入可能と見なされることに注意してください。 前の例を続けます::
 
   class SimpleTree:
       def leaves(self) -> list['SimpleTree']:
@@ -344,14 +252,13 @@ Continuing the previous example::
   def walk(graph: Traversable) -> None:
       ...
   tree: Tree[float] = Tree()
-  walk(tree)  # OK, 'Tree[float]' is assignable to 'Traversable'
+  walk(tree)  # OK、'Tree[float]' は 'Traversable' に代入可能です
 
 
-Self-types in protocols
-^^^^^^^^^^^^^^^^^^^^^^^
+プロトコルにおける自己型
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The self-types in protocols follow the
-:ref:`rules for other methods <annotating-methods>`. For example::
+プロトコルにおける自己型は、:ref:`他のメソッドのルール <annotating-methods>` に従います。 例えば::
 
   C = TypeVar('C', bound='Copyable')
   class Copyable(Protocol):
@@ -368,32 +275,20 @@ The self-types in protocols follow the
 
   c: Copyable
   c = One()  # OK
-  c = Other()  # Also OK
+  c = Other()  # これも OK
 
-Assignability relationships with other types
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+他の型との代入可能性の関係
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Protocols cannot be instantiated, so there are no values whose
-runtime type is a protocol. For variables and parameters with protocol types,
-assignability relationships are subject to the following rules:
+プロトコルはインスタンス化できないため、ランタイム型がプロトコルである値はありません。 プロトコル型の変数とパラメータについては、代入可能性の関係は次のルールに従います:
 
-* A protocol is never assignable to a concrete type.
-* A concrete type ``X`` is assignable to a protocol ``P`` if and only if ``X``
-  implements all protocol members of ``P`` with assignable types. In other
-  words, :term:`assignability <assignable>` with respect to a protocol is
-  always :term:`structural`.
-* A protocol ``P1`` is assignable to another protocol ``P2`` if ``P1`` defines
-  all protocol members of ``P2`` with assignable types.
+* プロトコルは具体的な型に代入可能ではありません。
+* 具体的な型 ``X`` は、``X`` が ``P`` のすべてのプロトコルメンバーを代入可能な型で実装している場合にのみ、プロトコル ``P`` に代入可能です。 言い換えれば、プロトコルに関する :term:`代入可能性 <assignable>` は常に :term:`structural` です。
+* プロトコル ``P1`` は、``P1`` が代入可能な型で ``P2`` のすべてのプロトコルメンバーを定義している場合にのみ、他のプロトコル ``P2`` に代入可能です。
 
-Generic protocol types follow the same rules of variance as non-protocol
-types. Protocol types can be used in all contexts where any other types
-can be used, such as in unions, ``ClassVar``, type variables bounds, etc.
-Generic protocols follow the rules for generic abstract classes, except for
-using structural assignability instead of assignability defined by
-inheritance relationships.
+ジェネリックプロトコル型は、非プロトコル型と同じ分散ルールに従います。 プロトコル型は、ユニオン、``ClassVar``、型変数の境界など、他の型が使用できるすべてのコンテキストで使用できます。 ジェネリックプロトコルは、継承関係によって定義された代入可能性の代わりに構造的代入可能性を使用することを除いて、ジェネリック抽象クラスのルールに従います。
 
-Static type checkers will recognize protocol implementations, even if the
-corresponding protocols are *not imported*::
+静的型チェッカーは、対応するプロトコルが *インポートされていなくても* プロトコルの実装を認識します::
 
   # file lib.py
   from collections.abc import Sized
@@ -407,7 +302,7 @@ corresponding protocols are *not imported*::
       ...
 
   # file main.py
-  from lib import populate  # Note that ListLike is NOT imported
+  from lib import populate  # ListLike がインポートされていないことに注意してください
 
   class MockStack:
       def __len__(self) -> int:
@@ -415,15 +310,14 @@ corresponding protocols are *not imported*::
       def append(self, x: int) -> None:
           print(x)
 
-  populate([1, 2, 3])    # Passes type check
-  populate(MockStack())  # Also OK
+  populate([1, 2, 3])    # 型チェックを通過
+  populate(MockStack())  # これも OK
 
 
-Unions and intersections of protocols
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+プロトコルのユニオンとインターセクション
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Unions of protocol classes behaves the same way as for non-protocol
-classes. For example::
+プロトコルクラスのユニオンは、非プロトコルクラスと同じ方法で動作します。 例えば::
 
   from typing import Protocol
 
@@ -442,8 +336,7 @@ classes. For example::
           return 0
   finish(DefaultJob()) # OK
 
-One can use multiple inheritance to define an intersection of protocols.
-Example::
+プロトコルのインターセクションを定義するには、多重継承を使用できます。 例::
 
   from collections.abc import Iterable, Hashable
 
@@ -452,16 +345,13 @@ Example::
 
   def cached_func(args: HashableFloats) -> float:
       ...
-  cached_func((1, 2, 3)) # OK, tuple is both hashable and iterable
+  cached_func((1, 2, 3)) # OK、タプルはハッシュ可能であり、反復可能です
 
 
-``type[]`` and class objects vs protocols
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``type[]`` とクラスオブジェクト vs プロトコル
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Variables and parameters annotated with ``type[Proto]`` accept only concrete
-(non-protocol) :term:`consistent subtypes <consistent subtype>` of ``Proto``.
-The main reason for this is to allow instantiation of parameters with such
-types. For example::
+``type[Proto]`` で注釈された変数とパラメータは、``Proto`` の具体的な (非プロトコル) :term:`一貫したサブタイプ <consistent subtype>` のみを受け入れます。 これの主な理由は、そのような型のパラメータのインスタンス化を許可することです。 例えば::
 
   class Proto(Protocol):
       @abstractmethod
@@ -473,24 +363,19 @@ types. For example::
 
   def fun(cls: type[Proto]) -> int:
       return cls().meth() # OK
-  fun(Proto)              # Error
+  fun(Proto)              # エラー
   fun(Concrete)           # OK
 
-The same rule applies to variables::
+同じルールが変数にも適用されます::
 
   var: Type[Proto]
-  var = Proto    # Error
+  var = Proto    # エラー
   var = Concrete # OK
   var().meth()   # OK
 
-Assigning an ABC or a protocol class to a variable is allowed if it is
-not explicitly typed, and such assignment creates a type alias.
-For normal (non-abstract) classes, the behavior of ``type[]`` is
-not changed.
+変数が明示的に型付けされていない場合、ABC またはプロトコルクラスを変数に代入することは許可されており、そのような代入は型エイリアスを作成します。 通常の (非抽象) クラスの場合、``type[]`` の動作は変更されません。
 
-A class object is considered an implementation of a protocol if accessing
-all members on it results in types assignable to the types of the protocol members.
-For example::
+クラスオブジェクトは、すべてのメンバーにアクセスすると、プロトコルメンバーの型に代入可能な型が得られる場合、プロトコルの実装と見なされます。 例えば::
 
   from typing import Any, Protocol
 
@@ -502,16 +387,14 @@ For example::
   class C:
       def meth(self, x: int) -> int: ...
 
-  a: ProtoA = C  # Type check error, signatures don't match!
+  a: ProtoA = C  # 型チェックエラー、シグネチャが一致しません!
   b: ProtoB = C  # OK
 
 
-``NewType()`` and type aliases
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``NewType()`` と型エイリアス
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Protocols are essentially anonymous. To emphasize this point, static type
-checkers might refuse protocol classes inside ``NewType()`` to avoid an
-illusion that a distinct type is provided::
+プロトコルは本質的に匿名です。 この点を強調するために、静的型チェッカーは、特定の型が提供されるという幻想を避けるために、``NewType()`` 内のプロトコルクラスを拒否する場合があります::
 
   from typing import NewType, Protocol
   from collections.abc import Iterator
@@ -520,10 +403,9 @@ illusion that a distinct type is provided::
       code: int
       secrets: Iterator[bytes]
 
-  UserId = NewType('UserId', Id)  # Error, can't provide distinct type
+  UserId = NewType('UserId', Id)  # エラー、特定の型を提供できません
 
-In contrast, type aliases are fully supported, including generic type
-aliases::
+対照的に、型エイリアスは完全にサポートされています。 ジェネリック型エイリアスも含まれます::
 
   from typing import TypeVar
   from collections.abc import Reversible, Iterable, Sized
@@ -534,12 +416,10 @@ aliases::
   CompatReversible = Reversible[T] | SizedIterable[T]
 
 
-Modules as implementations of protocols
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+プロトコルの実装としてのモジュール
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A module object is accepted where a protocol is expected if the public
-interface of the given module is assignable to the expected protocol.
-For example::
+モジュールオブジェクトは、期待されるプロトコルに代入可能な場合、プロトコルが期待される場所で受け入れられます。 例えば::
 
   # file default_config.py
   timeout = 100
@@ -560,8 +440,7 @@ For example::
 
   setup(default_config)  # OK
 
-To determine assignability of module level functions, the ``self`` argument
-of the corresponding protocol methods is dropped. For example::
+モジュールレベルの関数の代入可能性を判断するために、対応するプロトコルメソッドの ``self`` 引数は削除されます。 例えば::
 
   # callbacks.py
   def on_error(x: int) -> None:
@@ -579,26 +458,16 @@ of the corresponding protocol methods is dropped. For example::
       def on_success(self) -> None:
           ...
 
-  rp: Reporter = callbacks  # Passes type check
+  rp: Reporter = callbacks  # 型チェックを通過
 
 .. _`runtime-checkable`:
 
-``@runtime_checkable`` decorator and narrowing types by ``isinstance()``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``@runtime_checkable`` デコレータと ``isinstance()`` による型の絞り込み
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The default semantics is that ``isinstance()`` and ``issubclass()`` fail
-for protocol types. This is in the spirit of duck typing -- protocols
-basically would be used to model duck typing statically, not explicitly
-at runtime.
+デフォルトのセマンティクスは、プロトコル型に対して ``isinstance()`` および ``issubclass()`` が失敗することです。 これはダックタイピングの精神に基づいています。 プロトコルは基本的にダックタイピングを静的にモデル化するために使用され、ランタイムで明示的に使用されるわけではありません。
 
-However, it should be possible for protocol types to implement custom
-instance and class checks when this makes sense, similar to how ``Iterable``
-and other ABCs in ``collections.abc`` and ``typing`` already do it,
-but this is limited to non-generic and unsubscripted generic protocols
-(``Iterable`` is statically equivalent to ``Iterable[Any]``).
-The ``typing`` module will define a special ``@runtime_checkable`` class decorator
-that provides the same semantics for class and instance checks as for
-``collections.abc`` classes, essentially making them "runtime protocols"::
+ただし、これが意味をなす場合、プロトコル型がカスタムインスタンスおよびクラスチェックを実装できるはずです。 これは、``collections.abc`` および ``typing`` の ``Iterable`` などの ABC がすでに行っているのと同様です。 ただし、これは非ジェネリックおよび非サブスクリプトジェネリックプロトコル (``Iterable`` は静的には ``Iterable[Any]`` と同等) に限定されます。 ``typing`` モジュールは、クラスおよびインスタンスチェックに対して ``collections.abc`` クラスと同じセマンティクスを提供する特別な ``@runtime_checkable`` クラスデコレータを定義します。 これにより、それらは「ランタイムプロトコル」になります::
 
   from typing import runtime_checkable, Protocol
 
@@ -609,41 +478,16 @@ that provides the same semantics for class and instance checks as for
 
   assert isinstance(open('some/file'), SupportsClose)
 
-Note that instance checks are not 100% reliable statically, which is why
-this behavior is opt-in.
-The most type checkers can do is to treat ``isinstance(obj, Iterator)``
-roughly as a simpler way to write
-``hasattr(x, '__iter__') and hasattr(x, '__next__')``. To minimize
-the risks for this feature, the following rules are applied.
+インスタンスチェックは静的には 100% 信頼できないことに注意してください。 これがこの動作がオプトインである理由です。 型チェッカーができる最善のことは、``isinstance(obj, Iterator)`` を ``hasattr(x, '__iter__') and hasattr(x, '__next__')`` を書くための簡単な方法として扱うことです。 この機能のリスクを最小限に抑えるために、次のルールが適用されます。
 
-**Definitions**:
+**定義**:
 
-* *Data and non-data protocols*: A protocol is called a non-data protocol
-  if it only contains methods as members (for example ``Sized``,
-  ``Iterator``, etc). A protocol that contains at least one non-method member
-  (like ``x: int``) is called a data protocol.
-* *Unsafe overlap*: A type ``X`` is called unsafely overlapping with a protocol
-  ``P``, if ``X`` is not assignable to ``P``, but it is assignable to the
-  type-erased version of ``P`` where all members have type ``Any``. In
-  addition, if at least one element of a union unsafely overlaps with a
-  protocol ``P``, then the whole union is unsafely overlapping with ``P``.
+* *データおよび非データプロトコル*: プロトコルがメンバーとしてメソッドのみを含む場合 (例えば ``Sized``、``Iterator`` など)、そのプロトコルは非データプロトコルと呼ばれます。 少なくとも 1 つの非メソッドメンバー (例えば ``x: int``) を含むプロトコルはデータプロトコルと呼ばれます。
+* *安全でない重複*: 型 ``X`` がプロトコル ``P`` と安全でない重複を持つと呼ばれるのは、``X`` が ``P`` に代入可能ではないが、すべてのメンバーが ``Any`` 型を持つプロトコル ``P`` の型消去バージョンに代入可能である場合です。 さらに、少なくとも 1 つの要素がプロトコル ``P`` と安全でない重複を持つユニオンがある場合、そのユニオン全体がプロトコル ``P`` と安全でない重複を持つと見なされます。
 
-**Specification**:
+**仕様**:
 
-* A protocol can be used as a second argument in ``isinstance()`` and
-  ``issubclass()`` only if it is explicitly opt-in by ``@runtime_checkable``
-  decorator. This requirement exists because protocol checks are not type safe
-  in case of dynamically set attributes, and because type checkers can only prove
-  that an ``isinstance()`` check is safe only for a given class, not for all its
-  subclasses.
-* ``isinstance()`` can be used with both data and non-data protocols, while
-  ``issubclass()`` can be used only with non-data protocols. This restriction
-  exists because some data attributes can be set on an instance in constructor
-  and this information is not always available on the class object.
-* Type checkers should reject an ``isinstance()`` or ``issubclass()`` call, if
-  there is an unsafe overlap between the type of the first argument and
-  the protocol.
-* Type checkers should be able to select a correct element from a union after
-  a safe ``isinstance()`` or ``issubclass()`` call. For narrowing from non-union
-  types, type checkers can use their best judgement (this is intentionally
-  unspecified, since a precise specification would require intersection types).
+* プロトコルは、``@runtime_checkable`` デコレータによって明示的にオプトインされている場合にのみ、``isinstance()`` および ``issubclass()`` の 2 番目の引数として使用できます。 この要件は、プロトコルチェックが動的に設定された属性の場合に型安全ではないため、および型チェッカーが ``isinstance()`` チェックが特定のクラスに対して安全であることを証明できるのは、そのクラスのすべてのサブクラスに対してではないためです。
+* ``isinstance()`` はデータおよび非データプロトコルの両方で使用できますが、``issubclass()`` は非データプロトコルでのみ使用できます。 この制限は、いくつかのデータ属性がコンストラクタでインスタンスに設定される可能性があり、この情報がクラスオブジェクトで常に利用できるわけではないためです。
+* 型チェッカーは、最初の引数の型とプロトコルの間に安全でない重複がある場合、``isinstance()`` または ``issubclass()`` 呼び出しを拒否する必要があります。
+* 型チェッカーは、安全な ``isinstance()`` または ``issubclass()`` 呼び出しの後にユニオンから正しい要素を選択できる必要があります。 非ユニオン型からの絞り込みについては、型チェッカーは最善の判断を使用できます (これは意図的に指定されていません。正確な仕様は交差型を必要とするためです)。

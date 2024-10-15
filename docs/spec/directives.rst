@@ -1,101 +1,91 @@
 .. _directives:
 
-Type checker directives
-=======================
+型チェッカーのディレクティブ
+==========================================================================================
 
 .. _`assert-type`:
 
 ``assert_type()``
------------------
+------------------------------------------------------------------------------------------
 
-The function ``typing.assert_type(val, typ)`` allows users to
-ask a static type checker to confirm that *val* has an inferred type of *typ*.
+関数 ``typing.assert_type(val, typ)`` を使用すると、ユーザーは
+静的型チェッカーに *val* が *typ* の推論された型を持つことを確認するように依頼できます。
 
-When a type checker encounters a call to ``assert_type()``, it
-should emit an error if the value is not of the specified type::
+型チェッカーが ``assert_type()`` の呼び出しに遭遇した場合、
+値が指定された型でない場合はエラーを発行する必要があります::
 
     def greet(name: str) -> None:
-        assert_type(name, str)  # OK, inferred type of `name` is `str`
-        assert_type(name, int)  # type checker error
+        assert_type(name, str)  # OK、`name` の推論された型は `str` です
+        assert_type(name, int)  # 型チェッカーエラー
 
-The second argument must be a valid :term:`type expression`.
+2 番目の引数は有効な :term:`type expression` である必要があります。
 
 .. _`reveal-type`:
 
 ``reveal_type()``
------------------
+------------------------------------------------------------------------------------------
 
-The function ``reveal_type(obj)`` makes type checkers
-reveal the inferred static type of an expression.
+関数 ``reveal_type(obj)`` は、型チェッカーに
+式の推論された静的型を明らかにさせます。
 
-When a static type checker encounters a call to this function,
-it should emit a diagnostic with the type of the argument. For example::
+静的型チェッカーがこの関数の呼び出しに遭遇した場合、
+引数の型を持つ診断を発行する必要があります。 例::
 
   x: int = 1
-  reveal_type(x)  # Revealed type is "builtins.int"
+  reveal_type(x)  # 明らかにされた型は "builtins.int" です
 
 .. _`type-ignore`:
 
-``# type: ignore`` comments
----------------------------
+``# type: ignore`` コメント
+------------------------------------------------------------------------------------------
 
-The special comment ``# type: ignore`` is used to silence type checker
-errors.
+特別なコメント ``# type: ignore`` は、型チェッカーの
+エラーを無視するために使用されます。
 
-The ``# type: ignore`` comment should be put on the line that the
-error refers to::
+``# type: ignore`` コメントは、エラーが参照する行に配置する必要があります::
 
   import http.client
   errors = {
       'not_found': http.client.NOT_FOUND  # type: ignore
   }
 
-A ``# type: ignore`` comment on a line by itself at the top of a file,
-before any docstrings, imports, or other executable code, silences all
-errors in the file. Blank lines and other comments, such as shebang
-lines and coding cookies, may precede the ``# type: ignore`` comment.
+ファイルの先頭にある行に ``# type: ignore`` コメントを単独で配置すると、
+ファイル内のすべてのエラーが無視されます。 空行や他のコメント（シェバン行やコーディングクッキーなど）は、
+``# type: ignore`` コメントの前に置くことができます。
 
-In some cases, linting tools or other comments may be needed on the same
-line as a type comment. In these cases, the type comment should be before
-other comments and linting markers:
+場合によっては、リントツールや他のコメントが型コメントと同じ行に必要な場合があります。
+その場合、型コメントは他のコメントやリントマーカーの前に置く必要があります:
 
   # type: ignore # <comment or other marker>
 
 .. _`cast`:
 
 ``cast()``
-----------
+------------------------------------------------------------------------------------------
 
-Occasionally the type checker may need a different kind of hint: the
-programmer may know that an expression is of a more constrained type
-than a type checker may be able to infer.  For example::
+場合によっては、型チェッカーが異なる種類のヒントを必要とすることがあります。
+プログラマーは、型チェッカーが推論できる型よりも制約された型の式を知っている場合があります。 例::
 
   from typing import cast
 
   def find_first_str(a: list[object]) -> str:
       index = next(i for i, x in enumerate(a) if isinstance(x, str))
-      # We only get here if there's at least one string in a
+      # ここに到達するのは、a に少なくとも 1 つの文字列がある場合のみです
       return cast(str, a[index])
 
-Some type checkers may not be able to infer that the type of
-``a[index]`` is ``str`` and only infer ``object`` or ``Any``, but we
-know that (if the code gets to that point) it must be a string.  The
-``cast(t, x)`` call tells the type checker that we are confident that
-the type of ``x`` is ``t``. ``t`` must be a valid :term:`type expression`.
-At runtime a cast always returns the
-expression unchanged -- it does not check the type, and it does not
-convert or coerce the value.
+一部の型チェッカーは、``a[index]`` の型が ``str`` であることを推論できず、
+``object`` または ``Any`` のみを推論する場合がありますが、
+コードがそのポイントに到達する場合、それは文字列である必要があります。 ``cast(t, x)`` 呼び出しは、型チェッカーに ``x`` の型が ``t`` であることを確信していることを伝えます。 ``t`` は有効な :term:`type expression` である必要があります。
+実行時には、キャストは常に式を変更せずに返します - 型をチェックせず、値を変換または強制しません。
 
 .. _`if-type-checking`:
 
 ``TYPE_CHECKING``
------------------
+------------------------------------------------------------------------------------------
 
-Sometimes there's code that must be seen by a type checker (or other
-static analysis tools) but should not be executed.  For such
-situations the ``typing`` module defines a constant,
-``TYPE_CHECKING``, that is considered ``True`` during type checking
-(or other static analysis) but ``False`` at runtime.  Example::
+場合によっては、型チェッカー（または他の静的解析ツール）によって見られる必要があるが、
+実行されるべきではないコードがあります。 そのような状況のために、``typing`` モジュールは定数 ``TYPE_CHECKING`` を定義しており、
+型チェック中（または他の静的解析中）には ``True`` と見なされますが、実行時には ``False`` と見なされます。 例::
 
   import typing
 
@@ -106,178 +96,92 @@ situations the ``typing`` module defines a constant,
       a_var: expensive_mod.SomeClass = arg
       ...
 
-(Note that the type annotation must be enclosed in quotes, making it a
-"forward reference", to hide the ``expensive_mod`` reference from the
-interpreter runtime.  In the variable annotation no quotes are needed.)
+（型注釈は引用符で囲む必要があり、これにより ``expensive_mod`` 参照が
+インタープリタの実行時から隠されます。 変数注釈では引用符は必要ありません。）
 
-This approach may also be useful to handle import cycles.
+このアプローチは、インポートサイクルを処理するためにも役立つ場合があります。
 
 .. _`no-type-check`:
 
 ``@no_type_check``
-------------------
+------------------------------------------------------------------------------------------
 
-The ``@typing.no_type_check`` decorator may be supported by type checkers
-for functions and classes.
+``@typing.no_type_check`` デコレーターは、関数およびクラスに対して型チェッカーによってサポートされる場合があります。
 
-If a type checker supports the ``no_type_check`` decorator for functions, it
-should suppress all type errors for the ``def`` statement and its body including
-any nested functions or classes. It should also ignore all parameter
-and return type annotations and treat the function as if it were unannotated.
+型チェッカーが関数に対して ``no_type_check`` デコレーターをサポートする場合、
+``def`` ステートメントおよびその本体に含まれるすべての型エラーを抑制する必要があります。
+また、すべてのパラメータおよび戻り値の型注釈を無視し、関数を注釈なしとして扱う必要があります。
 
-The behavior for the ``no_type_check`` decorator when applied to a class is
-left undefined by the typing spec at this time.
+クラスに適用された場合の ``no_type_check`` デコレーターの動作は、
+現時点では型指定によって定義されていません。
 
 .. _`version-and-platform-checks`:
 
-Version and platform checking
------------------------------
+バージョンおよびプラットフォームのチェック
+------------------------------------------------------------------------------------------
 
-Type checkers are expected to understand simple version and platform
-checks, e.g.::
+型チェッカーは、簡単なバージョンおよびプラットフォームのチェックを理解することが期待されています。 例::
 
   import sys
 
   if sys.version_info >= (3, 12):
       # Python 3.12+
   else:
-      # Python 3.11 and lower
+      # Python 3.11 以下
 
   if sys.platform == 'win32':
-      # Windows specific definitions
+      # Windows 固有の定義
   else:
-      # Posix specific definitions
+      # Posix 固有の定義
 
-Don't expect a checker to understand obfuscations like
-``"".join(reversed(sys.platform)) == "xunil"``.
+``"".join(reversed(sys.platform)) == "xunil"`` のような難読化を型チェッカーが理解することは期待しないでください。
 
 .. _`deprecated`:
 
 ``@deprecated``
----------------
+------------------------------------------------------------------------------------------
 
-(Originally specified in :pep:`702`.)
+（元々 :pep:`702` で指定されています。）
 
-The :py:func:`warnings.deprecated`
-decorator can be used on a class, function or method to mark it as deprecated.
-This includes :class:`typing.TypedDict` and :class:`typing.NamedTuple` definitions.
-With overloaded functions, the decorator may be applied to individual overloads,
-indicating that the particular overload is deprecated. The decorator may also be
-applied to the overload implementation function, indicating that the entire function
-is deprecated.
+:py:func:`warnings.deprecated` デコレーターは、クラス、関数、またはメソッドに適用して非推奨とするために使用できます。
+これには :class:`typing.TypedDict` および :class:`typing.NamedTuple` の定義が含まれます。
+オーバーロードされた関数では、特定のオーバーロードが非推奨であることを示すためにデコレーターを個別のオーバーロードに適用できます。
+デコレーターは、オーバーロードの実装関数に適用することもでき、関数全体が非推奨であることを示します。
 
-The decorator takes the following arguments:
+デコレーターは次の引数を取ります:
 
-* A required positional-only argument representing the deprecation message.
-* Two keyword-only arguments, ``category`` and ``stacklevel``, controlling
-  runtime behavior (see under "Runtime behavior" below).
+* 非推奨メッセージを表す必須の位置引数。
+* 実行時の動作を制御する 2 つのキーワード引数 ``category`` および ``stacklevel`` （以下の「実行時の動作」を参照）。
 
-The positional-only argument is of type ``str`` and contains a message that should
-be shown by the type checker when it encounters a usage of the decorated object.
-Tools may clean up the deprecation message for display, for example
-by using :func:`inspect.cleandoc` or equivalent logic.
-The message must be a string literal.
-The content of deprecation messages is up to the user, but it may include the version
-in which the deprecated object is to be removed, and information about suggested
-replacement APIs.
+位置引数は ``str`` 型であり、デコレーターが装飾されたオブジェクトの使用時に型チェッカーによって表示されるメッセージを含みます。
+ツールは表示のために非推奨メッセージをクリーンアップする場合があります。 例として :func:`inspect.cleandoc` または同等のロジックを使用します。
+メッセージは文字列リテラルである必要があります。
+非推奨メッセージの内容はユーザーに任されていますが、非推奨オブジェクトが削除されるバージョンや推奨される代替 API に関する情報を含めることができます。
 
-Type checkers should produce a diagnostic whenever they encounter a usage of an
-object marked as deprecated. For deprecated overloads, this includes all calls
-that resolve to the deprecated overload.
-For deprecated classes and functions, this includes:
+型チェッカーは、非推奨とマークされたオブジェクトの使用に遭遇した場合に診断を生成する必要があります。
+非推奨のオーバーロードについては、非推奨のオーバーロードに解決されるすべての呼び出しが含まれます。
+非推奨のクラスおよび関数については、次のものが含まれます:
 
-* References through module, class, or instance attributes (``module.deprecated_object``,
-  ``module.SomeClass.deprecated_method``, ``module.SomeClass().deprecated_method``)
-* Any usage of deprecated objects in their defining module
-  (``x = deprecated_object()`` in ``module.py``)
-* If ``import *`` is used, usage of deprecated objects from the
-  module (``from module import *; x = deprecated_object()``)
-* ``from`` imports (``from module import deprecated_object``)
-* Any syntax that indirectly triggers a call to the function. For example,
-  if the ``__add__`` method of a class ``C`` is deprecated, then
-  the code ``C() + C()`` should trigger a diagnostic. Similarly, if the
-  setter of a property is marked deprecated, attempts to set the property
-  should trigger a diagnostic.
+* モジュール、クラス、またはインスタンス属性を介した参照（``module.deprecated_object``、
+  ``module.SomeClass.deprecated_method``, ``module.SomeClass().deprecated_method``）
+* 定義モジュール内での非推奨オブジェクトの使用
+  （``module.py`` 内の ``x = deprecated_object()``）
+* ``import *`` が使用される場合、モジュールからの非推奨オブジェクトの使用
+  （``from module import *; x = deprecated_object()``）
+* ``from`` インポート（``from module import deprecated_object``）
+* 関数の呼び出しを間接的にトリガーする構文。 例として、
+  クラス ``C`` の ``__add__`` メソッドが非推奨とマークされている場合、
+  ``C() + C()`` のコードは診断をトリガーする必要があります。 同様に、
+  プロパティのセッターが非推奨とマークされている場合、プロパティの設定を試みると診断がトリガーされる必要があります。
 
-If a method is marked with the :ref:`@override decorator <override>`
-and the base class method it overrides is deprecated, the type checker should
-produce a diagnostic.
+メソッドが :ref:`@override デコレーター <override>` でマークされており、
+オーバーライドされる基底クラスのメソッドが非推奨である場合、型チェッカーは診断を生成する必要があります。
 
-There are additional scenarios where deprecations could come into play.
-For example, an object may implement a :class:`typing.Protocol`, but one
-of the methods required for protocol compliance is deprecated.
-As scenarios such as this one appear complex and relatively unlikely to come up in practice,
-type checkers are not mandated to detect them.
+非推奨が関係する追加のシナリオもあります。
+例として、オブジェクトが :class:`typing.Protocol` を実装しているが、
+プロトコル準拠に必要なメソッドの 1 つが非推奨である場合です。
+このようなシナリオは複雑であり、実際には発生する可能性が低いため、
+型チェッカーはそれらを検出することを義務付けられていません。
 
-Example
-^^^^^^^
-
-As an example, consider this library stub named ``library.pyi``:
-
-.. code-block:: python
-
-   from warnings import deprecated
-
-   @deprecated("Use Spam instead")
-   class Ham: ...
-
-   @deprecated("It is pining for the fiords")
-   def norwegian_blue(x: int) -> int: ...
-
-   @overload
-   @deprecated("Only str will be allowed")
-   def foo(x: int) -> str: ...
-   @overload
-   def foo(x: str) -> str: ...
-
-   class Spam:
-       @deprecated("There is enough spam in the world")
-       def __add__(self, other: object) -> object: ...
-
-       @property
-       @deprecated("All spam will be equally greasy")
-       def greasy(self) -> float: ...
-
-       @property
-       def shape(self) -> str: ...
-       @shape.setter
-       @deprecated("Shapes are becoming immutable")
-       def shape(self, value: str) -> None: ...
-
-Here is how type checkers should handle usage of this library:
-
-.. code-block:: python
-
-   from library import Ham  # error: Use of deprecated class Ham. Use Spam instead.
-
-   import library
-
-   library.norwegian_blue(1)  # error: Use of deprecated function norwegian_blue. It is pining for the fiords.
-   map(library.norwegian_blue, [1, 2, 3])  # error: Use of deprecated function norwegian_blue. It is pining for the fiords.
-
-   library.foo(1)  # error: Use of deprecated overload for foo. Only str will be allowed.
-   library.foo("x")  # no error
-
-   ham = Ham()  # no error (already reported above)
-
-   spam = library.Spam()
-   spam + 1  # error: Use of deprecated method Spam.__add__. There is enough spam in the world.
-   spam.greasy  # error: Use of deprecated property Spam.greasy. All spam will be equally greasy.
-   spam.shape  # no error
-   spam.shape = "cube"  # error: Use of deprecated property setter Spam.shape. Shapes are becoming immutable.
-
-The exact wording of the diagnostics is up to the type checker and is not part
-of the specification.
-
-Type checker behavior
-^^^^^^^^^^^^^^^^^^^^^
-
-It is unspecified exactly how type checkers should present deprecation
-diagnostics to their users. However, some users (e.g., application developers
-targeting only a specific version of Python) may not care about deprecations,
-while others (e.g., library developers who want their library to remain
-compatible with future versions of Python) would want to catch any use of
-deprecated functionality in their CI pipeline. Therefore, it is recommended
-that type checkers provide configuration options that cover both use cases.
-As with any other type checker error, it is also possible to ignore deprecations
-using ``# type: ignore`` comments.
+例
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,10 +1,10 @@
 .. _`type-qualifiers`:
 
-Type qualifiers
-===============
+型修飾子
+==========================================================================================
 
-This chapter describes the behavior of some :term:`type qualifiers <type qualifier>`.
-Additional type qualifiers are covered in other chapters:
+この章では、いくつかの :term:`型修飾子 <type qualifier>` の動作について説明します。
+追加の型修飾子は他の章で説明されています:
 
 * :ref:`ClassVar <classvar>`
 * :ref:`NotRequired <notrequired>`
@@ -14,19 +14,15 @@ Additional type qualifiers are covered in other chapters:
 .. _`at-final`:
 
 ``@final``
-----------
+------------------------------------------------------------------------------------------
 
-(Originally specified in :pep:`591`.)
+(元々 :pep:`591` で指定されていました。)
 
-The ``typing.final`` decorator is used to restrict the use of
-inheritance and overriding.
+``typing.final`` デコレータは、継承とオーバーライドの使用を制限するために使用されます。
 
-A type checker should prohibit any class decorated with ``@final``
-from being subclassed and any method decorated with ``@final`` from
-being overridden in a subclass. The method decorator version may be
-used with all of instance methods, class methods, static methods, and properties.
+型チェッカーは、``@final`` でデコレートされたクラスがサブクラス化されることや、``@final`` でデコレートされたメソッドがサブクラスでオーバーライドされることを禁止する必要があります。 メソッドデコレータバージョンは、インスタンスメソッド、クラスメソッド、スタティックメソッド、およびプロパティのすべてで使用できます。
 
-For example::
+例えば::
 
     from typing import final
 
@@ -34,10 +30,10 @@ For example::
     class Base:
         ...
 
-    class Derived(Base):  # Error: Cannot inherit from final class "Base"
+    class Derived(Base):  # エラー: final クラス "Base" から継承することはできません
         ...
 
-and::
+および::
 
     from typing import final
 
@@ -47,13 +43,12 @@ and::
             ...
 
     class Derived(Base):
-        def foo(self) -> None:  # Error: Cannot override final attribute "foo"
-                                # (previously declared in base class "Base")
+        def foo(self) -> None:  # エラー: final 属性 "foo" をオーバーライドすることはできません
+                                # (ベースクラス "Base" で以前に宣言されました)
             ...
 
 
-For overloaded methods, ``@final`` should be placed on the
-implementation (or on the first overload, for stubs)::
+オーバーロードされたメソッドの場合、``@final`` は実装に配置する必要があります (またはスタブの場合は最初のオーバーロードに)::
 
    from typing import Any, overload
 
@@ -66,58 +61,47 @@ implementation (or on the first overload, for stubs)::
        def method(self, x=None):
            ...
 
-It is an error to use ``@final`` on a non-method function.
+非メソッド関数に ``@final`` を使用することはエラーです。
 
 .. _`uppercase-final`:
 
 ``Final``
----------
+------------------------------------------------------------------------------------------
 
-(Originally specified in :pep:`591`.)
+(元々 :pep:`591` で指定されていました。)
 
-The ``typing.Final`` :term:`type qualifier` is used to indicate that a
-variable or attribute should not be reassigned, redefined, or overridden.
+``typing.Final`` :term:`type qualifier` は、変数や属性が再割り当て、再定義、またはオーバーライドされないことを示すために使用されます。
 
-Syntax
-^^^^^^
+構文
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``Final`` may be used in one of several forms:
+``Final`` はいくつかの形式のいずれかで使用できます:
 
-* With an explicit type, using the syntax ``Final[<type>]``. Example::
+* 明示的な型を使用して、構文 ``Final[<type>]`` を使用します。 例::
 
     ID: Final[float] = 1
 
-* With no type annotation. Example::
+* 型注釈なしで使用します。 例::
 
     ID: Final = 1
 
-  The typechecker should apply its usual type inference mechanisms to
-  determine the type of ``ID`` (here, likely, ``int``). Note that unlike for
-  generic classes this is *not* the same as ``Final[Any]``.
+  型チェッカーは通常の型推論メカニズムを適用して ``ID`` の型を決定する必要があります (ここではおそらく ``int``)。 ジェネリッククラスとは異なり、これは ``Final[Any]`` と同じではないことに注意してください。
 
-* In class bodies and stub files you can omit the right hand side and just write
-  ``ID: Final[float]``.  If the right hand side is omitted, there must
-  be an explicit type argument to ``Final``.
+* クラス本体およびスタブファイルでは、右辺を省略して ``ID: Final[float]`` とだけ書くことができます。 右辺が省略された場合、``Final`` に明示的な型引数が必要です。
 
-* Finally, as ``self.id: Final = 1`` (also optionally with a type in
-  square brackets). This is allowed *only* in ``__init__`` methods, so
-  that the final instance attribute is assigned only once when an
-  instance is created.
+* 最後に、``self.id: Final = 1`` として (角括弧内に型を指定することもできます)。 これは ``__init__`` メソッド内でのみ許可されており、インスタンスが作成されるときに最初に一度だけ final インスタンス属性が割り当てられるようにします。
 
 
-Semantics and examples
-^^^^^^^^^^^^^^^^^^^^^^
+セマンティクスと例
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The two main rules for defining a final name are:
+final 名を定義するための主なルールは次の 2 つです:
 
-* There can be *at most one* final declaration per module or class for
-  a given attribute. There can't be separate class-level and instance-level
-  constants with the same name.
+* モジュールまたはクラスごとに特定の属性に対して *最大 1 つ* の final 宣言が存在することができます。 同じ名前のクラスレベルおよびインスタンスレベルの定数を別々に持つことはできません。
 
-* There must be *exactly one* assignment to a final name.
+* final 名には *正確に 1 つ* の割り当てが必要です。
 
-This means a type checker should prevent further assignments to final
-names in type-checked code::
+これは、型チェッカーが型チェックされたコードで final 名へのさらなる割り当てを防ぐ必要があることを意味します::
 
    from typing import Final
 
@@ -126,15 +110,12 @@ names in type-checked code::
    class Base:
        DEFAULT_ID: Final = 0
 
-   RATE = 300  # Error: can't assign to final attribute
-   Base.DEFAULT_ID = 1  # Error: can't override a final attribute
+   RATE = 300  # エラー: final 属性に割り当てることはできません
+   Base.DEFAULT_ID = 1  # エラー: final 属性をオーバーライドすることはできません
 
-Note that a type checker need not allow ``Final`` declarations inside loops
-since the runtime will see multiple assignments to the same variable in
-subsequent iterations.
+型チェッカーは、ループ内で ``Final`` 宣言を許可する必要はありません。 ループの後続の反復で同じ変数に複数の割り当てが行われるためです。
 
-Additionally, a type checker should prevent final attributes from
-being overridden in a subclass::
+さらに、型チェッカーはサブクラスで final 属性がオーバーライドされるのを防ぐ必要があります::
 
    from typing import Final
 
@@ -143,59 +124,41 @@ being overridden in a subclass::
        ...
 
    class ListView(Window):
-       BORDER_WIDTH = 3  # Error: can't override a final attribute
+       BORDER_WIDTH = 3  # エラー: final 属性をオーバーライドすることはできません
 
-A final attribute declared in a class body without an initializer must
-be initialized in the ``__init__`` method (except in stub files)::
+クラス本体で初期化子なしで宣言された final 属性は、``__init__`` メソッドで初期化する必要があります (スタブファイルを除く)::
 
    class ImmutablePoint:
        x: Final[int]
-       y: Final[int]  # Error: final attribute without an initializer
+       y: Final[int]  # エラー: 初期化子なしの final 属性
 
        def __init__(self) -> None:
-           self.x = 1  # Good
+           self.x = 1  # 良い
 
-The generated ``__init__`` method of :doc:`dataclasses` qualifies for this
-requirement: a bare ``x: Final[int]`` is permitted in a dataclass body, because
-the generated ``__init__`` will initialize ``x``.
+:doc:`dataclasses` の生成された ``__init__`` メソッドはこの要件を満たします: dataclass 本体にある単なる ``x: Final[int]`` は許可されます。 生成された ``__init__`` は ``x`` を初期化します。
 
-Type checkers should infer a final attribute that is initialized in a class
-body as being a class variable, except in the case of :doc:`dataclasses`, where
-``x: Final[int] = 3`` creates a dataclass field and instance-level final
-attribute ``x`` with default value ``3``; ``x: ClassVar[Final[int]] = 3`` is
-necessary to create a final class variable with value ``3``. In
-non-dataclasses, combining ``ClassVar`` and ``Final`` is redundant, and type
-checkers may choose to warn or error on the redundancy.
+型チェッカーは、クラス本体で初期化された final 属性をクラス変数として推論する必要があります。 ただし、:doc:`dataclasses` の場合を除きます。 ここでは、``x: Final[int] = 3`` はデフォルト値 ``3`` を持つ dataclass フィールドおよびインスタンスレベルの final 属性 ``x`` を作成します。 ``x: ClassVar[Final[int]] = 3`` は、値 ``3`` を持つ final クラス変数を作成するために必要です。 非 dataclass では、``ClassVar`` と ``Final`` を組み合わせることは冗長であり、型チェッカーは冗長性に対して警告またはエラーを出すことができます。
 
-``Final`` may only be used in assignments or variable annotations. Using it in
-any other position is an error. In particular, ``Final`` can't be used in
-annotations for function arguments::
+``Final`` は割り当てまたは変数注釈でのみ使用できます。 他の位置で使用することはエラーです。 特に、関数引数の注釈には ``Final`` を使用できません::
 
-   x: list[Final[int]] = []  # Error!
+   x: list[Final[int]] = []  # エラー!
 
-   def fun(x: Final[List[int]]) ->  None:  # Error!
+   def fun(x: Final[List[int]]) ->  None:  # エラー!
        ...
 
-``Final`` may be wrapped only by other type qualifiers (e.g. ``ClassVar`` or
-``Annotated``). It cannot be used in a type parameter (e.g.
-``list[Final[int]]`` is not permitted.)
+``Final`` は他の型修飾子 (例: ``ClassVar`` または ``Annotated``) のみでラップすることができます。 型パラメータで使用することはできません (例: ``list[Final[int]]`` は許可されていません)。
 
-Note that declaring a name as final only guarantees that the name will
-not be re-bound to another value, but does not make the value
-immutable. Immutable ABCs and containers may be used in combination
-with ``Final`` to prevent mutating such values::
+名前を final として宣言することは、その名前が別の値に再バインドされないことを保証するだけであり、値を不変にするわけではないことに注意してください。 不変の ABC およびコンテナは、``Final`` と組み合わせて使用してそのような値の変更を防ぐことができます::
 
    x: Final = ['a', 'b']
    x.append('c')  # OK
 
    y: Final[Sequence[str]] = ['a', 'b']
-   y.append('x')  # Error: "Sequence[str]" has no attribute "append"
-   z: Final = ('a', 'b')  # Also works
+   y.append('x')  # エラー: "Sequence[str]" には属性 "append" がありません
+   z: Final = ('a', 'b')  # これも動作します
 
 
-Type checkers should treat uses of a final name that was initialized
-with a literal as if it was replaced by the literal. For example, the
-following should be allowed::
+型チェッカーは、リテラルで初期化された final 名の使用を、リテラルに置き換えられたかのように扱う必要があります。 例えば、次のようにする必要があります::
 
    from typing import NamedTuple, Final
 
@@ -206,59 +169,51 @@ following should be allowed::
 .. _`annotated`:
 
 ``Annotated``
--------------
+------------------------------------------------------------------------------------------
 
-(Originally specified by :pep:`593`.)
+(元々 :pep:`593` によって指定されました。)
 
-Syntax
-^^^^^^
+構文
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``Annotated`` is parameterized with a *base expression* and at least one
-Python value representing associated *metadata*::
+``Annotated`` は *基本式* と少なくとも 1 つの Python 値を表す *メタデータ* でパラメータ化されます::
 
     from typing import Annotated
 
     Annotated[BaseExpr, Metadata1, Metadata2, ...]
 
-Here are the specific details of the syntax:
+構文の具体的な詳細は次のとおりです:
 
-* The base expression (the first argument to ``Annotated``) must be valid
-  in the context where it is being used:
+* 基本式 (``Annotated`` の最初の引数) は、使用されるコンテキストで有効でなければなりません:
 
-  * If ``Annotated`` is used in a place where arbitrary
-    :term:`annotation expressions <annotation expression>` are allowed,
-    the base expression may be an annotation expression.
-  * Otherwise, the base expression must be a valid :term:`type expression`.
+  * ``Annotated`` が任意の :term:`注釈式 <annotation expression>` が許可される場所で使用される場合、基本式は注釈式である必要があります。
+  * それ以外の場合、基本式は有効な :term:`expression` でなければなりません。
 
-* Multiple metadata elements are supported (``Annotated`` supports variadic
-  arguments)::
+* 複数のメタデータ要素がサポートされています (``Annotated`` は可変引数をサポートしています)::
 
     Annotated[int, ValueRange(3, 10), ctype("char")]
 
-* There must be at least one metadata element (``Annotated[int]`` is not valid)
+* 少なくとも 1 つのメタデータ要素が必要です (``Annotated[int]`` は無効です)
 
-* The order of the metadata is preserved and matters for equality
-  checks::
+* メタデータの順序は保持され、等価性チェックにおいて重要です::
 
     Annotated[int, ValueRange(3, 10), ctype("char")] != Annotated[
         int, ctype("char"), ValueRange(3, 10)
     ]
 
-* Nested ``Annotated`` types are flattened, with metadata ordered
-  starting with the innermost ``Annotated`` expression::
+* ネストされた ``Annotated`` 型はフラット化され、メタデータは最も内側の ``Annotated`` 式から順に並べられます::
 
     Annotated[Annotated[int, ValueRange(3, 10)], ctype("char")] == Annotated[
         int, ValueRange(3, 10), ctype("char")
     ]
 
-* Duplicated metadata elements are not removed::
+* 重複したメタデータ要素は削除されません::
 
     Annotated[int, ValueRange(3, 10)] != Annotated[
         int, ValueRange(3, 10), ValueRange(3, 10)
     ]
 
-* ``Annotated`` can be used in definition of nested and generic aliases,
-  but only if it wraps a :term:`type expression`::
+* ``Annotated`` はネストされたおよびジェネリックエイリアスの定義で使用できますが、:term:`structural` をラップする場合のみです::
 
     T = TypeVar("T")
     Vec = Annotated[list[tuple[T, T]], MaxLen(10)]
@@ -266,84 +221,54 @@ Here are the specific details of the syntax:
 
     V == Annotated[list[tuple[int, int]], MaxLen(10)]
 
-* As with most :term:`special forms <special form>`, ``Annotated`` is not assignable to
-  ``type`` or ``type[T]``::
+* ほとんどの :term:`特殊形式 <special form>` と同様に、``Annotated`` は ``type`` または ``type[T]`` に割り当てることはできません::
 
-    v1: type[int] = Annotated[int, ""]  # Type error
+    v1: type[int] = Annotated[int, ""]  # 型エラー
 
     SmallInt: TypeAlias = Annotated[int, ValueRange(0, 100)]
-    v2: type[Any] = SmallInt  # Type error
+    v2: type[Any] = SmallInt  # 型エラー
 
-* An attempt to call ``Annotated`` (whether parameterized or not) should be
-  treated as a type error by type checkers::
+* ``Annotated`` を呼び出そうとすると (パラメータ化されているかどうかに関係なく)、型チェッカーは型エラーとして扱う必要があります::
 
-    Annotated()  # Type error
-    Annotated[int, ""](0)  # Type error
+    Annotated()  # 型エラー
+    Annotated[int, ""](0)  # 型エラー
 
     SmallInt = Annotated[int, ValueRange(0, 100)]
-    SmallInt(1)  # Type error
+    SmallInt(1)  # 型エラー
 
-:pep:`593` and an earlier version of this specification used the term
-"annotations" instead of "metadata" for the extra arguments to
-``Annotated``. The term "annotations" is deprecated to avoid confusion
-with the parameter, return, and variable annotations that are part of
-the Python syntax.
+:pep:`593` およびこの仕様の以前のバージョンでは、``Annotated`` の追加引数に対して「注釈」という用語が使用されていました。 「注釈」という用語は、Python 構文の一部であるパラメータ、戻り値、および変数の注釈と混同しないように廃止されました。
 
-Meaning
-^^^^^^^
+意味
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The metadata provided by ``Annotated`` can be used for either static
-or runtime analysis. If a library (or tool) encounters an instance of
-``Annotated[T, x]`` and has no special logic for metadata element ``x``, it
-should ignore it and treat the expression as equivalent to ``T``. Thus, in general,
-any :term:`type expression` or :term:`annotation expression` may be
-wrapped in ``Annotated`` without changing the meaning of the
-wrapped expression. However, type
-checkers may additionally choose to recognize particular metadata elements and use
-them to implement extensions to the standard type system.
+``Annotated`` によって提供されるメタデータは、静的解析またはランタイム解析のいずれかに使用できます。 ライブラリ (またはツール) が ``Annotated[T, x]`` のインスタンスに遭遇し、メタデータ要素 ``x`` に特別なロジックがない場合、それを無視し、式を ``T`` と同等として扱う必要があります。 したがって、一般的に、任意の :term:`structural` または :term:`annotation expression` は、ラップされた式の意味を変更せずに ``Annotated`` でラップできます。 ただし、型チェッカーは特定のメタデータ要素を認識し、それらを使用して標準の型システムへの拡張を実装することを選択できます。
 
-``Annotated`` metadata may apply either to the base expression or to the symbol
-being annotated, or even to some other aspect of the program.
+``Annotated`` メタデータは、基本式、注釈されているシンボル、またはプログラムの他の側面のいずれかに適用される場合があります。
 
-Consuming metadata
-^^^^^^^^^^^^^^^^^^
+メタデータの消費
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Ultimately, deciding how to interpret the metadata (if
-at all) is the responsibility of the tool or library encountering the
-``Annotated`` type. A tool or library encountering an ``Annotated`` type
-can scan through the metadata to determine if they are of interest
-(e.g., using ``isinstance()``).
+最終的には、メタデータをどのように解釈するか (もし解釈する場合) は、``Annotated`` 型に遭遇するツールまたはライブラリの責任です。 ``Annotated`` 型に遭遇するツールまたはライブラリは、メタデータが興味のあるものであるかどうかを判断するために (例: ``isinstance()`` を使用して) メタデータをスキャンできます。
 
-**Unknown metadata:** When a tool or a library does not support
-metadata or encounters an unknown metadata element, it should ignore it
-and treat the annotation as the base expression.
+**未知のメタデータ:** ツールまたはライブラリがメタデータをサポートしていない場合、または未知のメタデータ要素に遭遇した場合、それを無視し、注釈を基本式として扱う必要があります。
 
-**Namespacing metadata:** Namespaces are not needed for metadata since
-the class of the metadata object acts as a namespace.
+**メタデータの名前空間:** メタデータの名前空間は必要ありません。 メタデータオブジェクトのクラスが名前空間として機能します。
 
-**Multiple metadata elements:** It's up to the tool consuming the metadata
-to decide whether the client is allowed to have several metadata elements on
-one annotation and how to merge those elements.
+**複数のメタデータ要素:** クライアントが 1 つの注釈に複数のメタデータ要素を持つことを許可するかどうか、およびそれらの要素をどのようにマージするかは、メタデータを消費するツール次第です。
 
-Since the ``Annotated`` type allows you to put several metadata elements of
-the same (or different) type(s) on any annotation, the tools or libraries
-consuming the metadata are in charge of dealing with potential
-duplicates. For example, if you are doing value range analysis you might
-allow this::
+``Annotated`` 型を使用すると、任意の注釈に同じ (または異なる) 型の複数のメタデータ要素を配置できるため、メタデータを消費するツールまたはライブラリは潜在的な重複を処理する責任があります。 例えば、値範囲解析を行っている場合、次のようにすることができます::
 
     T1 = Annotated[int, ValueRange(-10, 5)]
     T2 = Annotated[T1, ValueRange(-20, 3)]
 
-Flattening nested annotations, this translates to::
+ネストされた注釈をフラット化すると、次のようになります::
 
     T2 = Annotated[int, ValueRange(-10, 5), ValueRange(-20, 3)]
 
-Aliases & Concerns over verbosity
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+エイリアスと冗長性に関する懸念
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Writing ``typing.Annotated`` everywhere can be quite verbose;
-fortunately, the ability to alias types means that in practice we
-don't expect clients to have to write lots of boilerplate code::
+``typing.Annotated`` を至る所に書くことは非常に冗長になる可能性があります。 幸いなことに、型のエイリアスを作成する機能により、実際にはクライアントが大量のボイラープレートコードを書く必要はないと予想されます::
 
     type Const[T] = Annotated[T, my_annotations.CONST]
 

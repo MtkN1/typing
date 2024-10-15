@@ -1,49 +1,35 @@
-Enumerations
-============
+列挙型
+==========================================================================================
 
-The ``enum.Enum`` class behaves differently from other Python classes in several
-ways that require special-case handling in type checkers. This section discusses
-the Enum behaviors that should be supported by type checkers and others which
-may be supported optionally. It is recommended that library and type stub
-authors avoid using optional behaviors because these may not be supported
-by some type checkers.
+``enum.Enum`` クラスは、型チェッカーで特別なケースの処理を必要とするいくつかの点で他の Python クラスとは異なる動作をします。 このセクションでは、型チェッカーがサポートすべき Enum の動作と、オプションでサポートされる動作について説明します。 ライブラリおよび型スタブの作成者は、これらの動作が一部の型チェッカーでサポートされない可能性があるため、オプションの動作を使用しないことをお勧めします。
 
+列挙型の定義
+------------------------------------------------------------------------------------------
 
-Enum Definition
----------------
+Enum クラスは、「クラス構文」または「関数構文」を使用して定義できます。 関数構文は、個々の引数として渡される名前、名前のリストまたはタプル、カンマ区切りまたはスペース区切りの名前の文字列、名前/値のペアを含むリストまたはタプル、および名前/値のアイテムの辞書など、列挙メンバーを指定するいくつかの方法を提供します。
 
-Enum classes can be defined using a "class syntax" or a "function syntax".
-The function syntax offers several ways to specify enum members: names passed
-as individual arguments, a list or tuple of names, a string of
-comma-delimited or space-delimited names, a list or tuple of tuples that contain
-name/value pairs, and a dictionary of name/value items.
+型チェッカーはクラス構文をサポートする必要がありますが、関数構文（そのさまざまな形式）はオプションです::
 
-Type checkers should support the class syntax, but the function syntax (in
-its various forms) is optional::
-
-    class Color1(Enum): # Supported
+    class Color1(Enum): # サポートされている
         RED = 1
         GREEN = 2
         BLUE = 3
 
-    Color2 = Enum('Color2', 'RED', 'GREEN', 'BLUE')  # Optional
-    Color3 = Enum('Color3', ['RED', 'GREEN', 'BLUE'])  # Optional
-    Color4 = Enum('Color4', ('RED', 'GREEN', 'BLUE'))  # Optional
-    Color5 = Enum('Color5', 'RED, GREEN, BLUE')  # Optional
-    Color6 = Enum('Color6', 'RED GREEN BLUE')  # Optional
-    Color7 = Enum('Color7', [('RED', 1), ('GREEN', 2), ('BLUE', 3)])  # Optional
-    Color8 = Enum('Color8', (('RED', 1), ('GREEN', 2), ('BLUE', 3)))  # Optional
-    Color9 = Enum('Color9', {'RED': 1, 'GREEN': 2, 'BLUE': 3})  # Optional
+    Color2 = Enum('Color2', 'RED', 'GREEN', 'BLUE')  # オプション
+    Color3 = Enum('Color3', ['RED', 'GREEN', 'BLUE'])  # オプション
+    Color4 = Enum('Color4', ('RED', 'GREEN', 'BLUE'))  # オプション
+    Color5 = Enum('Color5', 'RED, GREEN, BLUE')  # オプション
+    Color6 = Enum('Color6', 'RED GREEN BLUE')  # オプション
+    Color7 = Enum('Color7', [('RED', 1), ('GREEN', 2), ('BLUE', 3)])  # オプション
+    Color8 = Enum('Color8', (('RED', 1), ('GREEN', 2), ('BLUE', 3)))  # オプション
+    Color9 = Enum('Color9', {'RED': 1, 'GREEN': 2, 'BLUE': 3})  # オプション
 
-Enum classes can also be defined using a subclass of ``enum.Enum`` or any class
-that uses ``enum.EnumType`` (or a subclass thereof) as a metaclass. Note that
-``enum.EnumType`` was named ``enum.EnumMeta`` prior to Python 3.11. Type
-checkers should treat such classes as enums::
+Enum クラスは、``enum.Enum`` のサブクラスまたは ``enum.EnumType``（またはそのサブクラス）をメタクラスとして使用する任意のクラスを使用して定義することもできます。 ``enum.EnumType`` は Python 3.11 以前では ``enum.EnumMeta`` と呼ばれていました。 型チェッカーはそのようなクラスを列挙型として扱う必要があります::
 
     class CustomEnum1(Enum):
         pass
 
-    class Color7(CustomEnum1):  # Supported
+    class Color7(CustomEnum1):  # サポートされている
         RED = 1
         GREEN = 2
         BLUE = 3
@@ -54,18 +40,15 @@ checkers should treat such classes as enums::
     class CustomEnum2(metaclass=CustomEnumType):
         pass
 
-    class Color8(CustomEnum2):  # Supported
+    class Color8(CustomEnum2):  # サポートされている
         RED = 1
         GREEN = 2
         BLUE = 3
 
+列挙型の動作
+------------------------------------------------------------------------------------------
 
-Enum Behaviors
---------------
-
-Enum classes are iterable and indexable, and they can be called with a value
-to look up the enum member with that value. Type checkers should support these
-behaviors::
+Enum クラスは反復可能でインデックス付け可能であり、値を使用して呼び出すことができ、その値を持つ列挙メンバーを検索します。 型チェッカーはこれらの動作をサポートする必要があります::
 
     class Color(Enum):
         RED = 1
@@ -73,191 +56,155 @@ behaviors::
         BLUE = 3
 
     for color in Color:
-        reveal_type(color)  # Revealed type is 'Color'
+        reveal_type(color)  # 明らかにされた型は 'Color' です
 
-    reveal_type(Color["RED"])  # Revealed type is 'Literal[Color.RED]' (or 'Color')
-    reveal_type(Color(3))  # Revealed type is 'Literal[Color.BLUE]' (or 'Color')
+    reveal_type(Color["RED"])  # 明らかにされた型は 'Literal[Color.RED]'（または 'Color'）です
+    reveal_type(Color(3))  # 明らかにされた型は 'Literal[Color.BLUE]'（または 'Color'）です
 
-Unlike most Python classes, Calling an enum class does not invoke its constructor.
-Instead, the call performs a value-based lookup of an enum member.
+ほとんどの Python クラスとは異なり、列挙型クラスを呼び出してもそのコンストラクタは呼び出されません。 代わりに、その呼び出しは列挙メンバーの値ベースの検索を実行します。
 
-An Enum class with one or more defined members cannot be subclassed. They are
-implicitly "final". Type checkers should enforce this::
+1 つ以上のメンバーが定義されている Enum クラスはサブクラス化できません。 それらは暗黙的に「最終的」です。 型チェッカーはこれを強制する必要があります::
 
     class EnumWithNoMembers(Enum):
         pass
 
-    class Shape(EnumWithNoMembers):  # OK (because no members are defined)
+    class Shape(EnumWithNoMembers):  # OK（メンバーが定義されていないため）
         SQUARE = 1
         CIRCLE = 2
 
-    class ExtendedShape(Shape):  # Type checker error: Shape is implicitly final
+    class ExtendedShape(Shape):  # 型チェッカーエラー: Shape は暗黙的に最終的です
         TRIANGLE = 3
 
+メンバーの定義
+------------------------------------------------------------------------------------------
 
-Defining Members
-----------------
+「クラス構文」を使用する場合、Enum クラスはメンバーとその他の（メンバー以外の）属性の両方を定義できます。 ``EnumType`` メタクラスは、メンバーと非メンバーを区別する一連のルールを適用します。 型チェッカーは、これらのルールの中で最も一般的なものを尊重する必要があります。 あまり使用されないルールはオプションです。 動的な値が使用される場合、これらのルールの一部は静的に評価および強制することが不可能な場合があります。
 
-When using the "class syntax", enum classes can define both members and
-other (non-member) attributes. The ``EnumType`` metaclass applies a set
-of rules to distinguish between members and non-members. Type checkers
-should honor the most common of these rules. The lesser-used rules are
-optional. Some of these rules may be impossible to evaluate and enforce
-statically in cases where dynamic values are used.
-
-* If an attribute is defined in the class body with a type annotation but
-  with no assigned value, a type checker should assume this is a non-member
-  attribute::
+* 属性が型注釈付きでクラス本体に定義されているが、値が割り当てられていない場合、型チェッカーはこれが非メンバー属性であると見なす必要があります::
 
     class Pet(Enum):
-        genus: str  # Non-member attribute
-        species: str  # Non-member attribute
+        genus: str  # 非メンバー属性
+        species: str  # 非メンバー属性
 
-        CAT = 1  # Member attribute
-        DOG = 2  # Member attribute
+        CAT = 1  # メンバー属性
+        DOG = 2  # メンバー属性
 
-  Within a type stub, members can be defined using the actual runtime values,
-  or a placeholder of ``...`` can be used::
+  型スタブ内では、メンバーは実際のランタイム値を使用して定義することも、プレースホルダーとして ``...`` を使用することもできます::
 
     class Pet(Enum):
-        genus: str  # Non-member attribute
-        species: str  # Non-member attribute
+        genus: str  # 非メンバー属性
+        species: str  # 非メンバー属性
 
-        CAT = ...  # Member attribute
-        DOG = ...  # Member attribute
+        CAT = ...  # メンバー属性
+        DOG = ...  # メンバー属性
 
-* Members defined within an enum class should not include explicit type
-  annotations. Type checkers should infer a literal type for all members.
-  A type checker should report an error if a type annotation is used
-  for an enum member because this type will be incorrect and misleading
-  to readers of the code::
+* Enum クラス内で定義されたメンバーには明示的な型注釈を含めるべきではありません。 型チェッカーはすべてのメンバーに対してリテラル型を推論する必要があります。 型チェッカーは、列挙メンバーに型注釈が使用されている場合、これは誤ったものであり、コードの読者にとって誤解を招くため、エラーを報告する必要があります::
 
     class Pet(Enum):
         CAT = 1  # OK
-        DOG: int = 2  # Type checker error
+        DOG: int = 2  # 型チェッカーエラー
 
-* Methods, callables, descriptors (including properties), and nested classes
-  that are defined in the class are not treated as enum members by the
-  ``EnumType`` metaclass and should likewise not be treated as enum members by
-  a type checker::
+* クラス内で定義されたメソッド、呼び出し可能なもの、デスクリプタ（プロパティを含む）、およびネストされたクラスは、``EnumType`` メタクラスによって列挙メンバーとして扱われず、型チェッカーによっても列挙メンバーとして扱われるべきではありません::
 
     def identity(x): return x
 
     class Pet(Enum):
-        CAT = 1  # Member attribute
-        DOG = 2  # Member attribute
+        CAT = 1  # メンバー属性
+        DOG = 2  # メンバー属性
 
-        converter = lambda x: str(x)  # Non-member attribute
-        transform = identity  # Non-member attribute
+        converter = lambda x: str(x)  # 非メンバー属性
+        transform = identity  # 非メンバー属性
 
         @property
-        def species(self) -> str:  # Non-member property
+        def species(self) -> str:  # 非メンバー属性
             return "mammal"
 
-        def speak(self) -> None:  # Non-member method
+        def speak(self) -> None:  # 非メンバー属性
             print("meow" if self is Pet.CAT else "woof")
 
-        class Nested: ... # Non-member nested class
+        class Nested: ... # 非メンバー属性
 
-* An attribute that is assigned the value of another member of the same enum
-  is not a member itself. Instead, it is an alias for the first member::
+* 同じ列挙の別のメンバーの値が割り当てられている属性は、それ自体がメンバーではありません。 代わりに、最初のメンバーのエイリアスです::
 
     class TrafficLight(Enum):
         RED = 1
         GREEN = 2
         YELLOW = 3
 
-        AMBER = YELLOW  # Alias for YELLOW
+        AMBER = YELLOW  # YELLOW のエイリアス
 
-    reveal_type(TrafficLight.AMBER)  # Revealed type is Literal[TrafficLight.YELLOW]
+    reveal_type(TrafficLight.AMBER)  # 明らかにされた型は Literal[TrafficLight.YELLOW] です
 
-* If using Python 3.11 or newer, the ``enum.member`` and ``enum.nonmember``
-  classes can be used to unambiguously distinguish members from non-members.
-  Type checkers should support these classes::
+* Python 3.11 以降を使用している場合、``enum.member`` および ``enum.nonmember`` クラスを使用して、メンバーと非メンバーを明確に区別できます。 型チェッカーはこれらのクラスをサポートする必要があります::
 
     class Example(Enum):
-        a = member(1)  # Member attribute
-        b = nonmember(2)  # Non-member attribute
+        a = member(1)  # メンバー属性
+        b = nonmember(2)  # 非メンバー属性
 
         @member
-        def c(self) -> None:  # Member method
+        def c(self) -> None:  # メンバー属性
             pass
 
-    reveal_type(Example.a)  # Revealed type is Literal[Example.a]
-    reveal_type(Example.b)  # Revealed type is int or Literal[2]
-    reveal_type(Example.c)  # Revealed type is Literal[Example.c]
+    reveal_type(Example.a)  # 明らかにされた型は Literal[Example.a] です
+    reveal_type(Example.b)  # 明らかにされた型は int または Literal[2] です
+    reveal_type(Example.c)  # 明らかにされた型は Literal[Example.c] です
 
-* An attribute with a private name (beginning with, but not ending in, a double
-  underscore) is treated as a non-member::
+* プライベート名（ダブルアンダースコアで始まり、ダブルアンダースコアで終わらない）を持つ属性は、非メンバーとして扱われます::
 
     class Example(Enum):
-        A = 1  # Member attribute
-        __B = 2  # Non-member attribute
+        A = 1  # メンバー属性
+        __B = 2  # 非メンバー属性
 
-    reveal_type(Example.A)  # Revealed type is Literal[Example.A]
-    reveal_type(Example.__B)  # Type Error: Private name is mangled
+    reveal_type(Example.A)  # 明らかにされた型は Literal[Example.A] です
+    reveal_type(Example.__B)  # 型エラー: プライベート名がマングルされています
 
-* An enum class can define a class symbol named ``_ignore_``. This can be a list
-  of names or a string containing a space-delimited list of names that are
-  deleted from the enum class at runtime. Type checkers may support this
-  mechanism::
+* 列挙クラスは ``_ignore_`` という名前のクラスシンボルを定義できます。 これは、列挙クラスから削除される名前のリストまたはスペース区切りの名前のリストを含む文字列である可能性があります。 型チェッカーはこのメカニズムをサポートする場合があります::
 
     class Pet(Enum):
         _ignore_ = "DOG FISH"
-        CAT = 1  # Member attribute
-        DOG = 2  # temporary variable, will be removed from the final enum class
-        FISH = 3  # temporary variable, will be removed from the final enum class
+        CAT = 1  # メンバー属性
+        DOG = 2  # 一時変数、最終的な列挙クラスから削除されます
+        FISH = 3  # 一時変数、最終的な列挙クラスから削除されます
 
+メンバー名
+------------------------------------------------------------------------------------------
 
-Member Names
-------------
-
-All enum member objects have an attribute ``_name_`` that contains the member's
-name. They also have a property ``name`` that returns the same name. Type
-checkers may infer a literal type for the name of a member::
+すべての列挙メンバーオブジェクトには、メンバーの名前を含む ``_name_`` 属性があります。 また、同じ名前を返す ``name`` プロパティもあります。 型チェッカーはメンバーの名前のリテラル型を推論する場合があります::
 
     class Color(Enum):
         RED = 1
         GREEN = 2
         BLUE = 3
 
-    reveal_type(Color.RED._name_)  # Revealed type is Literal["RED"] (or str)
-    reveal_type(Color.RED.name)  # Revealed type is Literal["RED"] (or str)
+    reveal_type(Color.RED._name_)  # 明らかにされた型は Literal["RED"]（または str）です
+    reveal_type(Color.RED.name)  # 明らかにされた型は Literal["RED"]（または str）です
 
     def func1(red_or_blue: Literal[Color.RED, Color.BLUE]):
-        reveal_type(red_or_blue.name)  # Revealed type is Literal["RED", "BLUE"] (or str)
+        reveal_type(red_or_blue.name)  # 明らかにされた型は Literal["RED", "BLUE"]（または str）です
 
     def func2(any_color: Color):
-        reveal_type(any_color.name)  # Revealed type is Literal["RED", "BLUE", "GREEN"] (or str)
+        reveal_type(any_color.name)  # 明らかにされた型は Literal["RED", "BLUE", "GREEN"]（または str）です
 
+メンバーの値
+------------------------------------------------------------------------------------------
 
-Member Values
--------------
-
-All enum member objects have an attribute ``_value_`` that contains the member's
-value. They also have a property ``value`` that returns the same value. Type
-checkers may infer the type of a member's value::
+すべての列挙メンバーオブジェクトには、メンバーの値を含む ``_value_`` 属性があります。 また、同じ値を返す ``value`` プロパティもあります。 型チェッカーはメンバーの値の型を推論する場合があります::
 
     class Color(Enum):
         RED = 1
         GREEN = 2
         BLUE = 3
 
-    reveal_type(Color.RED._value_)  # Revealed type is Literal[1] (or int or object or Any)
-    reveal_type(Color.RED.value)  # Revealed type is Literal[1] (or int or object or Any)
+    reveal_type(Color.RED._value_)  # 明らかにされた型は Literal[1]（または int または object または Any）です
+    reveal_type(Color.RED.value)  # 明らかにされた型は Literal[1]（または int または object または Any）です
 
     def func1(red_or_blue: Literal[Color.RED, Color.BLUE]):
-        reveal_type(red_or_blue.value)  # Revealed type is Literal[1, 2] (or int or object or Any)
+        reveal_type(red_or_blue.value)  # 明らかにされた型は Literal[1, 2]（または int または object または Any）です
 
     def func2(any_color: Color):
-        reveal_type(any_color.value)  # Revealed type is Literal[1, 2, 3] (or int or object or Any)
+        reveal_type(any_color.value)  # 明らかにされた型は Literal[1, 2, 3]（または int または object または Any）です
 
-
-The value of ``_value_`` can be assigned in a constructor method. This technique
-is sometimes used to initialize both the member value and non-member attributes.
-If the value assigned in the class body is a tuple, the unpacked tuple value is
-passed to the constructor. Type checkers may validate consistency between assigned
-tuple values and the constructor signature::
+``_value_`` の値はコンストラクタメソッドで割り当てることができます。 この手法は、メンバーの値と非メンバー属性の両方を初期化するために使用されることがあります。 クラス本体で割り当てられた値がタプルである場合、アンパックされたタプル値がコンストラクタに渡されます。 型チェッカーは、割り当てられたタプル値とコンストラクタのシグネチャの一貫性を検証する場合があります::
 
     class Planet(Enum):
         def __init__(self, value: int, mass: float, radius: float):
@@ -268,44 +215,36 @@ tuple values and the constructor signature::
         MERCURY = (1, 3.303e+23, 2.4397e6)
         VENUS = (2, 4.869e+24, 6.0518e6)
         EARTH = (3, 5.976e+24, 6.37814e6)
-        MARS = (6.421e+23, 3.3972e6)  # Type checker error (optional)
-        JUPITER = 5  # Type checker error (optional)
+        MARS = (6.421e+23, 3.3972e6)  # 型チェッカーエラー（オプション）
+        JUPITER = 5  # 型チェッカーエラー（オプション）
 
-    reveal_type(Planet.MERCURY.value)  # Revealed type is Literal[1] (or int or object or Any)
+    reveal_type(Planet.MERCURY.value)  # 明らかにされた型は Literal[1]（または int または object または Any）です
 
-
-The class ``enum.auto`` and method ``_generate_next_value_`` can be used within
-an enum class to automatically generate values for enum members. Type checkers
-may support these to infer literal types for member values::
+列挙クラス内で ``enum.auto`` クラスおよび ``_generate_next_value_`` メソッドを使用して、列挙メンバーの値を自動的に生成できます。 型チェッカーはこれらをサポートしてメンバー値のリテラル型を推論する場合があります::
 
     class Color(Enum):
         RED = auto()
         GREEN = auto()
         BLUE = auto()
 
-    reveal_type(Color.RED.value)  # Revealed type is Literal[1] (or int or object or Any)
+    reveal_type(Color.RED.value)  # 明らかにされた型は Literal[1]（または int または object または Any）です
 
-
-If an enum class provides an explicit type annotation for ``_value_``, type
-checkers should enforce this declared type when values are assigned to
-``_value_``::
+列挙クラスが ``_value_`` に対して明示的な型注釈を提供する場合、型チェッカーは値が ``_value_`` に割り当てられるときにこの宣言された型を強制する必要があります::
 
     class Color(Enum):
         _value_: int
         RED = 1 # OK
-        GREEN = "green"  # Type error
+        GREEN = "green"  # 型エラー
 
     class Planet(Enum):
         _value_: str
 
         def __init__(self, value: int, mass: float, radius: float):
-            self._value_ = value # Type error
+            self._value_ = value # 型エラー
 
         MERCURY = (1, 3.303e+23, 2.4397e6)
 
-If the literal values for enum members are not supplied, as they sometimes
-are not within a type stub file, a type checker can use the type of the
-``_value_`` attribute::
+列挙メンバーのリテラル値が提供されていない場合（型スタブファイル内では提供されていないことがよくあります）、型チェッカーは ``_value_`` 属性の型を使用できます::
 
     class ColumnType(Enum):
         _value_: int
@@ -313,20 +252,12 @@ are not within a type stub file, a type checker can use the type of the
         IONIC = ...
         CORINTHIAN = ...
 
-    reveal_type(ColumnType.DORIC.value)  # Revealed type is int (or object or Any)
+    reveal_type(ColumnType.DORIC.value)  # 明らかにされた型は int（または object または Any）です
 
+列挙リテラルの展開
+------------------------------------------------------------------------------------------
 
-Enum Literal Expansion
-----------------------
-
-From the perspective of the type system, most enum classes are equivalent
-to the union of the literal members within that enum. (This rule
-does not apply to classes that derive from ``enum.Flag`` because these enums
-allow flags to be combined in arbitrary ways.) Because of the equivalency
-between an enum class and the union of literal members within that enum, the
-two types may be used interchangeably. Type checkers may therefore expand
-an enum type (that does not derive from ``enum.Flag``) into a union of
-literal values during type narrowing and exhaustion detection::
+型システムの観点から、ほとんどの列挙クラスはその列挙内のリテラルメンバーの共用体と同等です。 （このルールは、フラグを任意の方法で組み合わせることができるため、``enum.Flag`` から派生したクラスには適用されません。）列挙クラスとその列挙内のリテラルメンバーの共用体の間には同等性があるため、2 つの型は互換的に使用できます。 したがって、型チェッカーは、型の絞り込みおよび枯渇検出中に列挙型（``enum.Flag`` から派生していない）をリテラル値の共用体に展開する場合があります::
 
     class Color(Enum):
         RED = 1
@@ -337,7 +268,7 @@ literal values during type narrowing and exhaustion detection::
         if c is Color.RED or c is Color.BLUE:
             print("red or blue")
         else:
-            reveal_type(c)  # Revealed type is Literal[Color.GREEN]
+            reveal_type(c)  # 明らかにされた型は Literal[Color.GREEN] です
 
     def print_color2(c: Color):
         match c:
@@ -346,11 +277,9 @@ literal values during type narrowing and exhaustion detection::
             case Color.GREEN:
                 print("green")
             case _:
-                reveal_type(c)  # Revealed type is Never
+                reveal_type(c)  # 明らかにされた型は Never です
 
-
-Likewise, a type checker should treat a complete union of all literal members
-as :term:`equivalent` to the enum type::
+同様に、型チェッカーはすべてのリテラルメンバーの完全な共用体を列挙型と同等として扱う必要があります::
 
     class Answer(Enum):
         Yes = 1
@@ -359,5 +288,5 @@ as :term:`equivalent` to the enum type::
     def func(val: object) -> Answer:
         if val is not Answer.Yes and val is not Answer.No:
             raise ValueError("Invalid value")
-        reveal_type(val)  # Revealed type is Answer (or Literal[Answer.Yes, Answer.No])
+        reveal_type(val)  # 明らかにされた型は Answer（または Literal[Answer.Yes, Answer.No]）です
         return val  # OK

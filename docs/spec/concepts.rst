@@ -1,426 +1,225 @@
 .. _`type-system-concepts`:
 
-Type system concepts
-====================
+型システムの概念
+==========================================================================================
 
-Static, dynamic, and gradual typing
------------------------------------
+静的型付け、動的型付け、および逐次型付け
+------------------------------------------------------------------------------------------
 
-A **statically typed** programming language runs a type checker before running
-a program. The program is required to be well typed according to the language's
-type system. The type system assigns a type to all expressions in the language
-and verifies that their uses obey the typing rules. Normally, a program that is
-not well typed (i.e., one that contains a type error) will not run. Java and
-C++ are examples of statically typed object-oriented languages.
+**静的型付け** プログラミング言語は、プログラムを実行する前に型チェッカーを実行します。 プログラムは、言語の型システムに従って型が正しいことが求められます。 型システムは、言語内のすべての式に型を割り当て、それらの使用が型付けルールに従っていることを検証します。 通常、型が正しくないプログラム（つまり、型エラーを含むプログラム）は実行されません。 Java および C++ は、静的型付けのオブジェクト指向言語の例です。
 
-A **dynamically typed** programming language does not run a type checker before
-running a program. Instead, it checks the types of values before performing
-operations on them at runtime. This is not to say that the language is
-"untyped". Values at runtime have a type and their uses obey typing rules. Not
-every operation will be checked, but certain primitive operations in the
-language such as attribute access or arithmetic are. Python is a
-dynamically typed language.
+**動的型付け** プログラミング言語は、プログラムを実行する前に型チェッカーを実行しません。 代わりに、実行時に操作を実行する前に値の型をチェックします。 これは、言語が「型なし」であることを意味するわけではありません。 実行時の値には型があり、その使用は型付けルールに従います。 すべての操作がチェックされるわけではありませんが、属性アクセスや算術などの言語の特定の基本操作はチェックされます。 Python は動的型付け言語です。
 
-**Gradual typing** is a way to combine static and dynamic typing.
-Type-annotated Python allows opting in to static type checking at a fine level
-of granularity, so that some type errors can be caught statically, without
-running the program. Variables, parameters, and returns can optionally be given
-static type annotations. Even within the type of a single data structure,
-static type checking is optional and granular. For example, a dictionary can be
-annotated to enable static checking of the key type but only have dynamic
-runtime checking of the value type.
+**逐次型付け** は、静的型付けと動的型付けを組み合わせる方法です。 型注釈付きの Python は、細かい粒度で静的型チェックをオプトインすることを可能にし、プログラムを実行せずに一部の型エラーを静的に検出できます。 変数、パラメータ、および戻り値には、オプションで静的型注釈を付けることができます。 単一のデータ構造の型内でも、静的型チェックはオプションであり、細かい粒度で行われます。 たとえば、辞書はキーの型の静的チェックを有効にし、値の型の動的ランタイムチェックのみを持つように注釈を付けることができます。
 
-A **gradual** type system is one in which a special "unknown" or "dynamic" type
-is used to describe names or expressions whose types are not known statically.
-In Python, this type is spelled :ref:`Any`. Because :ref:`!Any` indicates a
-statically unknown type, the static type checker can't check type correctness
-of operations on expressions typed as :ref:`!Any`. These operations are still
-dynamically checked, via the Python runtime's usual dynamic checking.
+**逐次** 型システムは、特別な「不明」または「動的」型を使用して、静的に型が不明な名前または式を記述する型システムです。 Python では、この型は :ref:`Any` と表記されます。 :ref:`!Any` は静的に不明な型を示すため、静的型チェッカーは :ref:`!Any` として型付けされた式の操作の型の正しさをチェックできません。 これらの操作は、Python ランタイムの通常の動的チェックを介して引き続き動的にチェックされます。
 
-The Python type system also uses ``...`` within :ref:`Callable` types and
-within ``tuple[Any, ...]`` (see :ref:`tuples`) to indicate a statically unknown
-component of a type. The detailed rules for these usages are discussed in their
-respective sections of the specification. Collectively, along with :ref:`Any`,
-these are :term:`gradual forms <gradual form>`.
+Python の型システムは、:ref:`Callable` 型内および ``tuple[Any, ...]``（:ref:`tuples` を参照）内で ``...`` を使用して、型の静的に不明なコンポーネントを示します。 これらの使用に関する詳細なルールは、それぞれの仕様のセクションで説明されています。 これらをまとめて、:ref:`Any` とともに、:term:`逐次形式 <gradual form>` と呼びます。
 
-This specification describes a gradual type system for Python.
+この仕様は、Python の逐次型システムを説明しています。
 
-Fully static and gradual types
-------------------------------
+完全に静的な型と逐次型
+------------------------------------------------------------------------------------------
 
-We will refer to types that do not contain a :term:`gradual form` as a sub-part
-as **fully static types**.
+サブパートとして :term:`逐次形式 <gradual form>` を含まない型を **完全に静的な型** と呼びます。
 
-A **gradual type** can be a fully static type, :ref:`Any` itself, or a type
-that contains a gradual form as a sub-part. All Python types are gradual types;
-fully static types are a subset.
+**逐次型** は、完全に静的な型、:ref:`Any` 自体、またはサブパートとして逐次形式を含む型のいずれかです。 すべての Python 型は逐次型です。 完全に静的な型はそのサブセットです。
 
-Fully static types
+完全に静的な型
 ~~~~~~~~~~~~~~~~~~
 
-A fully static type denotes a set of potential runtime values. For instance,
-the fully static type ``object`` is the set of all Python objects. The fully
-static type ``bool`` is the set of values ``{ True, False }``. The fully static
-type ``str`` is the set of all Python strings; more precisely, the set of all
-Python objects whose runtime type (``__class__`` attribute) is either ``str``
-or a class that inherits directly or indirectly from ``str``. A :ref:`Protocol
-<Protocols>` denotes the set of all objects which share a certain set of
-attributes and/or methods.
+完全に静的な型は、潜在的なランタイム値のセットを示します。 たとえば、完全に静的な型 ``object`` は、すべての Python オブジェクトのセットです。 完全に静的な型 ``bool`` は、値のセット ``{ True, False }`` です。 完全に静的な型 ``str`` は、すべての Python 文字列のセットです。 より正確には、ランタイム型（``__class__`` 属性）が ``str`` または ``str`` から直接または間接的に継承するクラスであるすべての Python オブジェクトのセットです。 :ref:`Protocol <Protocols>` は、特定の属性および/またはメソッドのセットを共有するすべてのオブジェクトのセットを示します。
 
-If an object ``v`` is a member of the set of objects denoted by a fully static
-type ``T``, we can say that ``v`` is a "member of" the type ``T``, or ``v``
-"inhabits" ``T``.
+オブジェクト ``v`` が完全に静的な型 ``T`` によって表されるオブジェクトのセットのメンバーである場合、``v`` は型 ``T`` の「メンバー」である、または ``v`` は ``T`` を「含む」と言えます。
 
-Gradual types
+逐次型
 ~~~~~~~~~~~~~
 
-:ref:`Any` represents an unknown static type. It denotes some unknown set of
-runtime values.
+:ref:`Any` は、未知の静的型を表します。 これは、未知のランタイム値のセットを示します。
 
-This may appear similar to the fully static type ``object``, which represents
-the set of all Python objects, but it is quite different.
+これは、すべての Python オブジェクトのセットを表す完全に静的な型 ``object`` に似ているように見えるかもしれませんが、まったく異なります。
 
-If an expression has the type ``object``, a static type checker should ensure
-that operations on the expression are valid for all Python objects, or else
-emit a static type error. This allows very few operations! For example, if
-``x`` is typed as ``object``, ``x.foo`` should be a static type error because
-not all Python objects have an attribute ``foo``.
+式が ``object`` 型を持つ場合、静的型チェッカーは、式の操作がすべての Python オブジェクトに対して有効であることを確認するか、静的型エラーを発行する必要があります。 これにより、非常に少ない操作が許可されます！ たとえば、``x`` が ``object`` として型付けされている場合、``x.foo`` は静的型エラーであるべきです。なぜなら、すべての Python オブジェクトが ``foo`` 属性を持っているわけではないからです。
 
-An expression typed as :ref:`Any`, on the other hand, should be assumed to have
-_some_ specific static type, but _which_ static type is not known. A static
-type checker should not emit static type errors on an expression or statement
-if :ref:`!Any` might represent a static type which would avoid the error. (This
-is defined more precisely below, in terms of materialization and
-assignability.)
+一方、:ref:`Any` として型付けされた式は、_いくつかの_ 特定の静的型を持つと仮定する必要がありますが、_どの_ 静的型が不明です。 静的型チェッカーは、:ref:`!Any` がエラーを回避する静的型を表す可能性がある場合、式または文の操作に対して静的型エラーを発行しないでください。 （これは、具現化と代入可能性の観点から、以下でより正確に定義されています。）
 
-Similarly, a type such as ``tuple[int, Any]`` (see :ref:`tuples`) or ``int |
-Any`` (see :ref:`union-types`) does not represent a single set of Python
-objects; rather, it represents a (bounded) range of possible sets of values.
+同様に、 ``tuple[int, Any]`` （:ref:`tuples` を参照）や ``int | Any`` （:ref:`union-types` を参照）などの型は、単一のオブジェクトのセットを表しません。 代わりに、許容されるオブジェクトのセットの範囲を表します。
 
-In the same way that :ref:`Any` does not represent "the set of all Python
-objects" but rather "an unknown set of objects", ``tuple[int, Any]`` does not
-represent "the set of all length-two tuples whose first element is an integer".
-That is a fully static type, spelled ``tuple[int, object]``.  By contrast,
-``tuple[int, Any]`` represents some unknown set of tuple values; it might be
-the set of all tuples of two integers, or the set of all tuples of an integer
-and a string, or some other set of tuple values.
+同じように、:ref:`Any` が「すべての Python オブジェクトのセット」を表すのではなく「不明なオブジェクトのセット」を表すように、``tuple[int, Any]`` は「最初の要素が整数である長さ 2 のすべてのタプルのセット」を表しません。 それは完全に静的な型であり、``tuple[int, object]`` と表記されます。 対照的に、``tuple[int, Any]`` は、タプル値の不明なセットを表します。 それは、整数と文字列のタプルのセット、または整数と文字列のタプルのセット、または他のタプル値のセットである可能性があります。
 
-In practice, this difference is seen (for example) in the fact that we can
-assign an expression of type ``tuple[int, Any]`` to a target typed as
-``tuple[int, int]``, whereas assigning ``tuple[int, object]`` to ``tuple[int,
-int]`` is a static type error. (Again, we formalize this distinction in the
-below definitions of materialization and assignability.)
+実際には、この違いは、たとえば、``tuple[int, Any]`` 型の式を ``tuple[int, int]`` として型付けされたターゲットに代入できるという事実に見られますが、``tuple[int, object]`` を ``tuple[int, int]`` に代入することは静的型エラーです。 （再び、具現化と代入可能性の定義でこの違いを正式にします。）
 
-In the same way that the fully static type ``object`` is the upper bound for
-the possible sets of values represented by :ref:`Any`, the fully static type
-``tuple[int, object]`` is the upper bound for the possible sets of values
-represented by ``tuple[int, Any]``.
+同じように、完全に静的な型 ``object`` が :ref:`Any` に対する可能なオブジェクトのセットの上限であるように、完全に静的な型 ``tuple[int, object]`` は ``tuple[int, Any]`` に対する可能なオブジェクトのセットの上限です。
 
-The gradual guarantee
-~~~~~~~~~~~~~~~~~~~~~
+逐次保証
+~~~~~~~~~~~~~~~~~~
 
-:ref:`Any` allows gradually adding static types to a dynamically typed program.
-In a fully dynamically typed program, a static checker assigns the type
-:ref:`!Any` to all expressions, and should emit no errors. Inferring static
-types or adding type annotations to the program (making the program more
-statically typed) may result in static type errors, if the program is not
-correct or if the static types aren't able to fully represent the runtime
-types. Removing type annotations (making the program more dynamic) should not
-result in additional static type errors. This is often referred to as the
-**gradual guarantee**.
+:ref:`Any` は、動的に型付けされたプログラムに静的型を段階的に追加することを可能にします。 完全に動的に型付けされたプログラムでは、静的チェッカーはすべての式に :ref:`!Any` 型を割り当て、エラーを発行しないでください。 プログラムに静的型を追加するか、型注釈を追加する（プログラムをより静的に型付けする）と、プログラムが正しくない場合や静的型がランタイム型を完全に表すことができない場合に静的型エラーが発生する可能性があります。 型注釈を削除する（プログラムをより動的にする）と、追加の静的型エラーが発生しないはずです。 これは通常、**逐次保証** と呼ばれます。
 
-In Python's type system, we don't take the gradual guarantee as a strict
-requirement, but it's a useful guideline.
+Python の型システムでは、逐次保証を厳密な要件としては取りませんが、有用なガイドラインです。
 
-Subtype, supertype, and type equivalence
-----------------------------------------
+サブタイプ、スーパータイプ、および型の同値性
+------------------------------------------------------------------------------------------
 
-A fully static type ``B`` is a **subtype** of another fully static type ``A``
-if and only if the set of values represented by ``B`` is a subset of the set of
-values represented by ``A``. Because the subset relation on sets is transitive
-and reflexive, the subtype relation is also transitive (if ``C`` is a subtype
-of ``B`` and ``B`` is a subtype of ``A``, then ``C`` is a subtype of ``A``) and
-reflexive (``A`` is always a subtype of ``A``).
+完全に静的な型 ``B`` は、別の完全に静的な型 ``A`` の **サブタイプ** です。 これは、``B`` によって表される値のセットが ``A`` によって表される値のセットのサブセットである場合に限ります。 セットのサブセット関係が推移的で反射的であるため、サブタイプ関係も推移的です（``C`` が ``B`` のサブタイプであり、``B`` が ``A`` のサブタイプである場合、``C`` は ``A`` のサブタイプです）および反射的（``A`` は常に ``A`` のサブタイプです）。
 
-The **supertype** relation is the inverse of subtype: ``A`` is a supertype of
-``B`` if and only if ``B`` is a subtype of ``A``; or equivalently, if and only
-if the set of values represented by ``A`` is a superset of the values
-represented by ``B``. The supertype relation is also transitive and reflexive.
+**スーパータイプ** 関係はサブタイプの逆です。 ``A`` は ``B`` のスーパータイプです。これは、``B`` が ``A`` のサブタイプである場合に限ります。 または同等に、``A`` によって表される値のセットが ``B`` によって表される値のセットのスーパーセットである場合に限ります。 スーパータイプ関係も推移的で反射的です。
 
-We also define an **equivalence** relation on fully static types: the types
-``A`` and ``B`` are equivalent (or "the same type") if and only if ``A`` is a
-subtype of ``B`` and ``B`` is a subtype of ``A``. This means that the set of
-values represented by ``A`` is both a superset and a subset of the values
-represented by ``B``, meaning ``A`` and ``B`` must represent the same set of
-values.
+完全に静的な型に対して **同値** 関係も定義します。 型 ``A`` と ``B`` は同値（または「同じ型」）です。これは、``A`` が ``B`` のサブタイプであり、``B`` が ``A`` のサブタイプである場合に限ります。 これは、``A`` によって表される値のセットが ``B`` によって表される値のスーパーセットおよびサブセットの両方であることを意味し、``A`` と ``B`` は同じ値のセットを表す必要があります。
 
-We may describe a type ``B`` as "narrower" than a type ``A`` (or as a "proper
-subtype" of ``A``) if ``B`` is a subtype of ``A`` and ``B`` is not equivalent
-to ``A``. In the same scenario we can describe the type ``A`` as "wider" than
-``B``, or a "proper supertype" of ``B``.
+型 ``B`` が型 ``A`` よりも「狭い」（または「適切なサブタイプ」）であると言うことができます。 ``B`` が ``A`` のサブタイプであり、``B`` が ``A`` と同値でない場合です。 同じシナリオでは、型 ``A`` が ``B`` よりも「広い」、または ``B`` の「適切なスーパータイプ」であると言うことができます。
 
-Nominal and structural types
-----------------------------
+名義型と構造型
+------------------------------------------------------------------------------------------
 
-For a type such as ``str`` (or any other class), which describes the set of
-values whose ``__class__`` is ``str`` or a direct or indirect subclass of it,
-subtyping corresponds directly to subclassing. A subclass ``MyStr`` of ``str``
-is a subtype of ``str``, because ``MyStr`` represents a subset of the values
-represented by ``str``. Such types can be called "nominal types" and this is
-"nominal subtyping."
+``str`` などの型（または他のクラス）は、``__class__`` が ``str`` であるか、直接または間接的に ``str`` から継承するクラスである値のセットを記述します。 サブタイプは直接サブクラス化に対応します。 ``str`` のサブクラス ``MyStr`` は ``str`` のサブタイプです。なぜなら、``MyStr`` は ``str`` によって表される値のサブセットを表すからです。 このような型は「名義型」と呼ばれ、この「名義サブタイプ」です。
 
-Other types (e.g. :ref:`Protocols` and :ref:`TypedDict`) instead describe a set
-of values by the types of their attributes and methods, or the types of their
-dictionary keys and values. These are called "structural types". A structural
-type may be a subtype of another type without any inheritance or subclassing
-relationship, simply because it meets all the requirements of the supertype,
-and perhaps adds more, thus representing a subset of the possible values of the
-supertype. This is "structural subtyping".
+他の型（例：:ref:`Protocols` および :ref:`TypedDict`）は、代わりに属性およびメソッドの型、または辞書キーおよび値の型によって値のセットを記述します。 これらは「構造型」と呼ばれます。 構造型は、スーパータイプとの継承またはサブクラス化関係がなくても、スーパータイプのすべての要件を満たし、さらに追加することによって、スーパータイプの可能な値のサブセットを表すため、別の型のサブタイプである場合があります。 これは「構造サブタイプ」です。
 
-Although the means of specifying the set of values represented by the types
-differs, the fundamental concepts are the same for both nominal and structural
-types: a type represents a set of possible values and a subtype represents a
-subset of those values.
+型によって表される値のセットを指定する手段は異なりますが、基本的な概念は名義型と構造型の両方に対して同じです。 型は可能な値のセットを表し、サブタイプはその値のサブセットを表します。
 
-Materialization
----------------
+具現化
+------------------------------------------------------------------------------------------
 
-Since :ref:`Any` represents an unknown static type, it does not represent any
-known single set of values (it represents an unknown set of values). Thus it is
-not in the domain of the subtype, supertype, or equivalence relations on static
-types described above.
+:ref:`Any` は未知の静的型を表すため、静的型に関する上記のサブタイプ、スーパータイプ、または同値関係のドメインには含まれません。
 
-To relate gradual types more generally, we define a **materialization**
-relation. Materialization transforms a "more dynamic" type to a "more static"
-type. Given a gradual type ``A``, if we replace zero or more occurrences of
-``Any`` in ``A`` with some type (which can be different for each occurrence of
-``Any``), the resulting gradual type ``B`` is a materialization of ``A``. (We
-can also materialize a :ref:`Callable` type by replacing ``...`` with any type
-signature, and materialize ``tuple[Any, ...]`` by replacing it with a
-determinate-length tuple type.)
+逐次型をより一般的に関連付けるために、**具現化** 関係を定義します。 具現化は、「より動的な」型を「より静的な」型に変換します。 逐次型 ``A`` が与えられた場合、``A`` 内の 1 つ以上の ``Any`` の出現をいくつかの型（``Any`` の各出現に対して異なる型である可能性があります）に置き換えると、結果の逐次型 ``B`` は ``A`` の具現化です。 （``...`` を任意の型シグネチャに置き換えることにより、:ref:`Callable` 型を具現化し、決定長タプル型に置き換えることにより ``tuple[Any, ...]`` を具現化することもできます。）
 
-For instance, ``tuple[int, str]`` (a fully static type) and ``tuple[Any, str]``
-(a gradual type) are both materializations of ``tuple[Any, Any]``. ``tuple[int,
-str]`` is also a materialization of ``tuple[Any, str]``.
+たとえば、``tuple[int, str]``（完全に静的な型）および ``tuple[Any, str]``（逐次型）はどちらも ``tuple[Any, Any]`` の具現化です。 ``tuple[int, str]`` も ``tuple[Any, str]`` の具現化です。
 
-If ``B`` is a materialization of ``A``, we can say that ``B`` is a "more
-static" type than ``A``, and ``A`` is a "more dynamic" type than ``B``.
+``B`` が ``A`` の具現化である場合、``B`` は ``A`` よりも「より静的な」型であり、``A`` は ``B`` よりも「より動的な」型であると言えます。
 
-The materialization relation is both transitive and reflexive, so it defines a
-preorder on gradual types.
+具現化関係は推移的で反射的であるため、逐次型に対して前順序を定義します。
 
 .. _`consistent`:
 
-Consistency
------------
+一貫性
+------------------------------------------------------------------------------------------
 
-We define a **consistency** relation on gradual types, based on
-materialization.
+具現化に基づいて、逐次型に対する **一貫性** 関係を定義します。
 
-A fully static type ``A`` is consistent with another fully static type ``B`` if
-and only if they are the same type (``A`` is equivalent to ``B``).
+完全に静的な型 ``A`` は、別の完全に静的な型 ``B`` と一貫性があります。これは、同じ型（``A`` が ``B`` と同値である）である場合に限ります。
 
-A gradual type ``A`` is consistent with a gradual type ``B``, and ``B`` is
-consistent with ``A``, if and only if there exists some fully static type ``C``
-which is a materialization of both ``A`` and ``B``.
+逐次型 ``A`` は逐次型 ``B`` と一貫性があり、``B`` は ``A`` と一貫性があります。これは、``A`` と ``B`` の両方の具現化である完全に静的な型 ``C`` が存在する場合に限ります。
 
-:ref:`Any` is consistent with every type, and every type is consistent with
-:ref:`!Any`. (This follows from the definitions of materialization and
-consistency but is worth stating explicitly.)
+:ref:`Any` はすべての型と一貫性があり、すべての型は :ref:`!Any` と一貫性があります。 （これは具現化と一貫性の定義から導き出されますが、明示的に述べる価値があります。）
 
-The consistency relation is not transitive. ``tuple[int, int]`` is consistent
-with ``tuple[Any, int]``, and ``tuple[Any, int]`` is consistent with
-``tuple[str, int]``, but ``tuple[int, int]`` is not consistent with
-``tuple[str, int]``.
+一貫性関係は推移的ではありません。 ``tuple[int, int]`` は ``tuple[Any, int]`` と一貫性があり、``tuple[Any, int]`` は ``tuple[str, int]`` と一貫性がありますが、``tuple[int, int]`` は ``tuple[str, int]`` と一貫性がありません。
 
-The consistency relation is symmetric. If ``A`` is consistent with ``B``, ``B``
-is also consistent with ``A``. It is also reflexive: ``A`` is always consistent
-with ``A``.
+一貫性関係は対称です。 ``A`` が ``B`` と一貫性がある場合、``B`` も ``A`` と一貫性があります。 それはまた反射的です。 ``A`` は常に ``A`` と一貫性があります。
 
 .. _`assignable`:
 
-The assignable-to (or consistent subtyping) relation
-----------------------------------------------------
+代入可能な関係（または一貫したサブタイピング）
+------------------------------------------------------------------------------------------
 
-Given the materialization relation and the subtyping relation, we can define
-the **consistent subtype** relation over all types. A type ``B`` is a
-consistent subtype of a type ``A`` if there exists a materialization ``A'`` of
-``A`` and a materialization ``B'`` of ``B``, where ``A'`` and ``B'`` are both
-fully static types, and ``B'`` is a subtype of ``A'``.
+具現化関係とサブタイピング関係を考慮して、すべての型に対する **一貫したサブタイプ** 関係を定義できます。 型 ``B`` は、型 ``A`` の一貫したサブタイプです。これは、``A`` の具現化 ``A'`` と ``B`` の具現化 ``B'`` が存在し、``A'`` と ``B'`` が両方とも完全に静的な型であり、``B'`` が ``A'`` のサブタイプである場合に限ります。
 
-Consistent subtyping defines "assignability" for Python.  An expression can be
-assigned to a variable (including passed as an argument or returned from a
-function) if its type is a consistent subtype of the variable's type annotation
-(respectively, parameter's type annotation or return type annotation).
+一貫したサブタイピングは、Python の代入可能性を定義します。 式は、変数の型注釈（それぞれ、パラメータの型注釈または戻り型注釈）の一貫したサブタイプである場合、変数に代入できます（関数に渡されるか、関数から返されるかを含む）。
 
-We can say that a type ``B`` is "assignable to" a type ``A`` if ``B`` is a
-consistent subtype of ``A``. In this case we can also say that ``A`` is
-"assignable from" ``B``.
+型 ``B`` が型 ``A`` に「代入可能」であると言えます。 ``B`` が ``A`` の一貫したサブタイプである場合です。 この場合、``A`` が ``B`` から代入可能であるとも言えます。
 
-In the remainder of this specification, we will usually prefer the term
-**assignable to** over "consistent subtype of". The two are synonymous, but
-"assignable to" is shorter, and may communicate a clearer intuition to many
-readers.
+この仕様の残りの部分では、「一貫したサブタイプ」よりも **代入可能** という用語を好むことがよくあります。 2 つは同義ですが、「代入可能」の方が短く、多くの読者にとってより明確な直感を伝えるかもしれません。
 
-For example, ``Any`` is :term:`assignable` to ``int``, because ``int`` is a
-materialization of ``Any``, and ``int`` is a subtype of ``int``. The same
-materialization also shows that ``int`` is assignable to ``Any``.
+たとえば、``Any`` は ``int`` に :term:`assignable` です。なぜなら、``int`` は ``Any`` の具現化であり、``int`` は ``int`` のサブタイプだからです。 同じ具現化は、``int`` が ``Any`` に代入可能であることも示しています。
 
-The assignable-to relation is not generally symmetric, however. If ``B`` is a
-subtype of ``A``, then ``tuple[Any, B]`` is assignable to ``tuple[int, A]``,
-because ``tuple[Any, B]`` can materialize to ``tuple[int, B]``, which is a
-subtype of ``tuple[int, A]``. But ``tuple[int, A]`` is not assignable to
-``tuple[Any, B]``.
+代入可能な関係は一般的に対称ではありません。 ``B`` が ``A`` のサブタイプである場合、``tuple[Any, B]`` は ``tuple[int, A]`` に代入可能です。なぜなら、``tuple[Any, B]`` は ``tuple[int, B]`` に具現化でき、これは ``tuple[int, A]`` のサブタイプだからです。 しかし、``tuple[int, A]`` は ``tuple[Any, B]`` に代入可能ではありません。
 
-For a gradual structural type, consistency and assignability are also
-structural. For example, the structural type "all objects with an attribute
-``x`` of type ``Any``" is consistent with (and assignable to) the structural
-type "all objects with an attribute ``x`` of type ``int``".
+逐次構造型の場合、一貫性と代入可能性も構造的です。 たとえば、「型 ``Any`` の属性 ``x`` を持つすべてのオブジェクト」の構造型は、「型 ``int`` の属性 ``x`` を持つすべてのオブジェクト」の構造型と一貫性があり（および代入可能）です。
 
-Summary of type relations
--------------------------
+型関係の要約
+------------------------------------------------------------------------------------------
 
-The subtype, supertype, and equivalence relations establish a partial order on
-fully static types. The analogous relations on gradual types (via
-materialization) are "assignable-to" (or "consistent subtype"),
-"assignable-from" (or "consistent supertype"), and "consistent with". We can
-visualize this analogy in the following table:
+サブタイプ、スーパータイプ、および同値関係は、完全に静的な型に対して部分順序を確立します。 逐次型に対する類似の関係（具現化を介して）は、「代入可能」（または「一貫したサブタイプ」）、「代入可能」（または「一貫したスーパータイプ」）、および「一貫した」です。 この類推を次の表で視覚化できます。
 
 .. list-table::
    :header-rows: 1
 
-   * - Fully static types
-     - Gradual types
-   * - ``B`` is a :term:`subtype` of ``A``
-     - ``B`` is :term:`assignable` to (or a consistent subtype of) ``A``
-   * - ``A`` is a :term:`supertype` of ``B``
-     - ``A`` is assignable from (or a consistent supertype of) ``B``
-   * - ``B`` is :term:`equivalent` to ``A``
-     - ``B`` is :term:`consistent` with ``A``
+   * - 完全に静的な型
+     - 逐次型
+   * - ``B`` は ``A`` の :term:`subtype`
+     - ``B`` は ``A`` に :term:`assignable` （または一貫したサブタイプ）
+   * - ``A`` は ``B`` の :term:`supertype`
+     - ``A`` は ``B`` から代入可能（または一貫したスーパータイプ）
+   * - ``B`` は ``A`` と :term:`equivalent`
+     - ``B`` は ``A`` と :term:`consistent`
 
-We can also define equivalence on gradual types. Two gradual types ``A`` and
-``B`` are equivalent (that is, the same gradual type, not merely consistent
-with one another) if and only if all materializations of ``A`` are also
-materializations of ``B``, and all materializations of ``B`` are also
-materializations of ``A``.
+逐次型に対しても同値を定義できます。 2 つの逐次型 ``A`` と ``B`` は同値です（つまり、同じ逐次型であり、単に一貫しているだけではありません）。これは、``A`` のすべての具現化が ``B`` の具現化でもあり、``B`` のすべての具現化が ``A`` の具現化でもある場合に限ります。
 
-Attributes and methods
-----------------------
+属性とメソッド
+------------------------------------------------------------------------------------------
 
-In Python, we can do more with objects at runtime than just assign them to
-names, pass them to functions, or return them from functions. We can also
-get/set attributes and call methods.
+Python では、ランタイムでオブジェクトに対して名前に代入する、関数に渡す、または関数から返す以上のことができます。 属性を取得/設定し、メソッドを呼び出すこともできます。
 
-In the Python data model, the operations that can be performed on a value all
-desugar to method calls. For example, ``a + b`` is (roughly, eliding some
-details) syntactic sugar for either ``type(a).__add__(a, b)`` or
-``type(b).__radd__(b, a)``.
+Python データモデルでは、値に対して実行できる操作はすべてメソッド呼び出しにデシュガーされます。 たとえば、``a + b`` は（いくつかの詳細を省略して大まかに言えば）``type(a).__add__(a, b)`` または ``type(b).__radd__(b, a)`` の構文糖衣です。
 
-For a static type checker, accessing ``a.foo`` is a type error unless all
-possible objects in the set represented by the type of ``a`` have the ``foo``
-attribute. (We consider an implementation of ``__getattr__`` to be a getter for
-all attribute names, and similarly for ``__setattr__`` and ``__delattr__``.
-There are more `complexities
-<https://docs.python.org/3/reference/datamodel.html#customizing-attribute-access>`_;
-a full specification of attribute access belongs in its own chapter.)
+静的型チェッカーの場合、``a.foo`` において ``a`` の型が表すオブジェクトのすべてが ``foo`` 属性を持っていない限り、``a.foo`` は型エラーです。 （``__getattr__`` の実装をすべての属性名のゲッターと見なし、同様に ``__setattr__`` および ``__delattr__`` も見なします。 `複雑さ <https://docs.python.org/3/reference/datamodel.html#customizing-attribute-access>`_ があります。属性アクセスの完全な仕様は独自の章に属します。）
 
-If all objects in the set represented by the fully static type ``A`` have a
-``foo`` attribute, we can say that the type ``A`` has the ``foo`` attribute.
+完全に静的な型 ``A`` によって表されるすべてのオブジェクトが ``foo`` 属性を持っている場合、型 ``A`` が ``foo`` 属性を持っていると言えます。
 
-If the type ``A`` of ``a`` in ``a.foo`` is a gradual type, it may not represent
-a single set of objects. In this case, ``a.foo`` is a type error if and only if
-there does not exist any materialization of ``A`` which has the ``foo``
-attribute.
+``A`` の型が逐次型である場合、単一のオブジェクトのセットを表さない場合があります。 この場合、``a.foo`` は、``A`` の具現化が ``foo`` 属性を持たない限り、型エラーです。
 
-Equivalently, ``a.foo`` is a type error unless the type of ``a`` is assignable
-to a type that has the ``foo`` attribute.
-
+同様に、``a`` の型が ``foo`` 属性を持つ型に代入可能でない限り、``a.foo`` は型エラーです。
 
 .. _`union-types`:
 
-Union types
------------
+共用体型
+------------------------------------------------------------------------------------------
 
-Since accepting a small, limited set of expected types for a single
-argument is common, the type system supports union types, created with the
-``|`` operator.
-Example::
+単一の引数に対して予想される型の小さな制限されたセットを受け入れることは一般的であるため、型システムは ``|`` 演算子を使用して共用体型をサポートします。 例::
 
   def handle_employees(e: Employee | Sequence[Employee]) -> None:
       if isinstance(e, Employee):
           e = [e]
       ...
 
-A fully static union type ``T1 | T2``, where ``T1`` and ``T2`` are fully static
-types, represents the set of values formed by the union of the sets of values
-represented by ``T1`` and ``T2``, respectively. Thus, by the definition of the
-supertype relation, the union ``T1 | T2`` is a supertype of both ``T1`` and
-``T2``, and ``T1`` and ``T2`` are both subtypes of ``T1 | T2``.
+完全に静的な共用体型 ``T1 | T2`` は、``T1`` および ``T2`` が完全に静的な型である場合、``T1`` および ``T2`` によってそれぞれ表される値のセットの和集合によって形成される値のセットを表します。 したがって、スーパータイプ関係の定義により、共用体 ``T1 | T2`` は ``T1`` および ``T2`` の両方のスーパータイプであり、``T1`` および ``T2`` は両方とも ``T1 | T2`` のサブタイプです。
 
-A gradual union type ``S1 | S2``, where ``S1`` and ``S2`` are gradual types,
-represents all possible sets of values that could be formed by union of the
-possible sets of values represented by materializations of ``S1`` and ``S2``,
-respectively.
+逐次共用体型 ``S1 | S2`` は、``S1`` および ``S2`` が逐次型である場合、``S1`` および ``S2`` の具現化によってそれぞれ表される可能な値のセットの和集合によって形成される可能なすべての値のセットを表します。
 
-For any materialization of ``S1`` to ``T1`` and ``S2`` to ``T2``, ``S1 | S2``
-can likewise be materialized to ``T1 | T2``. Thus, the gradual types ``S1`` and
-``S2`` are both assignable to the gradual union type ``S1 | S2``.
+``S1`` の具現化を ``T1`` に、``S2`` の具現化を ``T2`` にする場合、``S1 | S2`` も ``T1 | T2`` に具現化できます。 したがって、逐次型 ``S1`` および ``S2`` は両方とも逐次共用体型 ``S1 | S2`` に代入可能です。
 
-If ``B`` is a subtype of ``A``, ``B | A`` is equivalent to ``A``.
+``B`` が ``A`` のサブタイプである場合、``B | A`` は ``A`` と同値です。
 
-This rule applies only to subtypes, not assignable-to. The union ``T | Any`` is
-not reducible to a simpler form. It represents an unknown static type with
-lower bound ``T``. That is, it represents an unknown set of objects which may
-be as large as ``object``, or as small as ``T``, but no smaller.
+このルールはサブタイプにのみ適用され、代入可能には適用されません。 共用体 ``T | Any`` はより単純な形式に簡略化できません。 これは、下限 ``T`` を持つ未知の静的型を表します。 つまり、これは ``object`` と同じくらい大きい、または ``T`` と同じくらい小さいが、それより小さくないオブジェクトの未知のセットを表します。
 
-Equivalent gradual types can, however, be simplified from unions; e.g.
-``list[Any] | list[Any]`` is equivalent to ``list[Any]``. Similarly, the union
-``Any | Any`` can be simplified to ``Any``: the union of two unknown sets of
-objects is an unknown set of objects.
+同等の逐次型は、共用体から簡略化できます。 例：``list[Any] | list[Any]`` は ``list[Any]`` と同値です。 同様に、共用体 ``Any | Any`` は ``Any`` に簡略化できます。 2 つの未知のオブジェクトのセットの和集合は未知のオブジェクトのセットです。
 
-Union with None
+None との共用体
 ~~~~~~~~~~~~~~~
 
-One common case of union types are *optional* types, which are unions with
-``None``. Example::
+共用体型の一般的なケースの 1 つは、``None`` との *オプション* 型です。 例::
 
   def handle_employee(e: Employee | None) -> None: ...
 
-Either the type ``Employee`` or the type of ``None`` are assignable to the
-union ``Employee | None``.
+型 ``Employee`` または ``None`` の型のいずれかが ``Employee | None`` の共用体に代入可能です。
 
-A past version of this specification allowed type checkers to assume an optional
-type when the default value is ``None``, as in this code::
+この仕様の過去のバージョンでは、デフォルト値が ``None`` である場合にオプション型を仮定することを型チェッカーに許可していました。 例：::
 
   def handle_employee(e: Employee = None): ...
 
-This would have been treated as equivalent to::
+これは次のように扱われます。::
 
   def handle_employee(e: Employee | None = None) -> None: ...
 
-This is no longer the recommended behavior. Type checkers should move
-towards requiring the optional type to be made explicit.
+これはもはや推奨される動作ではありません。 型チェッカーは、オプション型を明示的にすることに向かって進むべきです。
 
-Support for singleton types in unions
+共用体内のシングルトン型のサポート
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A singleton instance is frequently used to mark some special condition,
-in particular in situations where ``None`` is also a valid value
-for a variable. Example::
+シングルトンインスタンスは、特に ``None`` が変数の有効な値である場合に、特定の条件を示すために頻繁に使用されます。 例::
 
   _empty = object()
 
   def func(x=_empty):
-      if x is _empty:  # default argument value
+      if x is _empty:  # デフォルト引数値
           return 0
-      elif x is None:  # argument was provided and it's None
+      elif x is None:  # 引数が提供されていて、それが None である場合
           return 1
       else:
           return x * 2
 
-To allow precise typing in such situations, the user should use
-a union type in conjunction with the ``enum.Enum`` class provided
-by the standard library, so that type errors can be caught statically::
+このような状況で正確な型付けを許可するために、ユーザーは標準ライブラリによって提供される ``enum.Enum`` クラスと組み合わせて共用体型を使用する必要があります。 これにより、型エラーを静的に検出できます。::
 
   from enum import Enum
 
@@ -430,20 +229,16 @@ by the standard library, so that type errors can be caught statically::
 
   def func(x: int | None | Empty = _empty) -> int:
 
-      boom = x * 42  # This fails type check
+      boom = x * 42  # これは型チェックに失敗します
 
       if x is _empty:
           return 0
       elif x is None:
           return 1
-      else:  # At this point typechecker knows that x can only have type int
+      else:  # この時点で型チェッカーは x が int 型であることを知っています
           return x * 2
 
-Since the subclasses of ``Enum`` cannot be further subclassed,
-the type of variable ``x`` can be statically inferred in all branches
-of the above example. The same approach is applicable if more than one
-singleton object is needed: one can use an enumeration that has more than
-one value::
+``Enum`` のサブクラスはさらにサブクラス化できないため、上記の例のすべてのブランチで変数 ``x`` の型を静的に推論できます。 より多くのシングルトンオブジェクトが必要な場合も同様のアプローチが適用されます。 1 つ以上の値を持つ列挙を使用できます。::
 
   class Reason(Enum):
       timeout = 1
@@ -455,14 +250,13 @@ one value::
       elif response is Reason.error:
           return 'ERROR'
       else:
-          # response can be only str, all other possible values exhausted
+          # response は str のみであり、他の可能な値はすべて使い果たされました
           return 'PROCESSED: ' + response
 
-References
-----------
+参考文献
+------------------------------------------------------------------------------------------
 
-The concepts presented here are derived from the research literature in gradual
-typing. See e.g.:
+ここで紹介する概念は、逐次型付けの研究文献に由来しています。 例を参照してください。:
 
 * `Giuseppe Castagna, Victor Lanvin, Tommaso Petrucciani, and Jeremy G. Siek. 2019. Gradual Typing: A New Perspective. <https://doi.org/10.1145/3290329>`_ Proc. ACM Program. Lang. 3, POPL, Article 16 (January 2019), 112 pages
 * `Victor Lanvin. A semantic foundation for gradual set-theoretic types. <https://theses.hal.science/tel-03853222/file/va_Lanvin_Victor.pdf>`_ Computer science. Université Paris Cité, 2021. English. NNT : 2021UNIP7159. tel-03853222
