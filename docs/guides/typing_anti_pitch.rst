@@ -1,92 +1,45 @@
 .. _typing-anti-pitch:
 
-Reasons to avoid static type checking
-=====================================
+静的型チェックを避ける理由
+==========================================================================================
 
-In the words of :pep:`484`:
+:pep:`484` の言葉を借りれば:
 
-    It should also be emphasized that Python will remain a dynamically typed language, and
-    the authors have no desire to ever make type hints mandatory, even by convention.
+    Python は動的型付け言語であり続けるべきであり、型ヒントを必須にするつもりはないし、慣習としてもそうするつもりはない。
 
-The idea that dynamism in Python is a strength of the language is reflected in the fact that
-Python's type system is gradual. See :pep:`483` for details, but the long and short of this is
-that you can add static types to your codebase only to the extent that you want to, and static
-type checkers and other tools should be able to put up with this.
+Python の動的性が言語の強みであるという考えは、Python の型システムが漸進的であるという事実に反映されています。 詳細は :pep:`483` を参照してください。要するに、コードベースに静的型を追加するのは、望む範囲内でのみ可能であり、静的型チェッカーやその他のツールはこれに対応できるべきです。
 
-It's also worth noting that "static type checking" encompasses a spectrum of possible degrees of
-strictness. On the one hand, you can set yourself up so that your type checker does almost nothing.
-On the other -- well, I love type checking, but I would quit Python if I had to enable all
-possible strictness checks that type checkers offer.
+また、「静的型チェック」にはさまざまな厳密さの度合いがあることも注目に値します。 一方では、型チェッカーがほとんど何もしないように設定することができます。 他方では、型チェックが大好きですが、型チェッカーが提供するすべての厳密なチェックを有効にしなければならない場合、Python をやめるでしょう。
 
-Anyway, with all that said, here's a list of possible reasons to not use static type checking
-in Python:
+とにかく、これを前提として、Python で静的型チェックを使用しない理由のリストを以下に示します。
 
-* You simply don't want to. Python is a tool that is meant to serve you. Python is a big tent,
-  multi-paradigm language that generally allows you to do things in the way that best suits your
-  needs, as best determined by you.
+* 単にそうしたくない。 Python はあなたに役立つツールです。 Python は大きなテントのような多パラダイム言語であり、一般的にあなたのニーズに最も適した方法で物事を行うことを許容します。
 
-* Type annotations can both help and hurt readability. While type annotations can serve both
-  humans and machines, particularly complex annotations or changes to idioms serve machines more
-  than they do humans. Readability counts.
+* 型注釈は可読性を向上させることもあれば、損なうこともあります。 型注釈は人間と機械の両方に役立ちますが、特に複雑な注釈や慣用表現の変更は機械にとっては有益ですが、人間にとってはそうではありません。 可読性は重要です。
 
-* The cost-benefit ratio isn't good enough. Pleasing static type checkers requires a non-zero amount
-  of busy work. If this isn't worth the extra confidence you get, you shouldn't add static type
-  checking.
+* コストと利益の比率が十分でない。 静的型チェッカーを満足させるには、少なからず手間がかかります。 これが追加の信頼性に見合わない場合、静的型チェックを追加するべきではありません。
 
-* Your codebase fits in your developers' heads. Opinions vary, but people tend to agree that at
-  some number of developers and lines of code, static type checking confers significantly more
-  benefit. You don't feel like you're there yet.
+* コードベースが開発者の頭の中に収まる。 意見は分かれますが、ある程度の開発者数とコード行数に達すると、静的型チェックが大きな利益をもたらすと一般的に認識されています。 まだその段階に達していないと感じています。
 
-* If you maintain high test coverage, that might provide sufficient quality assurance for your
-  needs (acknowledging that static type checking and tests enforce different things; static type
-  checking usually cannot validate logic, tests can often not prove invariants of your code to
-  hold).
+* 高いテストカバレッジを維持している場合、それがあなたのニーズに対して十分な品質保証を提供するかもしれません（静的型チェックとテストは異なることを強制することを認識しています。静的型チェックは通常、ロジックを検証できず、テストはコードの不変性を証明できないことが多いです）。
 
-* Your codebase is old, large and has been working fine without static type checking for years.
-  While Python's type system is designed to
-  `allow gradual adoption of static type checking <https://mypy.readthedocs.io/en/stable/existing_code.html>`_,
-  the total cost of adding type annotations to a large extant codebase can be prohibitive.
+* コードベースが古く、大規模で、何年も静的型チェックなしでうまく機能してきた。 Python の型システムは、静的型チェックの漸進的な導入を許容するように設計されていますが、大規模な既存のコードベースに型注釈を追加する総コストは高くなる可能性があります。
 
-* Your application uses a particularly dynamic framework or your library does enough dynamic things
-  that type checking would be unlikely to help your developers and users. Migrating application
-  frameworks could be costly. Either a) redesigning your library in ways that static type checkers
-  could better understand or b) figuring out clever type annotations to twist the arms of type
-  checkers would take a lot of effort.
+* アプリケーションが特に動的なフレームワークを使用しているか、ライブラリが十分に動的なことを行っているため、型チェックが開発者やユーザーに役立たない可能性があります。 アプリケーションフレームワークの移行にはコストがかかる可能性があります。 静的型チェッカーがより理解しやすいようにライブラリを再設計するか、静的型チェッカーの腕をひねるための巧妙な型注釈を見つけるには、多大な労力が必要です。
 
-* Your codebase has suffered at the hands of `Hyrum's Law <https://www.hyrumslaw.com/>`_
-  and all possible observable behaviour is depended on. In order to avoid false positives for your
-  users, all your types end up being either a) complicated ``Protocol``\s that are hard to maintain,
-  or b) ``Any`` in which case there's not much point. (On the other hand, static type checking could
-  be a good solution for communicating to users what behaviour they should be allowed to rely on)
+* コードベースが `Hyrum's Law <https://www.hyrumslaw.com/>`_ の影響を受けており、すべての可能な観察可能な動作に依存しています。 ユーザーに対して誤検知を避けるために、すべての型が a) 保守が難しい複雑な ``Protocol`` になるか、b) ``Any`` になるため、あまり意味がありません。 （一方で、静的型チェックは、ユーザーにどの動作に依存すべきかを伝えるための良い解決策となる可能性があります）
 
-* You're not opposed to type checking in theory, but you dislike Python type checkers in practice.
-  Maybe they don't understand enough of the idioms you use, maybe you'd like them to infer more
-  instead of relying on explicit annotations, maybe they're too slow, maybe they don't integrate
-  well with your editor, maybe they're too hard to configure. Whatever the reason -- it just doesn't
-  work for your project.
+* 理論的には型チェックに反対していませんが、実際には Python 型チェッカーが嫌いです。 使用する慣用表現を十分に理解していないかもしれませんし、明示的な注釈に依存するのではなく、もっと推論してほしいかもしれませんし、遅すぎるかもしれませんし、エディターとの統合がうまくいかないかもしれませんし、設定が難しすぎるかもしれません。 いずれにせよ、プロジェクトにはうまくいきません。
 
-* Type checking in Python isn't actually strict enough, powerful enough or expressive enough for
-  you. Python type checkers end up making various decisions out of pragmatism, or due to limited
-  resources, and these decisions might not be the ones for you. This might mean that typed Python
-  simply isn't the right language for you, or you need to find other methods to enforce the
-  properties you desire.
+* Python の型チェックは実際には十分に厳密ではなく、強力でもなく、表現力も十分ではありません。 Python 型チェッカーは実用性や限られたリソースのためにさまざまな決定を下しますが、これらの決定があなたにとって最適でない場合があります。 これは、型付き Python があなたにとって適切な言語ではないことを意味するかもしれませんし、望む特性を強制するための他の方法を見つける必要があるかもしれません。
 
-Advice for maintainers of untyped libraries
-*******************************************
+型なしライブラリのメンテナーへのアドバイス
+==========================================================================================
 
-You've made the decision that adding static types isn't the right choice for your library. But
-perhaps you'd still like to help your users who do use static type checking -- and maybe you have
-some enthusiastic would-be contributors willing to help with this.
+静的型を追加することがライブラリにとって適切な選択ではないと判断しました。 しかし、静的型チェックを使用するユーザーを支援したいと考えているかもしれませんし、熱心な貢献者がこれを手伝いたいと思っているかもしれません。
 
-One option is encourage such contributors to publish a :pep:`561` stub-only package that is
-maintained separately from your main project. They could also contribute these stubs to the
-`typeshed <https://github.com/python/typeshed>`_ project.
+1 つのオプションは、そのような貢献者に、メインプロジェクトとは別に維持される :pep:`561` スタブのみのパッケージを公開するよう奨励することです。 これらのスタブを `typeshed <https://github.com/python/typeshed>`_ プロジェクトに提供することもできます。
 
-Note that if you're willing to maintain the stubs, but you don't wish to have them inline and don't
-want to statically type check your code, you can accomplish this by distributing type stubs inside
-your package. See :ref:`libraries` for more information. See :ref:`writing_stubs` for advice on
-how to help maintain type stubs.
+スタブを維持する意思はあるが、インラインにしたくないし、コードを静的型チェックしたくない場合は、パッケージ内に型スタブを配布することでこれを実現できます。 詳細については :ref:`libraries` を参照してください。 型スタブの維持方法については :ref:`writing_stubs` を参照してください。
 
-If more users pester you about adding static types, feel free to link them to this document. And if
-you ever change your mind, make sure to check out some of the other guides in this documentation,
-and ask any questions you have over at `Python's typing discussions <https://github.com/python/typing/discussions>`_.
+さらに多くのユーザーが静的型の追加を求めてきた場合、このドキュメントへのリンクを提供してください。 そして、気が変わった場合は、このドキュメントの他のガイドをいくつか確認し、`Python の型に関するディスカッション <https://github.com/python/typing/discussions>`_ で質問をしてください。

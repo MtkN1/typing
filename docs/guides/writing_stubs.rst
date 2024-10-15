@@ -1,197 +1,158 @@
 .. _writing_stubs:
 
-**********************************
-Writing and Maintaining Stub Files
-**********************************
+******************************************************************************************
+スタブファイルの作成と維持
+******************************************************************************************
 
-Stub files are a means of providing type information for Python modules.
-For a full reference, refer to :ref:`stub-files`.
+スタブファイルは、Python モジュールに型情報を提供する手段です。
+完全なリファレンスについては、:ref:`stub-files` を参照してください。
 
-Maintaining stubs can be a little cumbersome because they are separated from the
-implementation. This page lists some tools that make writing and maintaining
-stubs less painful, as well as some best practices on stub contents and style.
+スタブの維持は、実装から分離されているため、少し面倒です。 このページでは、スタブの作成と維持を少しでも楽にするためのツールと、スタブの内容とスタイルに関するベストプラクティスを紹介します。
 
-Tools for generating stubs
-==========================
+スタブを生成するためのツール
+==========================================================================================
 
 stubgen
 -------
 
-stubgen is a tool bundled with `mypy <https://github.com/python/mypy>`__
-that can be used to generate basic stubs. These stubs serve as a
-basic starting point; most types will default to ``Any``.
+stubgen は、`mypy <https://github.com/python/mypy>`__ にバンドルされているツールで、基本的なスタブを生成するために使用できます。 これらのスタブは基本的な出発点として機能し、ほとんどの型はデフォルトで ``Any`` になります。
 
 .. code-block:: console
 
     stubgen -p my_great_package
 
-For more details, see `stubgen docs <https://mypy.readthedocs.io/en/stable/stubgen.html>`__.
+詳細については、`stubgen docs <https://mypy.readthedocs.io/en/stable/stubgen.html>`__ を参照してください。
 
 pyright
 -------
 
-pyright contains a tool that generates basic stubs. Like stubgen, these generated
-stubs serve more as a starting point.
+pyright には基本的なスタブを生成するツールが含まれています。 stubgen と同様に、これらの生成されたスタブは出発点として機能します。
 
 .. code-block:: console
 
     pyright --createstub my_great_package
 
-For more details, see `pyright docs <https://github.com/microsoft/pyright/blob/main/docs/type-stubs.md#generating-type-stubs-from-command-line>`__.
+詳細については、`pyright docs <https://github.com/microsoft/pyright/blob/main/docs/type-stubs.md#generating-type-stubs-from-command-line>`__ を参照してください。
 
 monkeytype
 ----------
 
-monkeytype takes a slightly different approach — you run your code (perhaps via
-your tests) and monkeytype collects the types it observes at runtime to generate
-stubs.
+monkeytype は少し異なるアプローチを取ります。コードを実行し (おそらくテストを通じて)、monkeytype は実行時に観察された型を収集してスタブを生成します。
 
 .. code-block:: console
 
     monkeytype run script.py
     monkeytype stub my_great_package
 
-For more details, see `monkeytype docs <https://monkeytype.readthedocs.io/en/latest/>`__.
+詳細については、`monkeytype docs <https://monkeytype.readthedocs.io/en/latest/>`__ を参照してください。
 
-Tools for maintaining stubs
-===========================
+スタブを維持するためのツール
+==========================================================================================
 
 stubtest
 --------
 
-stubtest is a tool bundled with `mypy <https://github.com/python/mypy>`__.
+stubtest は、`mypy <https://github.com/python/mypy>`__ にバンドルされているツールです。
 
-stubtest finds inconsistencies between stub files and the implementation. It
-does this by comparing stub definitions to what it finds from importing your
-code and using runtime introspection (via the ``inspect`` module).
+stubtest は、スタブファイルと実装の間の不一致を見つけます。 これは、スタブ定義をインポートしてランタイムイントロスペクション (``inspect`` モジュールを介して) を使用して見つけたものと比較することで行います。
 
 .. code-block:: console
 
     stubtest my_great_package
 
-For more details, see `stubtest docs <https://mypy.readthedocs.io/en/stable/stubtest.html>`__.
+詳細については、`stubtest docs <https://mypy.readthedocs.io/en/stable/stubtest.html>`__ を参照してください。
 
 flake8-pyi
-----------
+------------------------------------------------------------------------------------------
 
-flake8-pyi is a `flake8 <https://flake8.pycqa.org/en/latest/>`__ plugin that
-lints common issues in stub files.
+flake8-pyi は、スタブファイルの一般的な問題をリントする `flake8 <https://flake8.pycqa.org/en/latest/>`__ プラグインです。
 
 .. code-block:: console
 
     flake8 my_great_package
 
-For more details, see `flake8-pyi docs <https://github.com/PyCQA/flake8-pyi>`__.
+詳細については、`flake8-pyi docs <https://github.com/PyCQA/flake8-pyi>`__ を参照してください。
 
-Running a type checker on the stubs
------------------------------------
+スタブの使用に関する型チェックの実行
+------------------------------------------------------------------------------------------
 
-Simply running a type checker on the stubs can catch several issues, from simple
-things like detecting missing annotations to more complex things like ensuring
-Liskov substitutability or detecting problematic overloads.
+スタブに対して型チェッカーを実行するだけで、欠落している注釈の検出などの単純な問題から、リスコフの置換可能性の確認や問題のあるオーバーロードの検出などの複雑な問題まで、いくつかの問題を検出できます。
 
-It may be instructive to examine `typeshed <https://github.com/python/typeshed/>`__'s
-`setup for testing stubs <https://github.com/python/typeshed/blob/main/tests/README.md>`__.
+`typeshed <https://github.com/python/typeshed/>`__ の `setup for testing stubs <https://github.com/python/typeshed/blob/main/tests/README.md>`__ を調べると参考になるかもしれません。
 
 ..
-   TODO: consider adding examples and configurations for specific type checkers
+   TODO: 特定の型チェッカーの例や設定を追加することを検討してください
 
-Type checking usage of your package
------------------------------------
+パッケージの使用に関する型チェックの実行
+------------------------------------------------------------------------------------------
 
-If you have access to a codebase that uses your package — perhaps tests for your
-package — running a type checker against it can help you detect issues,
-particularly with false positives.
+パッケージを使用するコードベースにアクセスできる場合 (おそらくパッケージのテスト)、それに対して型チェッカーを実行することで、特に偽陽性の問題を検出するのに役立ちます。
 
-If your package has some particularly complex aspects, you could even consider
-writing dedicated typing tests for tricky definitions. For more details, see
-:ref:`testing`.
+パッケージに特に複雑な側面がある場合は、難しい定義のための専用の型テストを作成することも検討できます。 詳細については、:ref:`testing` を参照してください。
 
-Stub Content
-============
+スタブの内容
+==========================================================================================
 
-This section documents best practices on what elements to include or
-leave out of stub files.
+このセクションでは、スタブファイルに含める要素や除外する要素に関するベストプラクティスを文書化しています。
 
-Modules excluded fom stubs
---------------------------
+スタブから除外されるモジュール
+------------------------------------------------------------------------------------------
 
-Not all modules should be included in stubs.
+すべてのモジュールがスタブに含まれるべきではありません。
 
-It is recommended to exclude:
+次のものを除外することをお勧めします:
 
-1. Implementation details, with `multiprocessing/popen_spawn_win32.py <https://github.com/python/cpython/blob/main/Lib/multiprocessing/popen_spawn_win32.py>`_ as a notable example
-2. Modules that are not supposed to be imported, such as ``__main__.py``
-3. Protected modules that start with a single ``_`` char. However, when needed protected modules can still be added (see :ref:`undocumented-objects` section below)
-4. Tests
+1. 実装の詳細。顕著な例として `multiprocessing/popen_spawn_win32.py <https://github.com/python/cpython/blob/main/Lib/multiprocessing/popen_spawn_win32.py>`_
+2. インポートされることを意図していないモジュール (例: ``__main__.py``)
+3. 単一の ``_`` 文字で始まる保護されたモジュール。ただし、必要に応じて保護されたモジュールを追加することはできます (以下の :ref:`undocumented-objects` セクションを参照してください)
+4. テスト
 
-Public Interface
-----------------
+パブリックインターフェース
+------------------------------------------------------------------------------------------
 
-Stubs should include the complete public interface (classes, functions,
-constants, etc.) of the module they cover, but it is not always
-clear exactly what is part of the interface.
+スタブには、カバーするモジュールの完全なパブリックインターフェース (クラス、関数、定数など) を含める必要がありますが、インターフェースの一部が何であるかは必ずしも明確ではありません。
 
-The following should always be included:
+次のものは常に含める必要があります:
 
-* All objects listed in the module's documentation.
-* All objects included in ``__all__`` (if present).
+* モジュールのドキュメントに記載されているすべてのオブジェクト。
+* ``__all__`` に含まれるすべてのオブジェクト (存在する場合)。
 
-Other objects may be included if they are not prefixed with an underscore
-or if they are being used in practice. (See the next section.)
+他のオブジェクトは、アンダースコアで始まっていない場合や、実際に使用されている場合に含めることができます。 (次のセクションを参照してください。)
 
 .. _undocumented-objects:
 
-Undocumented Objects
---------------------
+未文書のオブジェクト
+------------------------------------------------------------------------------------------
 
-Undocumented objects may be included as long as they are marked with a comment
-of the form ``# undocumented``.
+未文書のオブジェクトは、``# undocumented`` という形式のコメントでマークされている限り、含めることができます。
 
-Example::
+例::
 
     def list2cmdline(seq: Sequence[str]) -> str: ...  # undocumented
 
-Such undocumented objects are allowed because omitting objects can confuse
-users. Users who see an error like "module X has no attribute Y" will
-not know whether the error appeared because their code had a bug or
-because the stub is wrong. Although it may also be helpful for a type
-checker to point out usage of private objects, false negatives (no errors for
-wrong code) are preferable over false positives (type errors
-for correct code). In addition, even for private objects a type checker
-can be helpful in pointing out that an incorrect type was used.
+このような未文書のオブジェクトは、オブジェクトを省略するとユーザーが混乱する可能性があるため許可されています。 ユーザーが「モジュール X に属性 Y がありません」というエラーを見た場合、そのエラーがコードにバグがあるために発生したのか、スタブが間違っているために発生したのかを知ることはできません。 プライベートオブジェクトの使用を型チェッカーが指摘することも役立ちますが、誤検知 (正しいコードに対する型エラー) よりも偽陰性 (誤ったコードに対するエラーなし) の方が望ましいです。 さらに、プライベートオブジェクトであっても、型チェッカーは不正な型が使用されたことを指摘するのに役立ちます。
 
 ``__all__``
-------------
+------------------------------------------------------------------------------------------
 
-A stub file should contain an ``__all__`` variable if and only if it is also
-present at runtime. In that case, the contents of ``__all__`` should be
-identical in the stub and at runtime. If the runtime dynamically adds
-or removes elements (for example if certain functions are only available on
-some system configurations), include all possible elements in the stubs.
+スタブファイルには、ランタイムでも存在する場合にのみ ``__all__`` 変数を含める必要があります。 その場合、``__all__`` の内容はスタブとランタイムで同一である必要があります。 ランタイムが動的に要素を追加または削除する場合 (たとえば、特定の関数が特定のシステム構成でのみ利用可能な場合)、スタブにはすべての可能な要素を含めます。
 
-Stub-Only Objects
------------------
+スタブ専用のオブジェクト
+------------------------------------------------------------------------------------------
 
-Definitions that do not exist at runtime may be included in stubs to aid in
-expressing types. Unless intentionally exposed to users (see below), such
-definitions should be marked as private by prefixing their names with an
-underscore.
+ランタイムに存在しない定義は、型を表現するのに役立つため、スタブに含めることができます。 ユーザーに意図的に公開されていない限り (以下を参照)、そのような定義は名前の前にアンダースコアを付けてプライベートとしてマークする必要があります。
 
-Yes::
+はい::
 
     _T = TypeVar("_T")
     _DictList: TypeAlias = dict[str, list[int | None]]
 
-No::
+いいえ::
 
     T = TypeVar("T")
     DictList: TypeAlias = dict[str, list[int | None]]
 
-Sometimes, it is desirable to make a stub-only class available
-to a stub's users — for example, to allow them to type the return value of a
-public method for which a library does not provided a usable runtime type. Use
-the ``typing.type_check_only`` decorator to mark such objects::
+場合によっては、スタブ専用のクラスをスタブのユーザーに利用可能にすることが望ましい場合があります。 たとえば、ライブラリが使用可能なランタイム型を提供しないパブリックメソッドの戻り値を型指定するためです。 そのようなオブジェクトをマークするには、``typing.type_check_only`` デコレータを使用します::
 
   from typing import Protocol, type_check_only
 
@@ -201,25 +162,18 @@ the ``typing.type_check_only`` decorator to mark such objects::
 
   def get_reader() -> Readable: ...
 
-Structural Types
-----------------
+構造型
+------------------------------------------------------------------------------------------
 
-As seen in the example with ``Readable`` in the previous section, a common use
-of stub-only objects is to model types that are best described by their
-structure. These objects are called protocols (:pep:`544`), and it is encouraged
-to use them freely to describe simple structural types.
+前のセクションの ``Readable`` の例で見たように、スタブ専用のオブジェクトの一般的な使用法は、その構造によって最もよく説明される型をモデル化することです。 これらのオブジェクトはプロトコル (:pep:`544`) と呼ばれ、単純な構造型を記述するために自由に使用することが奨励されています。
 
-Incomplete Stubs
-----------------
+不完全なスタブ
+------------------------------------------------------------------------------------------
 
-Partial stubs can be useful, especially for larger packages, but they should
-follow the following guidelines:
+部分的なスタブは特に大規模なパッケージにとって有用ですが、次のガイドラインに従う必要があります:
 
-* Included functions and methods should list all arguments, but the arguments
-  can be left unannotated.
-* Do not use ``Any`` to mark unannotated or partially annotated values. Leave
-  function parameters and return values unannotated. In all other cases, use
-  ``_typeshed.Incomplete``
+* 含まれる関数とメソッドはすべての引数をリストする必要がありますが、引数は注釈なしにすることができます。
+* 注釈なしまたは部分的に注釈された値をマークするために ``Any`` を使用しないでください。 関数のパラメータと戻り値は注釈なしにしてください。 その他のすべての場合、``_typeshed.Incomplete`` を使用します
   (`documentation <https://github.com/python/typeshed/blob/main/stdlib/_typeshed/README.md>`_)::
 
     from _typeshed import Incomplete
@@ -229,18 +183,11 @@ follow the following guidelines:
 
     def foo(x): ...
 
-* Partial classes should include a ``__getattr__()`` method marked with
-  ``_typeshed.Incomplete`` (see example below).
-* Partial modules (i.e. modules that are missing some or all classes,
-  functions, or attributes) should include a top-level ``__getattr__()``
-  function marked with ``_typeshed.Incomplete`` (see example below).
-* Partial packages (i.e. packages that are missing one or more sub-modules)
-  should have a ``__init__.pyi`` stub that is marked as incomplete (see above).
-  A better alternative is to create empty stubs for all sub-modules and
-  mark them as incomplete individually.
+* 部分的なクラスには、``_typeshed.Incomplete`` でマークされた ``__getattr__()`` メソッドを含める必要があります (以下の例を参照)。
+* 部分的なモジュール (クラス、関数、属性の一部またはすべてが欠けているモジュール) には、``_typeshed.Incomplete`` でマークされたトップレベルの ``__getattr__()`` 関数を含める必要があります (以下の例を参照)。
+* 部分的なパッケージ (1 つ以上のサブモジュールが欠けているパッケージ) には、不完全としてマークされた ``__init__.pyi`` スタブが必要です (上記を参照)。 より良い代替案は、すべてのサブモジュールの空のスタブを作成し、それぞれを個別に不完全としてマークすることです。
 
-Example of a partial module with a partial class ``Foo`` and a partially
-annotated function ``bar()``::
+部分的なクラス ``Foo`` と部分的に注釈された関数 ``bar()`` を含む部分的なモジュールの例::
 
     from _typeshed import Incomplete
 
@@ -253,33 +200,27 @@ annotated function ``bar()``::
 
     def bar(x: str, y, *, z=...): ...
 
-Attribute Access
-----------------
+属性アクセス
+------------------------------------------------------------------------------------------
 
-Python has several methods for customizing attribute access: ``__getattr__``,
-``__getattribute__``, ``__setattr__``, and ``__delattr__``. Of these,
-``__getattr__`` and ``__setattr___`` should sometimes be included in stubs.
+Python には、属性アクセスをカスタマイズするためのいくつかのメソッドがあります: ``__getattr__``, ``__getattribute__``, ``__setattr__``, および ``__delattr__``。 これらのうち、``__getattr__`` と ``__setattr__`` はスタブに含める必要がある場合があります。
 
-In addition to marking incomplete definitions, ``__getattr__`` should be
-included when a class or module allows any name to be accessed. For example, consider
-the following class::
+不完全な定義をマークすることに加えて、クラスまたはモジュールが任意の名前にアクセスできる場合は、``__getattr__`` を含める必要があります。 たとえば、次のクラスを考えてみましょう::
 
   class Foo:
       def __getattribute__(self, name):
           return self.__dict__.setdefault(name)
 
-An appropriate stub definition is::
+適切なスタブ定義は次のとおりです::
 
   from typing import Any
 
   class Foo:
       def __getattr__(self, name: str) -> Any | None: ...
 
-Note that only ``__getattr__``, not ``__getattribute__``, is guaranteed to be
-supported in stubs.
+スタブでサポートされることが保証されているのは ``__getattr__`` のみであり、``__getattribute__`` ではないことに注意してください。
 
-On the other hand, ``__getattr__`` should be omitted even if the source code
-includes it, if only limited names are allowed. For example, consider this class::
+一方、次のクラスを考えてみましょう::
 
   class ComplexNumber:
       def __init__(self, n):
@@ -289,7 +230,7 @@ includes it, if only limited names are allowed. For example, consider this class
               return getattr(self._n, name)
           raise AttributeError(name)
 
-In this case, the stub should list the attributes individually::
+この場合、スタブは属性を個別にリストする必要があります::
 
   class ComplexNumber:
       @property
@@ -298,8 +239,7 @@ In this case, the stub should list the attributes individually::
       def imag(self) -> float: ...
       def __init__(self, n: complex) -> None: ...
 
-``__setattr___`` should be included when a class allows any name to be set and
-restricts the type. For example::
+クラスが任意の名前を設定でき、型を制限する場合は、``__setattr__`` を含める必要があります。 たとえば::
 
   class IntHolder:
       def __setattr__(self, name, value):
@@ -307,51 +247,47 @@ restricts the type. For example::
               return super().__setattr__(name, value)
           raise ValueError(value)
 
-A good stub definition would be::
+適切なスタブ定義は次のとおりです::
 
   class IntHolder:
       def __setattr__(self, name: str, value: int) -> None: ...
 
-``__delattr__`` should not be included in stubs.
+``__delattr__`` はスタブに含めるべきではありません。
 
-Finally, even in the presence of ``__getattr__`` and ``__setattr__``, it is
-still recommended to separately define known attributes.
+最後に、``__getattr__`` と ``__setattr__`` が存在する場合でも、既知の属性を個別に定義することをお勧めします。
 
-Constants
----------
+定数
+------------------------------------------------------------------------------------------
 
-When the value of a constant is important,  mark it as ``Final`` and assign it
-to its value.
+定数の値が重要な場合は、それを ``Final`` としてマークし、その値に割り当てます。
 
-Yes::
+はい::
 
     TEL_LANDLINE: Final = "landline"
     TEL_MOBILE: Final = "mobile"
     DAY_FLAG: Final = 0x01
     NIGHT_FLAG: Final = 0x02
 
-No::
+いいえ::
 
     TEL_LANDLINE: str
     TEL_MOBILE: str
     DAY_FLAG: int
     NIGHT_FLAG: int
 
-Overloads
----------
+オーバーロード
+------------------------------------------------------------------------------------------
 
-All variants of overloaded functions and methods must have an ``@overload``
-decorator. Do not include the implementation's final non-`@overload`-decorated
-definition.
+オーバーロードされた関数とメソッドのすべてのバリアントには、``@overload`` デコレータが必要です。 実装の最終的な非 ``@overload`` デコレータ付きの定義を含めないでください。
 
-Yes::
+はい::
 
   @overload
   def foo(x: str) -> str: ...
   @overload
   def foo(x: float) -> int: ...
 
-No::
+いいえ::
 
   @overload
   def foo(x: str) -> str: ...
@@ -359,77 +295,60 @@ No::
   def foo(x: float) -> int: ...
   def foo(x: str | float) -> Any: ...
 
-Decorators
-----------
+デコレータ
+------------------------------------------------------------------------------------------
 
-Include only the decorators listed :ref:`here <stub-decorators>`, whose effects
-are understood by all of the major type checkers. The behavior of other
-decorators should instead be incorporated into the types. For example, for the
-following function::
+すべての主要な型チェッカーによって理解される効果を持つ、ここにリストされているデコレータ (:ref:`stub-decorators`) のみを含めます。 他のデコレータの動作は、型に組み込む必要があります。 たとえば、次の関数の場合::
 
   import contextlib
   @contextlib.contextmanager
   def f():
       yield 42
 
-the stub definition should be::
+スタブ定義は次のようになります::
 
   from contextlib import AbstractContextManager
   def f() -> AbstractContextManager[int]: ...
 
-Documentation or Implementation
--------------------------------
+ドキュメントまたは実装
+------------------------------------------------------------------------------------------
 
-Sometimes a library's documented types will differ from the actual types in the
-code. In such cases, stub authors should use their best judgment. Consider these
-two examples::
+ライブラリの文書化された型がコード内の実際の型と異なる場合があります。 そのような場合、スタブの作成者は最良の判断を使用する必要があります。 次の 2 つの例を考えてみましょう::
 
   def print_elements(x):
-      """Print every element of list x."""
+      """リスト x のすべての要素を印刷します。"""
       for y in x:
           print(y)
 
   def maybe_raise(x):
-      """Raise an error if x (a boolean) is true."""
+      """x (ブール値) が true の場合にエラーを発生させます。"""
       if x:
           raise ValueError()
 
-The implementation of ``print_elements`` takes any iterable, despite the
-documented type of ``list``. In this case, annotate the argument as
-``Iterable[object]``, to follow the :ref:`best practice<argument-return-practices>`
-of preferring abstract types for arguments.
+``print_elements`` の実装は、文書化された ``list`` 型にもかかわらず、任意の反復可能オブジェクトを受け取ります。 この場合、引数を ``Iterable[object]`` として注釈し、引数に対して抽象型を優先するという :ref:`best practice<argument-return-practices>` に従います。
 
-For ``maybe_raise``, on the other hand, it is better to annotate the argument as
-``bool`` even though the implementation accepts any object. This guards against
-common mistakes like unintentionally passing in ``None``.
+一方、``maybe_raise`` については、実装が任意のオブジェクトを受け入れるにもかかわらず、引数を ``bool`` として注釈する方が良いです。 これにより、意図せずに ``None`` を渡すなどの一般的な間違いを防ぐことができます。
 
-If in doubt, consider asking the library maintainers about their intent.
+疑問がある場合は、ライブラリのメンテナーに意図を尋ねることを検討してください。
 
-Style Guide
-===========
+スタイルガイド
+==========================================================================================
 
-The recommendations in this section are aimed at stub authors who wish to
-provide a consistent style for stubs. Type checkers should not reject stubs that
-do not follow these recommendations, but linters can warn about them.
+このセクションの推奨事項は、スタブに一貫したスタイルを提供したいスタブ作成者を対象としています。 型チェッカーは、これらの推奨事項に従わないスタブを拒否するべきではありませんが、リンターはそれらについて警告することがあります。
 
-Stub files should generally follow the Style Guide for Python Code (:pep:`8`)
-and the :ref:`best-practices`. There are a few exceptions, outlined below, that take the
-different structure of stub files into account and aim to create
-more concise files.
+スタブファイルは一般的に、Python コードのスタイルガイド (:pep:`8`) と :ref:`best-practices` に従う必要があります。 スタブファイルの異なる構造を考慮し、より簡潔なファイルを作成することを目的としたいくつかの例外があります。
 
-Maximum Line Length
--------------------
+最大行長
+------------------------------------------------------------------------------------------
 
-Stub files should be limited to 130 characters per line.
+スタブファイルは、1 行あたり 130 文字に制限する必要があります。
 
-Blank Lines
------------
+空行
+------------------------------------------------------------------------------------------
 
-Do not use empty lines between functions, methods, and fields, except to
-group them with one empty line. Use one empty line around classes with non-empty
-bodies. Do not use empty lines between body-less classes, except for grouping.
+関数、メソッド、フィールドの間に空行を使用しないでください。ただし、1 つの空行でグループ化するために使用することはできます。 本文が空でないクラスの周りには 1 つの空行を使用します。 本文が空のクラスの間に空行を使用しないでください。ただし、グループ化のために使用することはできます。
 
-Yes::
+はい::
 
     def time_func() -> None: ...
     def date_func() -> None: ...
@@ -444,31 +363,31 @@ Yes::
     class MyError(Exception): ...
     class AnotherError(Exception): ...
 
-No::
+いいえ::
 
     def time_func() -> None: ...
 
-    def date_func() -> None: ...  # do no leave unnecessary empty lines
+    def date_func() -> None: ...  # 不要な空行を残さないでください
 
     def ip_func() -> None: ...
 
 
-    class Foo:  # leave only one empty line above
+    class Foo:  # 上に 1 つの空行のみを残します
         x: int
-    class MyError(Exception): ...  # leave an empty line between the classes
+    class MyError(Exception): ...  # クラスの間に空行を残します
 
-Module Level Attributes
------------------------
+モジュールレベルの属性
+------------------------------------------------------------------------------------------
 
-Do not unnecessarily use an assignment for module-level attributes.
+モジュールレベルの属性に対して不要な代入を使用しないでください。
 
-Yes::
+はい::
 
     CONST: Literal["const"]
     x: int
-    y: Final = 0  # this assignment conveys additional type information
+    y: Final = 0  # この代入は追加の型情報を伝えます
 
-No::
+いいえ::
 
     CONST = "const"
     x: int = 0
@@ -478,37 +397,34 @@ No::
 
 .. _stub-style-classes:
 
-Classes
--------
+クラス
+------------------------------------------------------------------------------------------
 
-Classes without bodies should use the ellipsis literal ``...`` in place
-of the body on the same line as the class definition.
+本文のないクラスは、クラス定義と同じ行に省略記号リテラル ``...`` を使用する必要があります。
 
-Yes::
+はい::
 
     class MyError(Exception): ...
 
-No::
+いいえ::
 
     class MyError(Exception):
         ...
     class AnotherError(Exception): pass
 
-Instance attributes and class variables follow the same recommendations as
-module level attributes:
+インスタンス属性とクラス変数は、モジュールレベルの属性と同じ推奨事項に従います:
 
-Yes::
+はい::
 
     class Foo:
         c: ClassVar[str]
         x: int
 
     class Color(Enum):
-        # An assignment with no type annotation is a convention used to indicate
-	# an enum member.
+        # 代入に型注釈がない場合は、列挙メンバーを示すための慣例です。
         RED = 1
 
-No::
+いいえ::
 
     class Foo:
         c: ClassVar[str] = ""
@@ -516,32 +432,26 @@ No::
         x = 4
         y: int = ...
 
-Functions and Methods
----------------------
+関数とメソッド
+------------------------------------------------------------------------------------------
 
-For keyword-only and positional-or-keyword arguments, use the same
-argument names as in the implementation, because otherwise using
-keyword arguments will fail.
+キーワード専用および位置またはキーワード引数については、実装と同じ引数名を使用してください。そうしないと、キーワード引数の使用が失敗します。
 
-For default values, use the literal values of "simple" default values (``None``,
-bools, ints, bytes, strings, and floats). Use the ellipsis literal ``...`` in
-place of more complex default values. Use an explicit ``X | None`` annotation
-when the default is ``None``.
+デフォルト値については、「単純な」デフォルト値 (``None``, ブール値, 整数, バイト, 文字列, および浮動小数点数) のリテラル値を使用します。 より複雑なデフォルト値の代わりに省略記号リテラル ``...`` を使用します。 デフォルトが ``None`` の場合は、明示的な ``X | None`` 注釈を使用します。
 
-Yes::
+はい::
 
     def foo(x: int = 0) -> None: ...
     def bar(y: str | None = None) -> None: ...
 
-No::
+いいえ::
 
     def foo(x: X = X()) -> None: ...
     def bar(y: str = None) -> None: ...
 
-Do not annotate ``self`` and ``cls`` in method definitions, except when
-referencing a type variable.
+メソッド定義で ``self`` および ``cls`` を注釈しないでください。ただし、型変数を参照する場合は除きます。
 
-Yes::
+はい::
 
     _T = TypeVar("_T")
 
@@ -550,24 +460,23 @@ Yes::
         @classmethod
         def create(cls: type[_T]) -> _T: ...
 
-No::
+いいえ::
 
     class Foo:
         def bar(self: Foo) -> None: ...
         @classmethod
         def baz(cls: type[Foo]) -> int: ...
 
-The bodies of functions and methods should consist of only the ellipsis
-literal ``...`` on the same line as the closing parenthesis and colon.
+関数とメソッドの本文は、閉じ括弧とコロンと同じ行に省略記号リテラル ``...`` のみで構成する必要があります。
 
-Yes::
+はい::
 
     def to_int1(x: str) -> int: ...
     def to_int2(
         x: str,
     ) -> int: ...
 
-No::
+いいえ::
 
     def to_int1(x: str) -> int:
         return int(x)
@@ -575,20 +484,14 @@ No::
         ...
     def to_int3(x: str) -> int: pass
 
-Language Features
------------------
+言語機能
+------------------------------------------------------------------------------------------
 
-Use the latest language features available, even for stubs targeting older
-Python versions. For example, Python 3.7 added the ``async`` keyword (see
-:pep:`492`). Stubs should use it to mark coroutines, even if the implementation
-still uses the ``@coroutine`` decorator. On the other hand, the ``type`` soft
-keyword from :pep:`695`, introduced in Python 3.12, should not be used in stubs
-until Python 3.11 reaches end-of-life in October 2027.
+スタブが古い Python バージョンを対象としている場合でも、利用可能な最新の言語機能を使用します。 たとえば、Python 3.7 では ``async`` キーワードが追加されました (:pep:`492` を参照)。 スタブはコルーチンをマークするためにそれを使用する必要があります。 一方、Python 3.12 で導入された :pep:`695` の ``type`` ソフトキーワードは、Python 3.11 が 2027 年 10 月にサポート終了するまでスタブで使用するべきではありません。
 
-Do not use quotes around forward references and do not use ``__future__``
-imports. See :ref:`stub-file-syntax` for more information.
+順方向参照の周りに引用符を使用せず、``__future__`` インポートを使用しないでください。 詳細については、:ref:`stub-file-syntax` を参照してください。
 
-Yes::
+はい::
 
     class Py35Class:
         x: int
@@ -596,7 +499,7 @@ Yes::
 
     class OtherClass: ...
 
-No::
+いいえ::
 
     class Py35Class:
         x = 0  # type: int
@@ -604,13 +507,12 @@ No::
 
     class OtherClass: ...
 
-NamedTuple and TypedDict
-------------------------
+NamedTuple と TypedDict
+------------------------------------------------------------------------------------------
 
-Use the class-based syntax for ``typing.NamedTuple`` and
-``typing.TypedDict``, following the :ref:`stub-style-classes` section of this style guide.
+``typing.NamedTuple`` および ``typing.TypedDict`` には、スタイルガイドの :ref:`stub-style-classes` セクションに従ってクラスベースの構文を使用します。
 
-Yes::
+はい::
 
     from typing import NamedTuple, TypedDict
 
@@ -622,35 +524,32 @@ Yes::
         stuff: str
         index: int
 
-No::
+いいえ::
 
     from typing import NamedTuple, TypedDict
     Point = NamedTuple("Point", [('x', float), ('y', float)])
     Thing = TypedDict("Thing", {'stuff': str, 'index': int})
 
-Built-in Generics
------------------
+組み込みジェネリクス
+------------------------------------------------------------------------------------------
 
-:pep:`585` built-in generics are supported and should be used instead
-of the corresponding types from ``typing``::
+:pep:`585` 組み込みジェネリクスがサポートされており、``typing`` から対応する型の代わりに使用する必要があります::
 
     from collections import defaultdict
 
     def foo(t: type[MyClass]) -> list[int]: ...
     x: defaultdict[int]
 
-Using imports from ``collections.abc`` instead of ``typing`` is
-generally possible and recommended::
+``typing`` の代わりに ``collections.abc`` からのインポートを使用することは一般的に可能であり、推奨されます::
 
     from collections.abc import Iterable
 
     def foo(iter: Iterable[int]) -> None: ...
 
-Unions
-------
+ユニオン
+------------------------------------------------------------------------------------------
 
-Declaring unions with the shorthand `|` syntax is recommended and supported by
-all type checkers::
+短縮形の `|` 構文を使用してユニオンを宣言することが推奨されており、すべての型チェッカーでサポートされています::
 
-  def foo(x: int | str) -> int | None: ...  # recommended
+  def foo(x: int | str) -> int | None: ...  # 推奨
   def foo(x: Union[int, str]) -> Optional[int]: ...  # ok

@@ -1,84 +1,59 @@
 .. _libraries:
 
-***********************
-Typing Python Libraries
-***********************
+******************************************************************************************
+Python ライブラリの型付け
+******************************************************************************************
 
-Much of Python's popularity can be attributed to the rich collection of
-Python libraries available to developers. Authors of these libraries
-play an important role in improving the experience for Python
-developers. This document provides some recommendations and guidance for
-Python library authors.
+Python の人気の多くは、開発者が利用できる豊富な Python ライブラリに起因しています。 これらのライブラリの作成者は、Python 開発者の体験を向上させる上で重要な役割を果たしています。 このドキュメントでは、Python ライブラリの作成者向けにいくつかの推奨事項とガイダンスを提供します。
 
-Why provide type annotations?
-=============================
+なぜ型注釈を提供するのですか？
+==========================================================================================
 
-Providing type annotations has the following benefits:
+型注釈を提供することには次のような利点があります。
 
-1. Type annotations help provide users of libraries a better coding
-   experience by enabling fast and accurate completion suggestions, class and
-   function documentation, signature help, hover text, auto-imports, etc.
-2. Users of libraries are able to use static type checkers to detect issues
-   with their use of libraries.
-3. Type annotations allow library authors to specify an interface contract that
-   is enforced by tools. This lets the library implementation evolve with less
-   fear that users are depending on implementation details. In the event of
-   changes to the library interface, type checkers are able to warn users when
-   their code is affected.
-4. Library authors are able to use static type checking themselves to help
-   produce high-quality, bug-free implementations.
+1. 型注釈は、ユーザーが迅速かつ正確な補完候補、クラスおよび関数のドキュメント、シグネチャ ヘルプ、ホバー テキスト、自動インポートなどを利用できるようにすることで、ライブラリ ユーザーのコーディング エクスペリエンスを向上させるのに役立ちます。
+2. ライブラリのユーザーは、静的型チェッカーを使用してライブラリの使用に関する問題を検出できます。
+3. 型注釈を使用すると、ライブラリ作成者はツールによって強制されるインターフェイス コントラクトを指定できます。 これにより、ユーザーが実装の詳細に依存していることを恐れることなく、ライブラリの実装を進化させることができます。 ライブラリ インターフェイスに変更が加えられた場合、型チェッカーはコードに影響がある場合にユーザーに警告を発することができます。
+4. ライブラリ作成者は、静的型チェックを使用して、高品質でバグのない実装を作成するのに役立てることができます。
 
 .. _providing-type-annotations:
 
-How to provide type annotations?
-================================
+型注釈を提供する方法は?
+==========================================================================================
 
-:pep:`561` documents several ways type information can be provided for a
-library:
+:pep:`561` では、ライブラリに型情報を提供するいくつかの方法について説明しています。
 
-- inline type annotations (preferred)
-- type stub files included in the package
-- a separate companion type stub package
-- type stubs in the typeshed repository
+- インライン型注釈 (推奨)
+- パッケージに含まれる型スタブ ファイル
+- 別のコンパニオン型スタブ パッケージ
+- typeshed リポジトリの型スタブ
 
-Inline type annotations simply refers to the use of annotations within your
-``.py`` files. In contrast, with type stub files, type information lives in
-separate ``.pyi`` files; see :ref:`stub-files` and :ref:`writing_stubs` for more
-details.
+インライン型注釈とは、単に ``.py`` ファイル内で注釈を使用することを指します。 対照的に、型スタブ ファイルでは、型情報は別の ``.pyi`` ファイルに存在します。 詳細については、:ref:`stub-files` および :ref:`writing_stubs` を参照してください。
 
-We recommend using the inline type annotations approach, since it has the
-following benefits:
+インライン型注釈アプローチを使用することをお勧めします。これは、次のような利点があるためです。
 
-- Typically requires the least effort to add and maintain
-- Users don't have to download additional packages
-- Always remains consistent with the implementation
-- Allows library authors to type check their own code
-- Allows language servers to show users relevant details about the
-  implementation, such as docstrings and default parameter values
+- 追加と保守に必要な労力が最も少ない
+- ユーザーは追加のパッケージをダウンロードする必要はありません
+- 常に実装と一致する
+- ライブラリ作成者が自分のコードを型チェックできるようにする
+- 言語サーバーがユーザーにドキュメント文字列やデフォルトのパラメーター値など、実装に関連する詳細を表示できるようにします
 
-However, there are cases where inlined type annotations are not possible — most
-notably when a library's functionality is implemented in a language
-other than Python.
+ただし、インライン型注釈が不可能な場合もあります。特に、ライブラリの機能が Python 以外の言語で実装されている場合です。
 
-If you are not interested in providing type annotations for your library, you
-could suggest users to contribute type stubs to the
-`typeshed <https://github.com/python/typeshed>`__ project.
+ライブラリに型注釈を提供することに関心がない場合は、ユーザーに型スタブを `typeshed <https://github.com/python/typeshed>`__ プロジェクトに提供するよう提案することができます。
 
-Marking a package as providing type information
------------------------------------------------
+パッケージを型情報を提供するものとしてマークする
+==========================================================================================
 
-As specified in :pep:`561`, tools will not treat your package as providing type
-information unless it includes a special ``py.typed`` marker file.
+:pep:`561` で指定されているように、特別な ``py.typed`` マーカーファイルが含まれていない限り、ツールはパッケージを型情報を提供するものとして扱いません。
 
 .. note::
-   Before marking a package as providing type information, it is best to ensure
-   that the library's interface is fully annotated. See :ref:`type_completeness`
-   for more details.
+   パッケージを型情報を提供するものとしてマークする前に、ライブラリのインターフェイスが完全に注釈されていることを確認するのが最善です。 詳細については、:ref:`type_completeness` を参照してください。
 
-Inline type annotations
-^^^^^^^^^^^^^^^^^^^^^^^
+インライン型注釈
+==========================================================================================
 
-A typical directory structure would look like:
+典型的なディレクトリ構造は次のようになります。
 
 .. code-block:: text
 
@@ -88,8 +63,7 @@ A typical directory structure would look like:
       stuff.py
       py.typed
 
-It's important to ensure that the ``py.typed`` marker file is included in the
-distributed package. If using ``setuptools``, this can be achieved like so:
+``py.typed`` マーカーファイルが配布パッケージに含まれていることを確認することが重要です。 ``setuptools`` を使用する場合、これは次のようにして実現できます。
 
 .. code-block:: python
 
@@ -103,13 +77,10 @@ distributed package. If using ``setuptools``, this can be achieved like so:
    )
 
 
-Type stub files included in the package
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+パッケージに含まれる型スタブ ファイル
+==========================================================================================
 
-It's possible to include a mix of type stub files (``.pyi``) and inline type
-annotations (``.py``). One use case for including type stub files in your
-package is to provide types for extension modules in your library. A typical
-directory structure would look like:
+型スタブ ファイル (``.pyi``) とインライン型注釈 (``.py``) の混在を含めることができます。 パッケージに型スタブ ファイルを含めるユース ケースの 1 つは、ライブラリ内の拡張モジュールの型を提供することです。 典型的なディレクトリ構造は次のようになります。
 
 .. code-block:: text
 
@@ -120,8 +91,7 @@ directory structure would look like:
       stuff.pyi
       py.typed
 
-If using ``setuptools``, we can ensure the ``.pyi`` and ``py.typed`` files are
-included like so:
+``setuptools`` を使用する場合、次のようにして ``.pyi`` および ``py.typed`` ファイルが含まれていることを確認できます。
 
 .. code-block:: python
 
@@ -134,19 +104,14 @@ included like so:
       packages=["my_great_package"],
    )
 
-The presence of ``.pyi`` files does not affect the Python interpreter at runtime
-in any way. However, static type checkers will only look at the ``.pyi`` file and
-ignore the corresponding ``.py`` file.
+``.pyi`` ファイルの存在は、実行時に Python インタープリターに影響を与えることはありません。 ただし、静的型チェッカーは対応する ``.py`` ファイルを無視して ``.pyi`` ファイルのみを参照します。
 
-Companion type stub package
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+コンパニオン型スタブ パッケージ
+==========================================================================================
 
-These are often referred to as "stub-only" packages. The name of the stub package
-should be the name of the runtime package suffixed with ``-stubs``. The ``py.typed``
-marker file is not necessary for stub-only packages. This approach can be useful
-to develop type stubs independently from your library.
+これらは「スタブのみ」パッケージと呼ばれることがよくあります。 スタブ パッケージの名前は、``-stubs`` で終わるランタイム パッケージの名前である必要があります。 スタブのみのパッケージには ``py.typed`` マーカーファイルは必要ありません。 このアプローチは、ライブラリとは独立して型スタブを開発するのに役立ちます。
 
-For example:
+例えば：
 
 .. code-block:: text
 
@@ -168,17 +133,12 @@ For example:
    )
 
 
-Users are then able to install the stubs-only package separately to provide
-types for the original library.
+その後、ユーザーはスタブのみのパッケージを別途インストールして、元のライブラリの型を提供できるようになります。
 
-Inclusion in sdist
-^^^^^^^^^^^^^^^^^^
+sdist への含める
+==========================================================================================
 
-Note that to ensure inclusion of ``.pyi`` and ``py.typed`` files in an sdist
-(.tar.gz archive), you may also need to modify the inclusion rules in your
-``MANIFEST.in`` (see the
-`packaging guide <https://packaging.python.org/en/latest/guides/using-manifest-in/>`__
-for more details on ``MANIFEST.in``). For example:
+``.pyi`` および ``py.typed`` ファイルを sdist (.tar.gz アーカイブ) に含めることを確認するには、``MANIFEST.in`` の含めるルールを変更する必要がある場合もあります (``MANIFEST.in`` の詳細については、 `packaging guide <https://packaging.python.org/en/latest/guides/using-manifest-in/>`__ を参照してください)。 例えば：
 
 .. code-block:: text
 
@@ -187,126 +147,94 @@ for more details on ``MANIFEST.in``). For example:
 
 .. _type_completeness:
 
-How much of my library needs types?
-===================================
+ライブラリのどの部分に型が必要ですか?
+==========================================================================================
 
-A "py.typed" library should aim to be type complete so that type
-checking and inspection can work to their full extent. Here we say that a
-library is “type complete” if all of the symbols
-that comprise its :ref:`interface <library-interface>` have type annotations
-that refer to types that are fully known. Private symbols are exempt.
+「py.typed」ライブラリは、型チェックと検査が最大限に機能するように、型が完全であることを目指す必要があります。 ここでは、ライブラリの「インターフェイス <library-interface>」を構成するすべてのシンボルに、完全に既知の型を参照する型注釈がある場合、そのライブラリは「型が完全である」と言います。 プライベート シンボルは免除されます。
 
-Type Completeness
------------------
+型の完全性
+==========================================================================================
 
-The following are best practice recommendations for how to define “type complete”:
+次に、「型が完全である」と定義するためのベスト プラクティスの推奨事項を示します。
 
-Classes:
+クラス:
 
--  All class variables, instance variables, and methods that are
-   “visible” (not overridden) are annotated and refer to known types
--  If a class is a subclass of a generic class, type arguments are
-   provided for each generic type parameter, and these type arguments
-   are known types
+- 「表示可能」(オーバーライドされていない) すべてのクラス変数、インスタンス変数、およびメソッドに注釈が付けられ、既知の型を参照する
+- クラスがジェネリック クラスのサブクラスである場合、各ジェネリック型パラメーターに対して型引数が指定され、これらの型引数は既知の型である
 
-Functions and Methods:
+関数とメソッド:
 
--  All input parameters have type annotations that refer to known types
--  The return parameter is annotated and refers to a known type
--  The result of applying one or more decorators results in a known type
+- すべての入力パラメーターには、既知の型を参照する型注釈が付けられている
+- 戻り値のパラメーターには注釈が付けられ、既知の型を参照する
+- 1 つ以上のデコレータを適用した結果、既知の型が得られる
 
-Type Aliases:
+型エイリアス:
 
--  All of the types referenced by the type alias are known
+- 型エイリアスによって参照されるすべての型は既知のものである
 
-Variables:
+変数:
 
--  All variables have type annotations that refer to known types
+- すべての変数には、既知の型を参照する型注釈が付けられている
 
-Type annotations can be omitted in a few specific cases where the type
-is obvious from the context:
+型注釈は、型がコンテキストから明らかな場合に省略できます。
 
--  Constants that are assigned simple literal values
-   (e.g. ``RED = '#F00'`` or ``MAX_TIMEOUT = 50`` or
-   ``room_temperature: Final = 20``). A constant is a symbol that is
-   assigned only once and is either annotated with ``Final`` or is named
-   in all-caps. A constant that is not assigned a simple literal value
-   requires explicit annotations, preferably with a ``Final`` annotation
-   (e.g. ``WOODWINDS: Final[List[str]] = ['Oboe', 'Bassoon']``).
--  Enum values within an Enum class do not require annotations because
-   they take on the type of the Enum class.
--  Type aliases do not require annotations. A type alias is a symbol
-   that is defined at a module level with a single assignment where the
-   assigned value is an instantiable type, as opposed to a class
-   instance
-   (e.g. ``Foo = Callable[[Literal["a", "b"]], Union[int, str]]`` or
-   ``Bar = Optional[MyGenericClass[int]]``).
--  The “self” parameter in an instance method and the “cls” parameter in
-   a class method do not require an explicit annotation.
--  The return type for an ``__init__`` method does not need to be
-   specified, since it is always ``None``.
--  The following module-level symbols do not require type annotations:
-   ``__all__``,\ ``__author__``, ``__copyright__``, ``__email__``,
-   ``__license__``, ``__title__``, ``__uri__``, ``__version__``.
--  The following class-level symbols do not require type annotations:
-   ``__class__``, ``__dict__``, ``__doc__``, ``__module__``,
-   ``__slots__``.
+- 単純なリテラル値が割り当てられた定数 (例: ``RED = '#F00'`` または ``MAX_TIMEOUT = 50`` または ``room_temperature: Final = 20``)。 定数は、1 回だけ割り当てられ、``Final`` で注釈されているか、すべて大文字で名前が付けられているシンボルです。 単純なリテラル値が割り当てられていない定数には、明示的な注釈が必要です。できれば ``Final`` 注釈を付けてください (例: ``WOODWINDS: Final[List[str]] = ['Oboe', 'Bassoon']``)。
+- Enum クラス内の Enum 値には注釈は必要ありません。これらは Enum クラスの型を取ります。
+- 型エイリアスには注釈は必要ありません。 型エイリアスは、モジュール レベルで単一の割り当てを持つシンボルであり、割り当てられた値がクラス インスタンスではなくインスタンス化可能な型であるものです (例: ``Foo = Callable[[Literal["a", "b"]], Union[int, str]]`` または ``Bar = Optional[MyGenericClass[int]]``)。
+- インスタンス メソッドの「self」パラメーターおよびクラス メソッドの「cls」パラメーターには、明示的な注釈は必要ありません。
+- ``__init__`` メソッドの戻り値の型を指定する必要はありません。常に ``None`` であるためです。
+- 次のモジュール レベルのシンボルには型注釈は必要ありません。 ``__all__``, ``__author__``, ``__copyright__``, ``__email__``, ``__license__``, ``__title__``, ``__uri__``, ``__version__``。
+- 次のクラス レベルのシンボルには型注釈は必要ありません。 ``__class__``, ``__dict__``, ``__doc__``, ``__module__``, ``__slots__``。
 
-Examples of known and unknown types
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+既知の型と未知の型の例
+==========================================================================================
 
 .. code:: python
 
 
-   # Variable with unknown type
+   # 型が不明な変数
    a = [3, 4, 5]
 
-   # Variable with known type
+   # 既知の型を持つ変数
    a: List[int] = [3, 4, 5]
 
-   # Type alias with partially unknown type (because type
-   # arguments are missing for list and dict)
+   # 部分的に未知の型を持つ型エイリアス (型引数が list および dict に対して欠落しているため)
    DictOrList = Union[list, dict]
 
-   # Type alias with known type
+   # 既知の型を持つ型エイリアス
    DictOrList = Union[List[Any], Dict[str, Any]]
 
-   # Generic type alias with known type
+   # 既知の型を持つジェネリック型エイリアス
    _T = TypeVar("_T")
    DictOrList = Union[List[_T], Dict[str, _T]]
 
-   # Function with known type
+   # 既知の型を持つ関数
    def func(a: Optional[int], b: Dict[str, float] = {}) -> None:
        pass
 
-   # Function with partially unknown type (because type annotations
-   # are missing for input parameters and return type)
+   # 部分的に未知の型を持つ関数 (型注釈が入力パラメーターおよび戻り値の型に対して欠落しているため)
    def func(a, b):
        pass
 
-   # Function with partially unknown type (because of missing
-   # type args on Dict)
+   # 部分的に未知の型を持つ関数 (Dict に型引数が欠落しているため)
    def func(a: int, b: Dict) -> None:
        pass
 
-   # Function with partially unknown type (because return type
-   # annotation is missing)
+   # 部分的に未知の型を持つ関数 (戻り値の型注釈が欠落しているため)
    def func(a: int, b: Dict[str, float]):
        pass
 
-   # Decorator with partially unknown type (because type annotations
-   # are missing for input parameters and return type)
+   # 部分的に未知の型を持つデコレータ (型注釈が入力パラメーターおよび戻り値の型に対して欠落しているため)
    def my_decorator(func):
        return func
 
-   # Function with partially unknown type (because type is obscured
-   # by untyped decorator)
+   # 部分的に未知の型を持つ関数 (型が型なしデコレータによって隠されているため)
    @my_decorator
    def func(a: int) -> str:
        pass
 
 
-   # Class with known type
+   # 既知の型を持つクラス
    class MyClass:
        height: float = 2.0
 
@@ -317,107 +245,72 @@ Examples of known and unknown types
        def name(self) -> str:
            ...
 
-   # Class with partially unknown type
+   # 部分的に未知の型を持つクラス
    class MyClass:
-       # Missing type annotation for class variable
+       # クラス変数の型注釈が欠落している
        height = 2.0
 
-       # Missing input parameter annotations
+       # 入力パラメーターの型注釈が欠落している
        def __init__(self, name, age):
-           # Missing type annotation for instance variable
+           # インスタンス変数の型注釈が欠落している
            self.age = age
 
-       # Missing return type annotation
+       # 戻り値の型注釈が欠落している
        @property
        def name(self):
            ...
 
-   # Class with partially unknown type
+   # 部分的に未知の型を持つクラス
    class BaseClass:
-       # Missing type annotation
+       # 型注釈が欠落している
        height = 2.0
 
-       # Missing type annotation
+       # 型注釈が欠落している
        def get_stuff(self):
            ...
 
-   # Class with known type (because it overrides all symbols
-   # exposed by BaseClass that have incomplete types)
+   # 既知の型を持つクラス (BaseClass によって公開されたすべてのシンボルをオーバーライドしているため)
    class DerivedClass(BaseClass):
        height: float
 
        def get_stuff(self) -> str:
            ...
 
-   # Class with partially unknown type because base class
-   # (dict) is generic, and type arguments are not specified.
+   # 部分的に未知の型を持つクラス (dict がジェネリックであり、型引数が指定されていないため)
    class DictSubclass(dict):
        pass
 
-..
-   TODO: consider moving best practices to their own page?
+インライン型のベスト プラクティス
+==========================================================================================
 
-Best Practices for Inlined Types
-================================
+広い型と狭い型
+==========================================================================================
 
-Wide vs. Narrow Types
----------------------
+型理論では、互いに関連する 2 つの型を比較する場合、「広い」型はより一般的な型であり、「狭い」型はより具体的な型です。 たとえば、``Sequence[str]`` は ``List[str]`` よりも広い型です。すべての ``List`` オブジェクトは ``Sequence`` オブジェクトでもありますが、その逆は成り立ちません。 サブクラスは、それが派生するクラスよりも狭いです。 型の共用体は、それを構成する個々の型よりも広いです。
 
-In type theory, when comparing two types that are related to each other,
-the “wider” type is the one that is more general, and the “narrower”
-type is more specific. For example, ``Sequence[str]`` is a wider type
-than ``List[str]`` because all ``List`` objects are also ``Sequence``
-objects, but the converse is not true. A subclass is narrower than a
-class it derives from. A union of types is wider than the individual
-types that comprise the union.
+一般に、関数の入力パラメーターには、実装でサポートされている最も広い型を注釈として付ける必要があります。 たとえば、実装が呼び出し元に文字列の反復可能なコレクションを提供する必要がある場合、パラメーターには ``List[str]`` ではなく ``Iterable[str]`` と注釈を付ける必要があります。 後者の型は必要以上に狭いため、ユーザーが文字列のタプルを渡そうとすると (実装でサポートされている)、型チェッカーは型の非互換性について警告します。
 
-In general, a function input parameter should be annotated with the
-widest possible type supported by the implementation. For example, if
-the implementation requires the caller to provide an iterable collection
-of strings, the parameter should be annotated as ``Iterable[str]``, not
-as ``List[str]``. The latter type is narrower than necessary, so if a
-user attempts to pass a tuple of strings (which is supported by the
-implementation), a type checker will complain about a type
-incompatibility.
+「可能な限り広い型を使用する」というルールの具体的な適用例として、ライブラリは (関数がコンテナーを変更する必要がない限り) 通常、変更可能な形式のコンテナー型ではなく、変更不可能な形式のコンテナー型を使用する必要があります。 ``Sequence`` を ``List`` の代わりに使用し、``Mapping`` を ``Dict`` の代わりに使用します。 変更不可能なコンテナーは、型パラメーターが不変ではなく共変であるため、より柔軟性があります。 ``Sequence[Union[str, int]]`` として型指定されたパラメーターは、``List[int]``、``Sequence[str]``、および ``Sequence[int]`` を受け入れることができます。 ただし、``List[Union[str, int]]`` として型指定されたパラメーターははるかに制限が厳しく、``List[Union[str, int]]`` のみを受け入れます。
 
-As a specific application of the “use the widest type possible” rule,
-libraries should generally use immutable forms of container types
-instead of mutable forms (unless the function needs to modify the
-container). Use ``Sequence`` rather than ``List``, ``Mapping`` rather
-than ``Dict``, etc. Immutable containers allow for more flexibility
-because their type parameters are covariant rather than invariant. A
-parameter that is typed as ``Sequence[Union[str, int]]`` can accept a
-``List[int]``, ``Sequence[str]``, and a ``Sequence[int]``. But a
-parameter typed as ``List[Union[str, int]]`` is much more restrictive
-and accepts only a ``List[Union[str, int]]``.
+オーバーロード
+==========================================================================================
 
-Overloads
----------
+関数またはメソッドが複数の異なる型を返すことができ、それらの型が特定のパラメーターの存在または型に基づいて決定できる場合は、`PEP 484 <https://www.python.org/dev/peps/pep-0484/#id45>`__ で定義されている ``@overload`` メカニズムを使用します。 オーバーロードは「.py」ファイル内で使用される場合、関数実装の前に表示される必要があり、``@overload`` デコレータを持つべきではありません。
 
-If a function or method can return multiple different types and those
-types can be determined based on the presence or types of certain
-parameters, use the ``@overload`` mechanism defined in `PEP
-484 <https://www.python.org/dev/peps/pep-0484/#id45>`__. When overloads
-are used within a “.py” file, they must appear prior to the function
-implementation, which should not have an ``@overload`` decorator.
+キーワード専用パラメーター
+==========================================================================================
 
-Keyword-only Parameters
------------------------
-
-If a function or method is intended to take parameters that are
-specified only by name, use the keyword-only separator (``*``).
+関数またはメソッドが名前でのみ指定されるパラメーターを取ることを意図している場合は、キーワード専用セパレータ (``*``) を使用します。
 
 .. code:: python
 
    def create_user(age: int, *, dob: Optional[date] = None):
        ...
 
-Annotating Decorators
----------------------
+デコレータの注釈
+==========================================================================================
 
-Decorators modify the behavior of a class or a function. Providing
-annotations for decorators is straightforward if the decorator retains
-the original signature of the decorated function.
+デコレータはクラスまたは関数の動作を変更します。 デコレータに注釈を付けることは、デコレータが装飾された関数の元のシグネチャを保持する場合は簡単です。
 
 .. code:: python
 
@@ -425,7 +318,7 @@ the original signature of the decorated function.
 
    def simple_decorator(_func: _F) -> _F:
        """
-        Simple decorators are invoked without parentheses like this:
+        シンプルなデコレータは次のようにかっこなしで呼び出されます。
           @simple_decorator
           def my_function(): ...
         """
@@ -433,66 +326,44 @@ the original signature of the decorated function.
 
    def complex_decorator(*, mode: str) -> Callable[[_F], _F]:
        """
-        Complex decorators are invoked with arguments like this:
+        複雑なデコレータは次のように引数を指定して呼び出されます。
           @complex_decorator(mode="easy")
           def my_function(): ...
         """
       ...
 
-Decorators that mutate the signature of the decorated function present
-challenges for type annotations. The ``ParamSpec`` and ``Concatenate``
-mechanisms described in :pep:`612` provide some help
-here, but these are available only in Python 3.10 and newer. More
-complex signature mutations may require type annotations that erase the
-original signature, thus blinding type checkers and other tools that
-provide signature assistance. As such, library authors are discouraged
-from creating decorators that mutate function signatures in this manner.
+装飾された関数のシグネチャを変更するデコレータは、型注釈に課題をもたらします。 :pep:`612` で説明されている ``ParamSpec`` および ``Concatenate`` メカニズムはここで役立ちますが、これらは Python 3.10 以降でのみ使用できます。 より複雑なシグネチャの変更には、元のシグネチャを消去する型注釈が必要になる場合があり、これにより型チェッカーやその他のツールがシグネチャ アシスタンスを提供できなくなります。 そのため、ライブラリ作成者は、この方法で関数シグネチャを変更するデコレータの作成を控えることをお勧めします。
 
-Generic Classes and Functions
------------------------------
+ジェネリック クラスと関数
+==========================================================================================
 
-Classes and functions that can operate in a generic manner on various
-types should declare themselves as generic using the mechanisms
-described in :pep:`484`.
-This includes the use of ``TypeVar`` symbols. Typically, a ``TypeVar``
-should be private to the file that declares it, and should therefore
-begin with an underscore.
+さまざまな型に対してジェネリックな方法で操作できるクラスと関数は、:pep:`484` で説明されているメカニズムを使用してジェネリックとして宣言する必要があります。 これには、``TypeVar`` シンボルの使用が含まれます。 通常、``TypeVar`` はそれを宣言するファイルに対してプライベートである必要があり、したがってアンダースコアで始まる必要があります。
 
-Type Aliases
-------------
+型エイリアス
+==========================================================================================
 
-Type aliases are symbols that refer to other types. Generic type aliases
-(those that refer to unspecialized generic classes) are supported by
-most type checkers.
+型エイリアスは、他の型を参照するシンボルです。 ジェネリック型エイリアス (特殊化されていないジェネリック クラスを参照するもの) は、ほとんどの型チェッカーでサポートされています。
 
-:pep:`613` provides a way
-to explicitly designate a symbol as a type alias using the new TypeAlias
-annotation.
+:pep:`613` は、新しい TypeAlias 注釈を使用してシンボルを型エイリアスとして明示的に指定する方法を提供します。
 
 .. code:: python
 
-   # Simple type alias
+   # シンプルな型エイリアス
    FamilyPet = Union[Cat, Dog, GoldFish]
 
-   # Generic type alias
+   # ジェネリック型エイリアス
    ListOrTuple = Union[List[_T], Tuple[_T, ...]]
 
-   # Recursive type alias
+   # 再帰型エイリアス
    TreeNode = Union[LeafNode, List["TreeNode"]]
 
-   # Explicit type alias using PEP 613 syntax
+   # PEP 613 構文を使用した明示的な型エイリアス
    StrOrInt: TypeAlias = Union[str, int]
 
-Abstract Classes and Methods
-----------------------------
+抽象クラスとメソッド
+==========================================================================================
 
-Classes that must be subclassed should derive from ``ABC``, and methods
-or properties that must be overridden should be decorated with the
-``@abstractmethod`` decorator. This allows type checkers to validate
-that the required methods have been overridden and provide developers
-with useful error messages when they are not. It is customary to
-implement an abstract method by raising a ``NotImplementedError``
-exception.
+サブクラス化する必要があるクラスは ``ABC`` から派生し、オーバーライドする必要があるメソッドまたはプロパティには ``@abstractmethod`` デコレータを付ける必要があります。 これにより、型チェッカーは必要なメソッドがオーバーライドされていることを検証し、そうでない場合に役立つエラーメッセージを開発者に提供できます。 抽象メソッドを実装するには、``NotImplementedError`` 例外を発生させるのが一般的です。
 
 .. code:: python
 
@@ -502,126 +373,95 @@ exception.
       @property
       @abstractmethod
       def hash_value(self) -> int:
-         """Subclasses must override"""
+         """サブクラスはオーバーライドする必要があります"""
          raise NotImplementedError()
 
       @abstractmethod
       def print(self) -> str:
-         """Subclasses must override"""
+         """サブクラスはオーバーライドする必要があります"""
          raise NotImplementedError()
 
-Final Classes and Methods
--------------------------
+最終クラスとメソッド
+==========================================================================================
 
-Classes that are not intended to be subclassed should be decorated as
-``@final`` as described in :pep:`591`. The same decorator
-can also be used to specify methods that cannot be overridden by
-subclasses.
+サブクラス化することを意図していないクラスには、:pep:`591` で説明されているように ``@final`` としてデコレートする必要があります。 同じデコレータを使用して、サブクラスによってオーバーライドできないメソッドを指定することもできます。
 
-Literals
---------
+リテラル
+==========================================================================================
 
-Type annotations should make use of the Literal type where appropriate,
-as described in :pep:`586`.
-Literals allow for more type specificity than their non-literal
-counterparts.
+型注釈は、:pep:`586` で説明されているように、適切な場合にリテラル型を使用する必要があります。 リテラルは、非リテラルの対応する部分よりも型の特異性を高めることができます。
 
-Constants
----------
+定数
+==========================================================================================
 
-Constant values (those that are read-only) can be specified using the
-Final annotation as described in :pep:`591`.
+定数値 (読み取り専用の値) は、:pep:`591` で説明されているように Final 注釈を使用して指定できます。
 
-Type checkers will also typically treat variables that are named using
-all upper-case characters as constants.
+型チェッカーは通常、すべて大文字の文字を使用して名前が付けられた変数を定数として扱います。
 
-In both cases, it is OK to omit the declared type of a constant if it is
-assigned a literal str, int, float, bool or None value. In such cases,
-the type inference rules are clear and unambiguous, and adding a literal
-type annotation would be redundant.
+どちらの場合も、リテラル str、int、float、bool、または None 値が割り当てられている場合、定数の宣言型を省略しても問題ありません。 このような場合、型推論ルールは明確かつ一意であり、リテラル型注釈を追加することは冗長になります。
 
 .. code:: python
 
-   # All-caps constant with inferred type
+   # 推論された型を持つすべて大文字の定数
    COLOR_FORMAT_RGB = "rgb"
 
-   # All-caps constant with explicit type
+   # 明示的な型を持つすべて大文字の定数
    COLOR_FORMAT_RGB: Literal["rgb"] = "rgb"
    LATEST_VERSION: Tuple[int, int] = (4, 5)
 
-   # Final variable with inferred type
+   # 推論された型を持つ最終変数
    ColorFormatRgb: Final = "rgb"
 
-   # Final variable with explicit type
+   # 明示的な型を持つ最終変数
    ColorFormatRgb: Final[Literal["rgb"]] = "rgb"
    LATEST_VERSION: Final[Tuple[int, int]] = (4, 5)
 
-Typed Dictionaries, Data Classes, and Named Tuples
---------------------------------------------------
+型付き辞書、データ クラス、および名前付きタプル
+==========================================================================================
 
-If your library runs only on newer versions of Python, you are
-encouraged to use some of the new type-friendly classes.
+ライブラリが新しいバージョンの Python でのみ実行される場合は、新しい型に対応したクラスの使用をお勧めします。
 
-NamedTuple (described in :pep:`484`) is preferred over
-namedtuple.
+NamedTuple (:pep:`484` で説明) は namedtuple よりも優先されます。
 
-Data classes (described in :pep:`557`) are preferred over
-untyped dictionaries.
+データ クラス (:pep:`557` で説明) は、型なし辞書よりも優先されます。
 
-TypedDict (described in :pep:`589`) is preferred over
-untyped dictionaries.
+TypedDict (:pep:`589` で説明) は、型なし辞書よりも優先されます。
 
-Compatibility with Older Python Versions
-========================================
+古い Python バージョンとの互換性
+==========================================================================================
 
-Each new version of Python from 3.5 onward has introduced new typing
-constructs. This presents a challenge for library authors who want to
-maintain runtime compatibility with older versions of Python. This
-section documents several techniques that can be used to add types while
-maintaining backward compatibility.
+3.5 以降の各新しいバージョンの Python には、新しい型付け構造が導入されています。 これは、古いバージョンの Python との実行時の互換性を維持したいライブラリ作成者にとって課題となります。 このセクションでは、型を追加しながら後方互換性を維持するために使用できるいくつかの手法について説明します。
 
-Quoted Annotations
-------------------
+引用された注釈
+==========================================================================================
 
-Type annotations for variables, parameters, and return types can be
-placed in quotes. The Python interpreter will then ignore them, whereas
-a type checker will interpret them as type annotations.
+変数、パラメーター、および戻り値の型注釈は引用符で囲むことができます。 その後、Python インタープリターはそれらを無視しますが、型チェッカーはそれらを型注釈として解釈します。
 
 .. code:: python
 
-   # Older versions of Python do not support subscripting
-   # for the OrderedDict type, so the annotation must be
-   # enclosed in quotes.
+   # OrderedDict 型は古いバージョンの Python ではサブスクリプトをサポートしていないため、注釈を引用符で囲む必要があります。
    def get_config(self) -> "OrderedDict[str, str]":
       return self._config
 
-Type Comment Annotations
-------------------------
+型コメント注釈
+==========================================================================================
 
-Python 3.0 introduced syntax for parameter and return type annotations,
-as specified in :pep:`484`.
-Python 3.6 introduced support for variable type annotations, as
-specified in :pep:`526`.
+Python 3.0 では、:pep:`484` で指定されているように、パラメーターおよび戻り値の型注釈の構文が導入されました。 Python 3.6 では、:pep:`526` で指定されているように、変数の型注釈のサポートが導入されました。
 
-If you need to support older versions of Python, type annotations can
-still be provided as “type comments”. These comments take the form
-``# type:``.
+古いバージョンの Python をサポートする必要がある場合、型注釈は「型コメント」として提供できます。 これらのコメントは ``# type:`` の形式を取ります。
 
 .. code:: python
 
    class Foo:
-      # Variable type comments go at the end of the line
-      # where the variable is assigned.
+      # 変数の型コメントは、変数が割り当てられた行の末尾に記述します。
       timeout = None # type: Optional[int]
 
-      # Function type comments can be specified on the
-      # line after the function signature.
+      # 関数の型コメントは、関数シグネチャの行の後に指定できます。
       def send_message(self, name, length):
          # type: (str, int) -> None
          ...
 
-      # Function type comments can also specify the type
-      # of each parameter on its own line.
+      # 関数の型コメントは、各パラメーターの型を個別の行に指定することもできます。
       def receive_message(
          self,
          name, # type: str
@@ -631,40 +471,25 @@ still be provided as “type comments”. These comments take the form
          ...
 
 typing_extensions
------------------
+==========================================================================================
 
-New type features that require runtime support are typically included in
-the stdlib ``typing`` module. Where possible, these new features are
-back-ported to a runtime library called ``typing_extensions`` that works
-with older Python runtimes.
+ランタイム サポートを必要とする新しい型機能は通常、stdlib ``typing`` モジュールに含まれます。 可能な場合、これらの新機能は ``typing_extensions`` というランタイム ライブラリにバックポートされ、古い Python ランタイムで動作します。
 
 TYPE_CHECKING
--------------
+==========================================================================================
 
-The ``typing`` module exposes a variable called ``TYPE_CHECKING`` which
-has a value of False within the Python runtime but a value of True when
-the type checker is performing its analysis. This allows type checking
-statements to be conditionalized.
+``typing`` モジュールは ``TYPE_CHECKING`` という変数を公開しており、これは Python ランタイム内では False の値を持ちますが、型チェッカーが分析を実行しているときは True の値を持ちます。 これにより、型チェック ステートメントを条件付きにすることができます。
 
-Care should be taken when using ``TYPE_CHECKING`` because behavioral
-changes between type checking and runtime could mask problems that the
-type checker would otherwise catch.
+``TYPE_CHECKING`` を使用する場合は注意が必要です。型チェックと実行時の間で動作が変更されると、型チェッカーが検出するはずの問題が隠される可能性があるためです。
 
-Non-Standard Type Behaviors
-===========================
+非標準の型の動作
+==========================================================================================
 
-Type annotations provide a way to annotate typical type behaviors, but
-some classes implement specialized, non-standard behaviors that cannot
-be described using standard type annotations. For now, such types need
-to be annotated as Any, which is unfortunate because the benefits of
-static typing are lost.
+型注釈は、典型的な型の動作に注釈を付ける方法を提供しますが、一部のクラスは標準以外の特殊な動作を実装しており、標準の型注釈を使用して記述することはできません。 現時点では、そのような型は Any として注釈を付ける必要があります。これは残念なことです。静的型付けの利点が失われるためです。
 
-Docstrings
-==========
+ドキュメント文字列
+==========================================================================================
 
-Docstrings should be provided for all classes, functions, and methods in
-the interface. They should be formatted according to :pep:`257`.
+ドキュメント文字列は、インターフェイス内のすべてのクラス、関数、およびメソッドに提供する必要があります。 それらは :pep:`257` に従ってフォーマットする必要があります。
 
-There is currently no single agreed-upon standard for function and
-method docstrings, but several common variants have emerged. We
-recommend using one of these variants.
+関数およびメソッドのドキュメント文字列に関しては、現在、単一の合意された標準はありませんが、いくつかの一般的なバリアントが登場しています。 これらのバリアントのいずれかを使用することをお勧めします。

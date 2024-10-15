@@ -5,71 +5,53 @@
 
 .. _modernizing:
 
-**************************************
-Modernizing Superseded Typing Features
-**************************************
+******************************************************************************************
+廃止された型機能のモダナイズ
+******************************************************************************************
 
-Introduction
-============
+はじめに
+==========================================================================================
 
-This guide helps to modernize your code by replacing older typing features
-with their modern equivalents. Not all features described here are obsolete,
-but they are superseded by more modern alternatives, which are recommended to use.
+このガイドでは、古い型機能を最新のものに置き換えることでコードをモダナイズする方法を説明します。 ここで説明するすべての機能が廃止されているわけではありませんが、より最新の代替機能によって置き換えられており、これらの代替機能の使用が推奨されます。
 
-These newer features are not available in all Python versions, although
-some features are available as backports from the
-`typing-extensions <https://pypi.org/project/typing-extensions/>`_
-package, or require quoting or using :python:`from __future__ import annotations`.
-Each section states the minimum Python version required to use the
-feature, whether it is available in typing-extensions, and whether it is
-available using quoting.
+これらの新しい機能はすべての Python バージョンで利用できるわけではありませんが、一部の機能は `typing-extensions <https://pypi.org/project/typing-extensions/>`_ パッケージからのバックポートとして利用できるか、引用または :python:`from __future__ import annotations` を使用する必要があります。 各セクションでは、機能を使用するために必要な最小 Python バージョン、typing-extensions で利用可能かどうか、および引用を使用して利用可能かどうかを示しています。
 
 .. note::
 
-    The latest version of typing-extensions is available for all Python
-    versions that have not reached their end of life, but not necessarily for
-    older versions.
+    typing-extensions の最新バージョンは、サポートが終了していないすべての Python バージョンで利用できますが、古いバージョンでは必ずしも利用できるとは限りません。
 
 .. note::
 
-    :python:`from __future__ import annotations` is available since Python 3.7.
-    This only has an effect inside type annotations, while quoting is still
-    required outside. For example, this example runs on Python 3.7 and up,
-    although the pipe operator was only introduced in Python 3.10::
+    :python:`from __future__ import annotations` は Python 3.7 以降で利用可能です。 これは型注釈内でのみ効果があり、引用は依然として外部で必要です。 たとえば、この例は Python 3.7 以降で実行されますが、パイプ演算子は Python 3.10 で導入されました::
 
         from __future__ import annotations
         from typing_extensions import TypeAlias
 
-        def f(x: int | None) -> int | str: ...  # the future import is sufficient
-        Alias: TypeAlias = "int | str"  # this requires quoting
+        def f(x: int | None) -> int | str: ...  # future import で十分です
+        Alias: TypeAlias = "int | str"  # これは引用が必要です
 
 .. _modernizing-type-comments:
 
-Type Comments
-=============
+型コメント
+==========================================================================================
 
-*Alternative available since:* Python 3.0, 3.6
+*代替機能が利用可能になったのは:* Python 3.0, 3.6
 
-Type comments were originally introduced to support type annotations in
-Python 2 and variable annotations before Python 3.6. While most type checkers
-still support them, they are considered obsolete, and type checkers are
-not required to support them.
+型コメントは元々、Python 2 および Python 3.6 より前のバージョンで変数注釈をサポートするために導入されました。 ほとんどの型チェッカーは依然としてサポートしていますが、これらは廃止されたと見なされており、型チェッカーはそれらをサポートする必要はありません。
 
-For example, replace::
+たとえば、次のように置き換えます::
 
     x = 3  # type: int
     def f(x, y):  # type: (int, int) -> int
         return x + y
 
-with::
+次のように置き換えます::
 
     x: int = 3
     def f(x: int, y: int) -> int:
         return x + y
 
-When using forward references or types only available during type checking,
-it's necessary to either use :python:`from __future__ import annotations`
-(available since Python 3.7) or to quote the type::
+前方参照や型チェック時にのみ利用可能な型を使用する場合は、:python:`from __future__ import annotations` (Python 3.7 以降で利用可能) を使用するか、型を引用する必要があります::
 
     def f(x: "Parrot") -> int: ...
 
@@ -78,70 +60,63 @@ it's necessary to either use :python:`from __future__ import annotations`
 .. _modernizing-typing-text:
 
 ``typing.Text``
-===============
+==========================================================================================
 
-*Alternative available since:* Python 3.0
+*代替機能が利用可能になったのは:* Python 3.0
 
-:class:`typing.Text` was a type alias intended for Python 2 compatibility.
-It is equivalent to :class:`str` and should be replaced with it.
-For example, replace::
+:class:`typing.Text` は Python 2 互換性のための型エイリアスでした。 これは :class:`str` と同等であり、置き換える必要があります。
+たとえば、次のように置き換えます::
 
     from typing import Text
 
     def f(x: Text) -> Text: ...
 
-with::
+次のように置き換えます::
 
     def f(x: str) -> str: ...
 
 .. _modernizing-typed-dict:
 
-``typing.TypedDict`` Legacy Forms
-=================================
+``typing.TypedDict`` レガシーフォーム
+==========================================================================================
 
-*Alternative available since:* Python 3.6
+*代替機能が利用可能になったのは:* Python 3.6
 
-:class:`TypedDict <typing.TypedDict>` supports two legacy forms for
-supporting Python versions that don't support variable annotations.
-Replace these two variants::
+:class:`TypedDict <typing.TypedDict>` は、変数注釈をサポートしない Python バージョンをサポートするための 2 つのレガシーフォームをサポートしています。 次の 2 つのバリアントを置き換えます::
 
     from typing import TypedDict
 
     FlyingSaucer = TypedDict("FlyingSaucer", {"x": int, "y": str})
     FlyingSaucer = TypedDict("FlyingSaucer", x=int, y=str)
 
-with::
+次のように置き換えます::
 
     class FlyingSaucer(TypedDict):
         x: int
         y: str
 
-But the dictionary form is still necessary if the keys are not valid Python
-identifiers::
+ただし、キーが有効な Python 識別子でない場合は、辞書形式が依然として必要です::
 
     Airspeeds = TypedDict("Airspeeds", {"unladen-swallow": int})
 
 .. _modernizing-generics:
 
-Generics in the ``typing`` Module
-=================================
+``typing`` モジュールのジェネリクス
+==========================================================================================
 
-*Alternative available since:* Python 3.0 (quoted), Python 3.9 (unquoted)
+*代替機能が利用可能になったのは:* Python 3.0 (引用), Python 3.9 (非引用)
 
-Originally, the :mod:`typing` module provided aliases for built-in types that
-accepted type parameters. Since Python 3.9, these aliases are no longer
-necessary, and can be replaced with the built-in types. For example,
-replace::
+元々、:mod:`typing` モジュールは、型パラメーターを受け入れる組み込み型のエイリアスを提供していました。 Python 3.9 以降、これらのエイリアスは不要になり、組み込み型に置き換えることができます。 たとえば、次のように置き換えます::
 
     from typing import Dict, List
 
     def f(x: List[int]) -> Dict[str, int]: ...
 
-with::
+次のように置き換えます::
 
     def f(x: list[int]) -> dict[str, int]: ...
 
-This affects the following types:
+これには次の型が影響します:
 
 * :class:`typing.Dict` (→ :class:`dict`)
 * :class:`typing.FrozenSet` (→ :class:`frozenset`)
@@ -149,23 +124,20 @@ This affects the following types:
 * :class:`typing.Set` (→ :class:`set`)
 * :data:`typing.Tuple` (→ :class:`tuple`)
 
-The :mod:`typing` module also provided aliases for certain standard library
-types that accepted type parameters. Since Python 3.9, these aliases are no
-longer necessary, and can be replaced with the proper types. For example,
-replace::
+:mod:`typing` モジュールは、型パラメーターを受け入れる特定の標準ライブラリ型のエイリアスも提供していました。 Python 3.9 以降、これらのエイリアスは不要になり、適切な型に置き換えることができます。 たとえば、次のように置き換えます::
 
     from typing import DefaultDict, Pattern
 
     def f(x: Pattern[str]) -> DefaultDict[str, int]: ...
 
-with::
+次のように置き換えます::
 
     from collections import defaultdict
     from re import Pattern
 
     def f(x: Pattern[str]) -> defaultdict[str, int]: ...
 
-This affects the following types:
+これには次の型が影響します:
 
 * :class:`typing.Deque` (→ :class:`collections.deque`)
 * :class:`typing.DefaultDict` (→ :class:`collections.defaultdict`)
@@ -184,66 +156,61 @@ This affects the following types:
 * :class:`typing.Container` (→ :class:`collections.abc.Container`)
 * :class:`typing.Collection` (→ :class:`collections.abc.Collection`)
 * :data:`typing.Callable` (→ :class:`collections.abc.Callable`)
-* :class:`typing.AbstractSet` (→ :class:`collections.abc.Set`), note the change in name
+* :class:`typing.AbstractSet` (→ :class:`collections.abc.Set`), 名前の変更に注意
 * :class:`typing.MutableSet` (→ :class:`collections.abc.MutableSet`)
 * :class:`typing.Mapping` (→ :class:`collections.abc.Mapping`)
 * :class:`typing.MutableMapping` (→ :class:`collections.abc.MutableMapping`)
 * :class:`typing.Sequence` (→ :class:`collections.abc.Sequence`)
 * :class:`typing.MutableSequence` (→ :class:`collections.abc.MutableSequence`)
-* :class:`typing.ByteString` (→ :class:`collections.abc.ByteString`), but see :ref:`modernizing-byte-string`
+* :class:`typing.ByteString` (→ :class:`collections.abc.ByteString`), ただし :ref:`modernizing-byte-string` を参照
 * :class:`typing.MappingView` (→ :class:`collections.abc.MappingView`)
 * :class:`typing.KeysView` (→ :class:`collections.abc.KeysView`)
 * :class:`typing.ItemsView` (→ :class:`collections.abc.ItemsView`)
 * :class:`typing.ValuesView` (→ :class:`collections.abc.ValuesView`)
-* :class:`typing.ContextManager` (→ :class:`contextlib.AbstractContextManager`), note the change in name
-* :class:`typing.AsyncContextManager` (→ :class:`contextlib.AbstractAsyncContextManager`), note the change in name
+* :class:`typing.ContextManager` (→ :class:`contextlib.AbstractContextManager`), 名前の変更に注意
+* :class:`typing.AsyncContextManager` (→ :class:`contextlib.AbstractAsyncContextManager`), 名前の変更に注意
 * :class:`typing.Pattern` (→ :class:`re.Pattern`)
 * :class:`typing.Match` (→ :class:`re.Match`)
 
 .. _modernizing-union:
 
-``typing.Union`` and ``typing.Optional``
-========================================
+``typing.Union`` および ``typing.Optional``
+==========================================================================================
 
-*Alternative available since:* Python 3.0 (quoted), Python 3.10 (unquoted)
+*代替機能が利用可能になったのは:* Python 3.0 (引用), Python 3.10 (非引用)
 
-While :data:`Union <typing.Union>` and :data:`Optional <typing.Optional>` are
-not considered obsolete, using the ``|`` (pipe) operator is often more
-readable. :python:`Union[X, Y]` is equivalent to :python:`X | Y`, while
-:python:`Optional[X]` is equivalent to :python:`X | None`.
+:data:`Union <typing.Union>` および :data:`Optional <typing.Optional>` は廃止されたとは見なされていませんが、``|`` (パイプ) 演算子を使用する方が読みやすい場合がよくあります。 :python:`Union[X, Y]` は :python:`X | Y` と同等であり、:python:`Optional[X]` は :python:`X | None` と同等です。
 
-For example, replace::
+たとえば、次のように置き換えます::
 
     from typing import Optional, Union
 
     def f(x: Optional[int]) -> Union[int, str]: ...
 
-with::
+次のように置き換えます::
 
     def f(x: int | None) -> int | str: ...
 
 .. _modernizing-no-return:
 
 ``typing.NoReturn``
-===================
+==========================================================================================
 
-*Alternative available since:* Python 3.11, typing-extensions
+*代替機能が利用可能になったのは:* Python 3.11, typing-extensions
 
-Python 3.11 introduced :data:`typing.Never` as an alias to
-:data:`typing.NoReturn` for use in annotations that are not
-return types. For example, replace::
+Python 3.11 では、:data:`typing.NoReturn` のエイリアスとして :data:`typing.Never` が導入され、戻り値の型ではない注釈で使用されます。 たとえば、次のように置き換えます::
 
     from typing import NoReturn
 
     def f(x: int, y: NoReturn) -> None: ...
 
-with::
+次のように置き換えます::
 
-    from typing import Never  # or typing_extensions.Never
+    from typing import Never  # または typing_extensions.Never
 
     def f(x: int, y: Never) -> None: ...
 
-But keep ``NoReturn`` for return types::
+ただし、戻り値の型には ``NoReturn`` を使用します::
 
     from typing import NoReturn
 
@@ -251,38 +218,33 @@ But keep ``NoReturn`` for return types::
 
 .. _modernizing-type-aliases:
 
-Type Aliases
-============
+型エイリアス
+==========================================================================================
 
-*Alternative available since:* Python 3.12 (keyword); Python 3.10, typing-extensions
+*代替機能が利用可能になったのは:* Python 3.12 (キーワード); Python 3.10, typing-extensions
 
-Originally, type aliases were defined using a simple assignment::
+元々、型エイリアスは単純な代入を使用して定義されていました::
 
     IntList = list[int]
 
-Python 3.12 introduced the :keyword:`type` keyword to define type aliases::
+Python 3.12 では、型エイリアスを定義するための :keyword:`type` キーワードが導入されました::
 
     type IntList = list[int]
 
-Code supporting older Python versions should use
-:data:`TypeAlias <typing.TypeAlias>`, introduced in Python 3.10, but also
-available in typing-extensions, instead::
+古い Python バージョンをサポートするコードは、Python 3.10 で導入されたが typing-extensions でも利用可能な :data:`TypeAlias <typing.TypeAlias>` を代わりに使用する必要があります::
 
-    from typing import TypeAlias  # or typing_extensions.TypeAlias
+    from typing import TypeAlias  # または typing_extensions.TypeAlias
 
     IntList: TypeAlias = list[int]
 
 .. _modernizing-user-generics:
 
-User Defined Generics
-=====================
+ユーザー定義ジェネリクス
+==========================================================================================
 
-*Alternative available since:* Python 3.12
+*代替機能が利用可能になったのは:* Python 3.12
 
-Python 3.12 introduced new syntax for defining generic classes. Previously,
-generic classes had to derive from :class:`typing.Generic` (or another
-generic class) and defined the type variable using :class:`typing.TypeVar`.
-For example::
+Python 3.12 では、ジェネリック クラスを定義するための新しい構文が導入されました。 以前は、ジェネリック クラスは :class:`typing.Generic` (または他のジェネリック クラス) から派生し、型変数は :class:`typing.TypeVar` を使用して定義されていました。 たとえば::
 
     from typing import Generic, TypeVar
 
@@ -291,9 +253,7 @@ For example::
     class Brian(Generic[T]): ...
     class Reg(int, Generic[T]): ...
 
-Starting with Python 3.12, the type variable doesn't need to be declared
-using ``TypeVar``, and instead of deriving the class from ``Generic``, the
-following syntax can be used::
+Python 3.12 以降、型変数は ``TypeVar`` を使用して宣言する必要がなくなり、クラスを ``Generic`` から派生させる代わりに次の構文を使用できます::
 
     class Brian[T]: ...
     class Reg[T](int): ...
@@ -301,35 +261,27 @@ following syntax can be used::
 .. _modernizing-byte-string:
 
 ``typing.ByteString``
-=====================
+==========================================================================================
 
-*Alternative available since:* Python 3.0; Python 3.12, typing-extensions
+*代替機能が利用可能になったのは:* Python 3.0; Python 3.12, typing-extensions
 
-:class:`ByteString <typing.ByteString>` was originally intended to be a type
-alias for "byte-like" types, i.e. :class:`bytes`, :class:`bytearray`, and
-:class:`memoryview`. In practice, this
-is seldom exactly what is needed. Use one of these alternatives instead:
+:class:`ByteString <typing.ByteString>` は元々、:class:`bytes`、:class:`bytearray`、および :class:`memoryview` のような「バイト型」の型のエイリアスとして意図されていました。 実際には、これはほとんどの場合、正確に必要なものではありません。 代わりに次のいずれかの代替案を使用します:
 
-* Just :class:`bytes` is often sufficient, especially when not declaring
-  a public API.
-* For items that accept any type that supports the
-  :ref:`buffer protocol <bufferobjects>`, use :class:`collections.abc.Buffer`
-  (available since Python 3.12) or :t-ext:`typing_extensions.Buffer`.
-* Otherwise, use a union of :class:`bytes`, :class:`bytearray`,
-  :class:`memoryview`, and/or any other types that are accepted.
+* 公開 API を宣言しない場合は、単に :class:`bytes` で十分な場合がよくあります。
+* :ref:`buffer protocol <bufferobjects>` をサポートする任意の型を受け入れる項目には、:class:`collections.abc.Buffer` (Python 3.12 以降で利用可能) または :t-ext:`typing_extensions.Buffer` を使用します。
+* それ以外の場合は、:class:`bytes`、:class:`bytearray`、:class:`memoryview`、および/または受け入れられる他の型の共用体を使用します。
 
-``typing.Hashable`` and ``typing.Sized``
-========================================
+``typing.Hashable`` および ``typing.Sized``
+==========================================================================================
 
-*Alternative available since:* Python 3.12, typing-extensions
+*代替機能が利用可能になったのは:* Python 3.12, typing-extensions
 
-The following abstract base classes from :mod:`typing` were added to
-:mod:`collections.abc` in Python 3.12:
+次の :mod:`typing` の抽象基本クラスは、Python 3.12 で :mod:`collections.abc` に追加されました:
 
 * :class:`typing.Hashable` (→ :class:`collections.abc.Hashable`)
 * :class:`typing.Sized` (→ :class:`collections.abc.Sized`)
 
-Update your imports to use the new locations::
+インポートを新しい場所に更新します::
 
     from collections.abc import Hashable, Sized
 

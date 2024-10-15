@@ -1,55 +1,37 @@
 .. _unreachable:
 
-********************************************
-Unreachable Code and Exhaustiveness Checking
-********************************************
+******************************************************************************************
+到達不能コードと網羅性チェック
+******************************************************************************************
 
-Sometimes it is necessary to write code that should never execute, and
-sometimes we write code that we expect to execute, but that is actually
-unreachable. The type checker can help in both cases.
+時々、実行されるべきではないコードを書く必要があり、時々、実行されることを期待して書いたコードが実際には到達不能であることがあります。 型チェッカーはどちらの場合にも役立ちます。
 
-In this guide, we'll cover:
+このガイドでは、次の内容をカバーします。
 
-- ``Never``, the primitive type used for unreachable code
-- ``assert_never()``, a helper for exhaustiveness checking
-- Directly marking code as unreachable
-- Detecting unexpectedly unreachable code
+- 到達不能コードに使用されるプリミティブ型 ``Never``
+- 網羅性チェックのためのヘルパー ``assert_never()``
+- コードを直接到達不能としてマークする方法
+- 予期せず到達不能なコードの検出
 
-``Never`` and ``NoReturn``
-==========================
+``Never`` と ``NoReturn``
+==========================================================================================
 
-Type theory has a concept of a
-`bottom type <https://en.wikipedia.org/wiki/Bottom_type>`__,
-a type that has no values. Concretely, this can be used to represent
-the return type of a function that never returns, or the argument type
-of a function that may never be called. You can also think of the
-bottom type as a union with no members.
+型理論には、値を持たない型である `ボトム型 <https://en.wikipedia.org/wiki/Bottom_type>`__ という概念があります。 具体的には、戻り値を持たない関数の戻り値の型や、呼び出されることのない関数の引数の型を表すために使用できます。 ボトム型はメンバーを持たない共用体としても考えることができます。
 
-The Python type system has long provided a type called ``NoReturn``.
-While it was originally meant only for functions that never return,
-this concept is naturally extended to the bottom type in general, and all
-type checkers treat ``NoReturn`` as a general bottom type.
+Python の型システムは長い間 ``NoReturn`` という型を提供してきました。 これは元々、戻り値を持たない関数のためだけに意図されていましたが、この概念は一般的なボトム型に自然に拡張され、すべての型チェッカーは ``NoReturn`` を一般的なボトム型として扱います。
 
-To make the meaning of this type more explicit, Python 3.11 and
-typing-extensions 4.1 add a new primitive, ``Never``. To type checkers,
-it has the same meaning as ``NoReturn``.
+この型の意味をより明確にするために、Python 3.11 と typing-extensions 4.1 では、新しいプリミティブ ``Never`` が追加されました。 型チェッカーにとって、これは ``NoReturn`` と同じ意味を持ちます。
 
-In this guide, we'll use ``Never`` for the bottom type, but if you cannot
-use it yet, you can always use ``typing.NoReturn`` instead.
+このガイドでは、ボトム型として ``Never`` を使用しますが、まだ使用できない場合は、代わりに ``typing.NoReturn`` を使用できます。
 
-``assert_never()`` and Exhaustiveness Checking
-==============================================
+``assert_never()`` と網羅性チェック
+==========================================================================================
 
-The ``Never`` type can be leveraged to perform static exhaustiveness checking,
-where we use the type checker to make sure that we covered all possible
-cases. For example, this can come up when code performs a separate action
-for each member of an enum, or for each type in a union.
+``Never`` 型は静的網羅性チェックを実行するために活用できます。 これにより、すべての可能なケースをカバーしたことを型チェッカーで確認できます。 たとえば、コードが列挙型の各メンバーや共用体の各型に対して個別のアクションを実行する場合に役立ちます。
 
-To have the type checker do exhaustiveness checking for us, we call a
-function with a parameter typed as ``Never``. The type checker will allow
-this call only if it can prove that the code is not reachable.
+型チェッカーに網羅性チェックを行わせるためには、``Never`` 型として型付けされたパラメーターを持つ関数を呼び出します。 型チェッカーは、このコードが到達不能であることを証明できる場合にのみ、この呼び出しを許可します。
 
-As an example, consider this simple calculator:
+例として、このシンプルな計算機を考えてみましょう。
 
 .. code:: python
 
@@ -72,21 +54,11 @@ As an example, consider this simple calculator:
            case _:
                assert_never(op)
 
-The ``match`` statement covers all members of the ``Op`` enum,
-so the ``assert_never()`` call is unreachable and the type checker
-will accept this code. However, if you add another member to the
-enum (say, ``MULTIPLY``) but don't update the ``match`` statement,
-the type checker will give an error saying that you are not handling
-the ``MULTIPLY`` case.
+``match`` 文は ``Op`` 列挙型のすべてのメンバーをカバーしているため、``assert_never()`` 呼び出しは到達不能であり、型チェッカーはこのコードを受け入れます。 しかし、列挙型に別のメンバー (たとえば ``MULTIPLY``) を追加しても ``match`` 文を更新しない場合、型チェッカーは ``MULTIPLY`` ケースを処理していないというエラーを出します。
 
-Because the ``assert_never()`` helper function is frequently useful,
-it is provided by the standard library as ``typing.assert_never``
-starting in Python 3.11,
-and is also present in ``typing_extensions`` starting at version 4.1.
-However, it is also possible to define a similar function in your own
-code, for example if you want to customize the runtime error message.
+``assert_never()`` ヘルパー関数は頻繁に役立つため、標準ライブラリでは Python 3.11 以降で ``typing.assert_never`` として提供されており、typing_extensions ではバージョン 4.1 以降で提供されています。 ただし、ランタイムエラーメッセージをカスタマイズしたい場合など、自分のコードで同様の関数を定義することも可能です。
 
-You can also use ``assert_never()`` with a sequence of ``if`` statements:
+``assert_never()`` を一連の ``if`` 文と一緒に使用することもできます。
 
 .. code:: python
 
@@ -98,12 +70,10 @@ You can also use ``assert_never()`` with a sequence of ``if`` statements:
        else:
            assert_never(op)
 
-Marking Code as Unreachable
-===========================
+コードを到達不能としてマークする
+==========================================================================================
 
-Sometimes a piece of code is unreachable, but the type system is not
-powerful enough to recognize that. For example, consider a function that
-finds the lowest unused street number in a street:
+時々、コードの一部が到達不能であるが、型システムがそれを認識するのに十分な力を持っていないことがあります。 たとえば、通りの中で最も低い未使用の番地を見つける関数を考えてみましょう。
 
 .. code:: python
 
@@ -118,31 +88,16 @@ finds the lowest unused street number in a street:
                return i
        assert False, "unreachable"
 
-Because ``itertools.count()`` is an infinite iterator, this function
-will never reach the ``assert False`` statement. However, there is
-no way for the type checker to know that, so without the ``assert False``,
-the type checker will complain that the function is missing a return
-statement.
+``itertools.count()`` は無限イテレータであるため、この関数は ``assert False`` 文に到達することはありません。 しかし、型チェッカーがそれを知る方法はないため、``assert False`` がなければ、型チェッカーは関数が戻り値を持たないと文句を言います。
 
-Note how this is different from ``assert_never()``:
+これが ``assert_never()`` とは異なる点に注意してください。
 
-- If we used ``assert_never()`` in the ``lowest_unused()`` function,
-  the type checker would produce an error, because the type checker
-  cannot prove that the line is unreachable.
-- If we used ``assert False`` instead of ``assert_never()`` in the
-  ``calculate()`` example above, we would not get the benefits of
-  exhaustiveness checking. If the code is actually reachable,
-  the type checker will not warn us and we could hit the assertion
-  at runtime.
+- ``lowest_unused()`` 関数で ``assert_never()`` を使用した場合、型チェッカーはその行が到達不能であることを証明できないため、エラーを出します。
+- ``calculate()`` の例で ``assert_never()`` の代わりに ``assert False`` を使用した場合、網羅性チェックの利点を得ることはできません。 コードが実際に到達可能である場合、型チェッカーは警告を出さず、ランタイムでアサーションにヒットする可能性があります。
 
-While ``assert False`` is the most idiomatic way to express this pattern,
-any statement that ends execution will do. For example, you could raise
-an exception or call a function that returns ``Never``.
+``assert False`` はこのパターンを表現する最も慣用的な方法ですが、実行を終了する任意の文でも構いません。 たとえば、例外を発生させるか、``Never`` を返す関数を呼び出すことができます。
 
-Detecting Unexpectedly Unreachable Code
-=======================================
+予期せず到達不能なコードの検出
+==========================================================================================
 
-Another possible problem is code that is supposed to execute, but that
-can actually be statically determined to be unreachable.
-Some type checkers have an option that enables warnings for code
-detected as unreachable (e.g., ``--warn-unreachable`` in mypy).
+もう一つの問題は、実行されることを期待しているコードが実際には静的に到達不能であると判断できる場合です。 一部の型チェッカーには、到達不能と検出されたコードに対して警告を出すオプションがあります (例: mypy の ``--warn-unreachable``)。
