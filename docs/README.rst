@@ -1,50 +1,47 @@
-Python Typing Documentation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Python タイピングドキュメント
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Reading the docs
-=================
+ドキュメントを読む
+==========================================================================================
 
-The live documentation for Python's static typing can be found at
-`typing.readthedocs.io <https://typing.readthedocs.io/>`_.
+Python の静的型付けに関するライブドキュメントは
+`typing.readthedocs.io <https://typing.readthedocs.io/>`_ にあります。
 
-Building the docs
-=================
+ドキュメントのビルド
+==========================================================================================
 
-The documentation is built with tools which are not included in this
-tree but are maintained separately and are available from
-`PyPI <https://pypi.org/>`_.
+ドキュメントは、このツリーには含まれていないが、別途管理されており、
+`PyPI <https://pypi.org/>`_ から入手可能なツールでビルドされます。
 
 * `Sphinx <https://pypi.org/project/Sphinx/>`_
 * `python-docs-theme <https://pypi.org/project/python-docs-theme/>`_
 
-The easiest way to install these tools is to create a virtual environment and
-install the tools into there.
+これらのツールをインストールする最も簡単な方法は、仮想環境を作成し、
+そこにツールをインストールすることです。
 
-Using make
-----------
+make を使用する
+------------------------------------------------------------------------------------------
 
-To get started on UNIX, you can create a virtual environment with the command ::
+UNIX で始めるには、次のコマンドで仮想環境を作成します::
 
   make venv
 
-That will install all the tools necessary to build the documentation. Assuming
-the virtual environment was created in the ``venv`` directory (the default;
-configurable with the VENVDIR variable), you can run the following command to
-build the HTML output files::
+これにより、ドキュメントをビルドするために必要なすべてのツールがインストールされます。
+仮想環境が ``venv`` ディレクトリ（デフォルト、VENVDIR 変数で設定可能）に作成されたと仮定して、
+次のコマンドを実行して HTML 出力ファイルをビルドできます::
 
   make html
 
-By default, if the virtual environment is not created, the Makefile will
-look for instances of sphinxbuild and blurb installed on your process PATH
-(configurable with the SPHINXBUILD and BLURB variables).
+デフォルトでは、仮想環境が作成されていない場合、Makefile は
+プロセス PATH にインストールされた sphinxbuild および blurb のインスタンスを探します
+（SPHINXBUILD および BLURB 変数で設定可能）。
 
-Available make targets are:
+利用可能な make ターゲットは次のとおりです：
 
-* "clean", which removes all build files.
+* "clean" は、すべてのビルドファイルを削除します。
 
-* "venv", which creates a virtual environment with all necessary tools
-  installed.
+* "venv" は、必要なすべてのツールがインストールされた仮想環境を作成します。
 
-* "html", which builds standalone HTML files for offline viewing.
+* "html" は、オフラインで閲覧するためのスタンドアロン HTML ファイルをビルドします。
 
-* "text", which builds a plain text file for each source file.
+* "text" は、各ソースファイルのプレーンテキストファイルをビルドします。

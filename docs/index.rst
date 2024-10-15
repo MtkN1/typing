@@ -1,17 +1,17 @@
-*************************
-Static Typing with Python
-*************************
+******************************************************************************************
+Python の静的型付け
+******************************************************************************************
 
-Guides
-======
+ガイド
+==========================================================================================
 
 .. toctree::
    :maxdepth: 2
 
    guides/index
 
-Reference
-=========
+リファレンス
+==========================================================================================
 
 .. toctree::
    :maxdepth: 2
@@ -20,81 +20,69 @@ Reference
 
 .. seealso::
 
-   The documentation at https://mypy.readthedocs.io/ is relatively accessible
-   and complete.
+   https://mypy.readthedocs.io/ のドキュメントは比較的アクセスしやすく、完全です。
 
-Specification
-=============
+仕様
+==========================================================================================
 
 .. toctree::
    :maxdepth: 2
 
    spec/index
 
-Indices and tables
-==================
+索引とテーブル
+==========================================================================================
 
 * :ref:`genindex`
 * :ref:`search`
 
 .. _contact:
 
-Discussions and Support
-=======================
+ディスカッションとサポート
+==========================================================================================
 
-* `User help forum <https://github.com/python/typing/discussions>`_
-* `User chat on Gitter <http://gitter.im/python/typing>`_
-* `Developer forum <https://discuss.python.org/c/typing/32>`_
-* `Developer mailing list (archived) <https://mail.python.org/archives/list/typing-sig@python.org/>`_
+* `ユーザーヘルプフォーラム <https://github.com/python/typing/discussions>`_
+* `Gitter でのユーザーチャット <http://gitter.im/python/typing>`_
+* `開発者フォーラム <https://discuss.python.org/c/typing/32>`_
+* `開発者メーリングリスト（アーカイブ） <https://mail.python.org/archives/list/typing-sig@python.org/>`_
 
-Typing-related Tools
-====================
+型関連ツール
+==========================================================================================
 
-Type Checkers
--------------
+型チェッカー
+------------------------------------------------------------------------------------------
 
-* `mypy <http://mypy-lang.org/>`_, the reference implementation for type
-  checkers.
-* `pyre <https://pyre-check.org/>`_, a type checker written in OCaml and
-  optimized for performance.
-* `pyright <https://github.com/microsoft/pyright>`_, a type checker that
-  emphasizes speed.
-* `pytype <https://google.github.io/pytype/>`_, a type checker that
-  checks and infers types for unannotated code.
+* `mypy <http://mypy-lang.org/>`_, 型チェッカーのリファレンス実装。
+* `pyre <https://pyre-check.org/>`_, OCaml で書かれ、パフォーマンスに最適化された型チェッカー。
+* `pyright <https://github.com/microsoft/pyright>`_, 速度を重視した型チェッカー。
+* `pytype <https://google.github.io/pytype/>`_, 型注釈のないコードの型をチェックおよび推論する型チェッカー。
 
-Development Environments
-------------------------
+開発環境
+------------------------------------------------------------------------------------------
 
-* `PyCharm <https://www.jetbrains.com/pycharm/>`_, an IDE that supports
-  type stubs both for type checking and code completion.
-* `Visual Studio Code <https://code.visualstudio.com/>`_, a code editor that
-  supports type checking using mypy, pyright, or the
+* `PyCharm <https://www.jetbrains.com/pycharm/>`_, 型スタブを型チェックとコード補完の両方にサポートする IDE。
+* `Visual Studio Code <https://code.visualstudio.com/>`_, mypy、pyright、または
   `Pylance <https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance>`_
-  extension.
+  拡張機能を使用して型チェックをサポートするコードエディタ。
 
-Linters and Formatters
-----------------------
+リンターとフォーマッター
+------------------------------------------------------------------------------------------
 
-* `black <https://black.readthedocs.io/>`_, a code formatter with support for
-  type stub files.
-* `flake8-pyi <https://github.com/ambv/flake8-pyi>`_, a plugin for the
-  `flake8 <https://flake8.pycqa.org/>`_ linter that adds support for type
-  stubs.
-* `ruff <https://astral.sh/ruff>`_, a linter built for speed, with support for
-  most of the ``flake8-pyi`` rules.
+* `black <https://black.readthedocs.io/>`_, 型スタブファイルをサポートするコードフォーマッター。
+* `flake8-pyi <https://github.com/ambv/flake8-pyi>`_, 型スタブをサポートする
+  `flake8 <https://flake8.pycqa.org/>`_ リンターのプラグイン。
+* `ruff <https://astral.sh/ruff>`_, ほとんどの ``flake8-pyi`` ルールをサポートする速度重視のリンター。
 
-Type-Hint and Stub Integration
-------------------------------
+型ヒントとスタブの統合
+------------------------------------------------------------------------------------------
 
-* `autotyping <https://github.com/JelleZijlstra/autotyping>`_, a tool which
-  infers simple types from their context and inserts them as inline type-hints.
+* `autotyping <https://github.com/JelleZijlstra/autotyping>`_, コンテキストから単純な型を推論し、それらをインライン型ヒントとして挿入するツール。
 * `merge-pyi
   <https://google.github.io/pytype/developers/tools.html#merge_pyi>`_,
-  a thin wrapper around ``ApplyTypeAnnotationsVisitor`` from
-  `libCST <https://libcst.readthedocs.io/en/latest/>`_ that integrates .pyi
-  signatures as inline type-hints in Python source code.
+  .pyi シグネチャを Python ソースコードのインライン型ヒントとして統合する
+  `libCST <https://libcst.readthedocs.io/en/latest/>`_ の ``ApplyTypeAnnotationsVisitor`` の薄いラッパー。
 
-Typing PEPs
-===========
+型に関する PEP
+==========================================================================================
 
-See https://peps.python.org/topic/typing for a list of all typing-related PEPs.
+すべての型関連の PEP のリストについては、https://peps.python.org/topic/typing を参照してください。

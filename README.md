@@ -1,45 +1,28 @@
-# Static Typing for Python
+# Python の静的型付け
 
-## Documentation and Support
+## ドキュメントとサポート
 
-The documentation for Python's static typing can be found at
-[typing.readthedocs.io](https://typing.readthedocs.io/). You can get
-help in our [support forum](https://github.com/python/typing/discussions).
+Python の静的型付けに関するドキュメントは [typing.readthedocs.io](https://typing.readthedocs.io/) にあります。サポートが必要な場合は、[サポートフォーラム](https://github.com/python/typing/discussions) をご利用ください。
 
-Improvements to the type system should be discussed on
-[Python's Discourse](https://discuss.python.org/c/typing/32), and are
-tracked in the [issues](https://github.com/python/typing/issues) in this
-repository.
+型システムの改善については、[Python の Discourse](https://discuss.python.org/c/typing/32) で議論し、このリポジトリの [issues](https://github.com/python/typing/issues) で追跡されます。
 
-For conversations that are more suitable to a chat platform, you can use one of the following:
+チャットプラットフォームに適した会話については、以下のいずれかを使用できます：
 
 - [gitter](https://gitter.im/python/typing)
-- [discord](https://discord.com/channels/267624335836053506/891788761371906108) `#type-hinting` channel
+- [discord](https://discord.com/channels/267624335836053506/891788761371906108) の `#type-hinting` チャンネル
 
-## Repository Content
+## リポジトリの内容
 
-This GitHub repository is used for several things:
+この GitHub リポジトリは、いくつかの目的で使用されています：
 
-- The documentation at [typing.readthedocs.io](https://typing.readthedocs.io/)
-  is maintained in the [docs directory](./docs). This includes the
-  [specification](https://typing.readthedocs.io/en/latest/spec/index.html) for the
-  type system. See especially [the update procedure](https://typing.readthedocs.io/en/latest/spec/meta.html)
-  for the spec.
+- [typing.readthedocs.io](https://typing.readthedocs.io/) のドキュメントは [docs ディレクトリ](./docs) で管理されています。これには、型システムの[仕様](https://typing.readthedocs.io/en/latest/spec/index.html)が含まれます。特に、仕様の[更新手順](https://typing.readthedocs.io/en/latest/spec/meta.html)を参照してください。
 
-- A [discussion forum](https://github.com/python/typing/discussions) for typing-related user
-  help is hosted here.
+- タイピング関連のユーザーヘルプのための[ディスカッションフォーラム](https://github.com/python/typing/discussions)がここにホストされています。
 
-- [Conformance test](https://github.com/python/typing/blob/main/conformance/README.md) for Python static type checkers. The [latest conformance test results](https://htmlpreview.github.io/?https://github.com/python/typing/blob/main/conformance/results/results.html) are here.
+- Python 静的型チェッカーの[適合性テスト](https://github.com/python/typing/blob/main/conformance/README.md)。[最新の適合性テスト結果](https://htmlpreview.github.io/?https://github.com/python/typing/blob/main/conformance/results/results.html)はこちらです。
 
-Historically, this repository also hosted:
+過去には、このリポジトリには以下もホストされていました：
 
-- The `typing_extensions` package, which now lives in the
-  [typing_extensions](https://github.com/python/typing_extensions) repo.
-  It used to be in the `typing_extensions` directory.
+- `typing_extensions` パッケージは現在 [typing_extensions](https://github.com/python/typing_extensions) リポジトリにあります。以前は `typing_extensions` ディレクトリにありました。
 
-- A backport of the
-  [`typing` module](https://docs.python.org/3/library/typing.html) for older
-  Python versions. It was removed after all Python versions that lack `typing`
-  in the standard library reached end of life. The last released version,
-  supporting Python 2.7 and 3.4,
-  is [available at PyPI](https://pypi.org/project/typing/).
+- 古い Python バージョン向けの [`typing` モジュール](https://docs.python.org/3/library/typing.html) のバックポート。`typing` が標準ライブラリに含まれていないすべての Python バージョンがサポート終了に達した後に削除されました。Python 2.7 および 3.4 をサポートする最後のリリースバージョンは [PyPI で利用可能](https://pypi.org/project/typing/) です。
