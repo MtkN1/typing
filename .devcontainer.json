@@ -1,0 +1,6 @@
+{
+  "tasks": {
+    "build": "cd docs && make venv && make html",
+    "launch": "python -um http.server -d docs/build/html"
+  }
+}
